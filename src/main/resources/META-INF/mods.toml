@@ -1,21 +1,24 @@
 modLoader="javafml"
 loaderVersion="[25,)"
 issueTrackerURL="https://github.com/lambdazationpowered/Lambdazation/issues"
+
 [[mods]]
-modId="lambdazation"
-version="${file.jarVersion}"
-displayName="Lambdazation"
-displayURL="https://github.com/lambdazationpowered/Lambdazation/"
-logoFile="lambdazation.png"
-credits="Thanks for everyone who contributed to this mod!"
-authors="yuxuanchiadm"
-description="Lambdazation in progress!"
+    modId="lambdazation"
+    version="${file.jarVersion}"
+    displayName="Lambdazation"
+    displayURL="https://github.com/lambdazationpowered/Lambdazation/"
+    logoFile="lambdazation.png"
+    credits="Thanks for everyone who contributed to this mod!"
+    authors="yuxuanchiadm"
+    description="Lambdazation in progress!"
+
 [[dependencies.lambdazation]]
     modId="forge"
     mandatory=true
     versionRange="[25,)"
     ordering="NONE"
     side="BOTH"
+
 [[dependencies.lambdazation]]
     modId="minecraft"
     mandatory=true
