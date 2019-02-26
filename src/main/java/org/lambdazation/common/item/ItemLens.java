@@ -11,6 +11,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.DistExecutor;
 
 public final class ItemLens extends Item {
@@ -25,7 +26,12 @@ public final class ItemLens extends Item {
 	@Override
 	public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
 		if (worldIn.isRemote)
-			DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> Minecraft.getInstance().displayGuiScreen(new GuiTest()));
+			DistExecutor.runWhenOn(Dist.CLIENT, () -> this::openGuiTest);
 		return super.onItemRightClick(worldIn, playerIn, handIn);
+	}
+
+	@OnlyIn(Dist.CLIENT)
+	public void openGuiTest() {
+		Minecraft.getInstance().displayGuiScreen(new GuiTest());
 	}
 }

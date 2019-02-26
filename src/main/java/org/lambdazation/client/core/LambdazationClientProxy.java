@@ -8,10 +8,10 @@ import net.minecraftforge.fml.ModLoadingContext;
 
 public class LambdazationClientProxy extends LambdazationCommonProxy {
 	public final LambdazationGuiFactory lambdazationGuiFactory;
-	
+
 	public LambdazationClientProxy(Lambdazation lambdazation) {
 		super(lambdazation);
-		
+
 		lambdazationGuiFactory = new LambdazationGuiFactory();
 
 		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.GUIFACTORY, () -> lambdazationGuiFactory::openGui);
