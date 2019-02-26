@@ -8,4 +8,8 @@ public class LambdazationCommonProxy {
 	public LambdazationCommonProxy(Lambdazation lambdazation) {
 		this.lambdazation = lambdazation;
 	}
+
+	public void init() {
+
+	}
 }
