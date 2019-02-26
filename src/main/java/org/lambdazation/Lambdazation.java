@@ -1,8 +1,11 @@
-package org.lambdazation.common;
+package org.lambdazation;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.lambdazation.client.core.ClientProxy;
+import org.lambdazation.common.core.CommonProxy;
 import org.lambdazation.common.item.ItemLambdaCrystal;
+import org.lambdazation.server.core.ServerProxy;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -10,6 +13,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.IForgeRegistry;
@@ -17,12 +21,14 @@ import net.minecraftforge.registries.IForgeRegistry;
 @Mod("lambdazation")
 public final class Lambdazation {
 	public final Logger logger;
+	public final CommonProxy commonProxy;
 	public final Items items;
 	public final Blocks blocks;
 	public final EventHandlers eventHandlers;
 
 	public Lambdazation() {
 		logger = LogManager.getLogger();
+		commonProxy = DistExecutor.runForDist(() -> () -> new ClientProxy(this), () -> () -> new ServerProxy(this));
 		items = new Items();
 		blocks = new Blocks();
 		eventHandlers = new EventHandlers();
