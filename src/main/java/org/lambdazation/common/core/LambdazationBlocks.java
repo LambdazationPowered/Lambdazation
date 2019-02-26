@@ -24,4 +24,8 @@ public final class LambdazationBlocks {
 	public void registerBlocks(RegistryEvent.Register<Block> registry) {
 		registry.getRegistry().register(blockLambdaOre);
 	}
+
+	public void finalizeBlocks(RegistryEvent.Register<Block> registry) {
+
+	}
 }

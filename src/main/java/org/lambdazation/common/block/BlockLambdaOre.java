@@ -8,6 +8,8 @@ import net.minecraft.block.BlockOre;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.IItemProvider;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
 public final class BlockLambdaOre extends BlockOre {
@@ -33,7 +35,10 @@ public final class BlockLambdaOre extends BlockOre {
 	}
 
 	@Override
-	public int getExpDrop(IBlockState state, net.minecraft.world.IWorldReader reader, BlockPos pos, int fortune) {
-		return 0;
+	public int getExpDrop(IBlockState state, IWorldReader reader, BlockPos pos, int fortune) {
+		if (this == lambdazation.lambdazationBlocks.blockLambdaOre)
+			return MathHelper.nextInt(RANDOM, 550, 2920);
+		else
+			return 0;
 	}
 }

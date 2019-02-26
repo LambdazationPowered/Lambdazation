@@ -35,4 +35,8 @@ public final class LambdazationItems {
 		e.getRegistry().register(itemLambdaCrystal);
 		e.getRegistry().register(itemBlockLambdaOre);
 	}
+
+	public void finalizeItems(RegistryEvent.Register<Item> e) {
+
+	}
 }
