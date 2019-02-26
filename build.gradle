@@ -6,9 +6,11 @@ buildscript {
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath group: 'com.github.jengelman.gradle.plugins', name: 'shadow', version: '4.0.4'
     }
 }
 apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'eclipse'
 
 version = '1.0'
@@ -80,4 +82,14 @@ jar {
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
+}
+
+shadowJar {
+	dependencies {
+		include dependency('org.lamcalcj:lamcalcj-ast:1.0.0')
+	    include dependency('org.lamcalcj:lamcalcj-compiler:1.0.0')
+	    include dependency('org.lamcalcj:lamcalcj-pretty-print:1.0.0')
+	    include dependency('org.lamcalcj:lamcalcj-reducer:1.0.0')
+	    include dependency('org.lamcalcj:lamcalcj-utils:1.0.0')
+	}
 }
