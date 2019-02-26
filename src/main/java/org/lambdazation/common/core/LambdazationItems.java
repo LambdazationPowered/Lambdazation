@@ -2,6 +2,7 @@ package org.lambdazation.common.core;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.item.ItemLambdaCrystal;
+import org.lambdazation.common.item.ItemLens;
 
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
@@ -13,6 +14,8 @@ public final class LambdazationItems {
 	public final Lambdazation lambdazation;
 
 	public final ItemLambdaCrystal itemLambdaCrystal;
+	public final ItemLens itemLens;
+
 	public final ItemBlock itemBlockLambdaOre;
 
 	public LambdazationItems(Lambdazation lambdazation) {
@@ -25,6 +28,10 @@ public final class LambdazationItems {
 			.setNoRepair());
 		itemLambdaCrystal.setRegistryName(new ResourceLocation("lambdazation:lambda_crystal"));
 
+		itemLens = new ItemLens(lambdazation, new Item.Properties()
+			.group(lambdazation.lambdazationItemGroup));
+		itemLens.setRegistryName(new ResourceLocation("lambdazation:lens"));
+
 		itemBlockLambdaOre = new ItemBlock(lambdazation.lambdazationBlocks.blockLambdaOre, new Item.Properties()
 			.group(lambdazation.lambdazationItemGroup)
 			.rarity(EnumRarity.EPIC));
@@ -33,6 +40,7 @@ public final class LambdazationItems {
 
 	public void registerItems(RegistryEvent.Register<Item> e) {
 		e.getRegistry().register(itemLambdaCrystal);
+		e.getRegistry().register(itemLens);
 		e.getRegistry().register(itemBlockLambdaOre);
 	}
 
