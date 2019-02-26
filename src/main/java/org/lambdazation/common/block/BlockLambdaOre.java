@@ -23,7 +23,7 @@ public final class BlockLambdaOre extends BlockOre {
 
 	@Override
 	public IItemProvider getItemDropped(IBlockState state, World worldIn, BlockPos pos, int fortune) {
-		if (this == lambdazation.lambdazationBlocks.blockLambdaOre)
+		if (equals(lambdazation.lambdazationBlocks.blockLambdaOre))
 			return lambdazation.lambdazationItems.itemLambdaCrystal;
 		else
 			return this;
@@ -36,7 +36,7 @@ public final class BlockLambdaOre extends BlockOre {
 
 	@Override
 	public int getExpDrop(IBlockState state, IWorldReader reader, BlockPos pos, int fortune) {
-		if (this == lambdazation.lambdazationBlocks.blockLambdaOre)
+		if (equals(lambdazation.lambdazationBlocks.blockLambdaOre))
 			return MathHelper.nextInt(RANDOM, 550, 2920);
 		else
 			return 0;
