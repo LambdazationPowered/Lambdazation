@@ -2,73 +2,35 @@ package org.lambdazation;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lambdazation.client.core.ClientProxy;
-import org.lambdazation.common.core.CommonProxy;
-import org.lambdazation.common.item.ItemLambdaCrystal;
-import org.lambdazation.server.core.ServerProxy;
+import org.lambdazation.client.core.LambdazationClientProxy;
+import org.lambdazation.common.core.LambdazationCommonProxy;
+import org.lambdazation.common.core.LambdazationBlocks;
+import org.lambdazation.common.core.LambdazationItemGroup;
+import org.lambdazation.common.core.LambdazationItems;
+import org.lambdazation.server.core.LambdazationServerProxy;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.IForgeRegistry;
 
 @Mod("lambdazation")
 public final class Lambdazation {
 	public final Logger logger;
-	public final CommonProxy commonProxy;
-	public final Items items;
-	public final Blocks blocks;
-	public final EventHandlers eventHandlers;
+	public final LambdazationCommonProxy lambdazationCommonProxy;
+	public final LambdazationItemGroup lambdazationItemGroup;
+	public final LambdazationItems lambdazationItems;
+	public final LambdazationBlocks lambdazationBlocks;
 
 	public Lambdazation() {
 		logger = LogManager.getLogger();
-		commonProxy = DistExecutor.runForDist(() -> () -> new ClientProxy(this), () -> () -> new ServerProxy(this));
-		items = new Items();
-		blocks = new Blocks();
-		eventHandlers = new EventHandlers();
+		lambdazationCommonProxy = DistExecutor.runForDist(() -> () -> new LambdazationClientProxy(this), () -> () -> new LambdazationServerProxy(this));
+		lambdazationItemGroup = new LambdazationItemGroup(this);
+		lambdazationItems = new LambdazationItems(this);
+		lambdazationBlocks = new LambdazationBlocks(this);
 
-		MinecraftForge.EVENT_BUS.register(eventHandlers);
-		FMLJavaModLoadingContext.get().getModEventBus().register(eventHandlers);
-	}
-
-	public final class Items {
-		public final ItemLambdaCrystal itemLambdaCrystal;
-
-		public Items() {
-			itemLambdaCrystal = new ItemLambdaCrystal(new Item.Properties());
-			itemLambdaCrystal.setRegistryName(new ResourceLocation("lambdazation:lambda_crystal"));
-		}
-
-		public void registerItems(IForgeRegistry<Item> registry) {
-			registry.register(itemLambdaCrystal);
-		}
-	}
-
-	public final class Blocks {
-		public Blocks() {
-
-		}
-
-		public void registerBlocks(IForgeRegistry<Block> registry) {
-
-		}
-	}
-
-	public final class EventHandlers {
-		@SubscribeEvent
-		public void registerItems(RegistryEvent.Register<Item> e) {
-			items.registerItems(e.getRegistry());
-		}
-
-		@SubscribeEvent
-		public void registerBlocks(RegistryEvent.Register<Block> e) {
-			blocks.registerBlocks(e.getRegistry());
-		}
+		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Item.class, lambdazationItems::registerItems);
+		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Block.class, lambdazationBlocks::registerBlocks);
 	}
 }
