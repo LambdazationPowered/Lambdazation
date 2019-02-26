@@ -20,17 +20,17 @@ public final class Lambdazation {
 	public final Logger logger;
 	public final LambdazationCommonProxy lambdazationCommonProxy;
 	public final LambdazationItemGroup lambdazationItemGroup;
-	public final LambdazationItems lambdazationItems;
 	public final LambdazationBlocks lambdazationBlocks;
+	public final LambdazationItems lambdazationItems;
 
 	public Lambdazation() {
 		logger = LogManager.getLogger();
 		lambdazationCommonProxy = DistExecutor.runForDist(() -> () -> new LambdazationClientProxy(this), () -> () -> new LambdazationServerProxy(this));
 		lambdazationItemGroup = new LambdazationItemGroup(this);
-		lambdazationItems = new LambdazationItems(this);
 		lambdazationBlocks = new LambdazationBlocks(this);
+		lambdazationItems = new LambdazationItems(this);
 
-		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Item.class, lambdazationItems::registerItems);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Block.class, lambdazationBlocks::registerBlocks);
+		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Item.class, lambdazationItems::registerItems);
 	}
 }

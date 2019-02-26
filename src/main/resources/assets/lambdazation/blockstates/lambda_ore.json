@@ -1,0 +1,5 @@
+{
+    "variants": {
+        "": { "model": "lambdazation:block/lambda_ore" }
+    }
+}
