@@ -1,5 +1,6 @@
 package org.lambdazation.common.core;
 
+import net.minecraft.init.Biomes;
 import org.lambdazation.Lambdazation;
 
 import net.minecraft.world.biome.Biome;
@@ -9,6 +10,7 @@ import net.minecraft.world.gen.feature.MinableConfig;
 import net.minecraft.world.gen.feature.ReplaceBlockConfig;
 import net.minecraft.world.gen.placement.CountRangeConfig;
 import net.minecraftforge.event.RegistryEvent;
+import org.lambdazation.common.biome.MusicValley;
 
 public final class LambdazationBiomes {
 	public final Lambdazation lambdazation;
@@ -18,7 +20,7 @@ public final class LambdazationBiomes {
 	}
 
 	public void registerBiomes(RegistryEvent.Register<Biome> registry) {
-
+		registry.getRegistry().register(Biome.getBiome(277,new MusicValley()));//todo
 	}
 
 	public void finalizeBiomes(RegistryEvent.Register<Biome> registry) {
