@@ -4,7 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.common.core.LambdazationCommonProxy;
-import org.lambdazation.common.core.LambdazationCrystalFactory;
+import org.lambdazation.common.core.LambdazationTermFactory;
 import org.lambdazation.common.core.LambdazationBiomes;
 import org.lambdazation.common.core.LambdazationBlocks;
 import org.lambdazation.common.core.LambdazationItemGroup;
@@ -27,7 +27,7 @@ public final class Lambdazation {
 	public final LambdazationBlocks lambdazationBlocks;
 	public final LambdazationItems lambdazationItems;
 	public final LambdazationBiomes lamblambdazationBiomes;
-	public final LambdazationCrystalFactory lambdazationCrystalFactory;
+	public final LambdazationTermFactory lambdazationTermFactory;
 
 	public Lambdazation() {
 		logger = LogManager.getLogger();
@@ -36,7 +36,7 @@ public final class Lambdazation {
 		lambdazationBlocks = new LambdazationBlocks(this);
 		lambdazationItems = new LambdazationItems(this);
 		lamblambdazationBiomes = new LambdazationBiomes(this);
-		lambdazationCrystalFactory = new LambdazationCrystalFactory(this);
+		lambdazationTermFactory = new LambdazationTermFactory(this);
 
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Block.class, lambdazationBlocks::registerBlocks);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Block.class, EventPriority.LOWEST, lambdazationBlocks::finalizeBlocks);
@@ -44,5 +44,7 @@ public final class Lambdazation {
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Item.class, EventPriority.LOWEST, lambdazationItems::finalizeItems);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Biome.class, lamblambdazationBiomes::registerBiomes);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Biome.class, EventPriority.LOWEST, lamblambdazationBiomes::finalizeBiomes);
+
+		lambdazationCommonProxy.init();
 	}
 }

@@ -7,4 +7,9 @@ public class LambdazationServerProxy extends LambdazationCommonProxy {
 	public LambdazationServerProxy(Lambdazation lambdazation) {
 		super(lambdazation);
 	}
+
+	@Override
+	public void init() {
+
+	}
 }

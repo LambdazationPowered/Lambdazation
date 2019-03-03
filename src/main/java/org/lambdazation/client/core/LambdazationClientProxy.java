@@ -13,7 +13,10 @@ public class LambdazationClientProxy extends LambdazationCommonProxy {
 		super(lambdazation);
 
 		lambdazationGuiFactory = new LambdazationGuiFactory(lambdazation);
+	}
 
+	@Override
+	public void init() {
 		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.GUIFACTORY, () -> lambdazationGuiFactory::openGui);
 	}
 }
