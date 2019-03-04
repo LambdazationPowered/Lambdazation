@@ -21,11 +21,11 @@ public final class LambdazationBlocks {
 		blockLambdaOre.setRegistryName(new ResourceLocation("lambdazation:lambda_ore"));
 	}
 
-	public void registerBlocks(RegistryEvent.Register<Block> registry) {
-		registry.getRegistry().register(blockLambdaOre);
+	public void registerBlocks(RegistryEvent.Register<Block> e) {
+		e.getRegistry().register(blockLambdaOre);
 	}
 
-	public void finalizeBlocks(RegistryEvent.Register<Block> registry) {
+	public void finalizeBlocks(RegistryEvent.Register<Block> e) {
 
 	}
 }

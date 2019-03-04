@@ -2,8 +2,6 @@ package org.lambdazation.common.block;
 
 import java.util.Random;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.world.Explosion;
 import org.lambdazation.Lambdazation;
 
 import net.minecraft.block.BlockOre;
@@ -14,15 +12,13 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
-import javax.annotation.Nullable;
-
 public final class BlockLambdaOre extends BlockOre {
 	public final Lambdazation lambdazation;
 
 	public BlockLambdaOre(Lambdazation lambdazation, Properties properties) {
 		super(properties);
+
 		this.lambdazation = lambdazation;
-		properties.hardnessAndResistance(6,1000);
 	}
 
 	@Override

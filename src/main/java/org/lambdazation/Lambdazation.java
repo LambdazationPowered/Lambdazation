@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.common.core.LambdazationCommonProxy;
 import org.lambdazation.common.core.LambdazationTermFactory;
+import org.lambdazation.common.core.LambdazationTileEntityTypes;
 import org.lambdazation.common.core.LambdazationBiomes;
 import org.lambdazation.common.core.LambdazationBlocks;
 import org.lambdazation.common.core.LambdazationItemGroup;
@@ -13,6 +14,7 @@ import org.lambdazation.server.core.LambdazationServerProxy;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
+import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.fml.DistExecutor;
@@ -27,6 +29,7 @@ public final class Lambdazation {
 	public final LambdazationBlocks lambdazationBlocks;
 	public final LambdazationItems lambdazationItems;
 	public final LambdazationBiomes lamblambdazationBiomes;
+	public final LambdazationTileEntityTypes lambdazationTileEntityTypes;
 	public final LambdazationTermFactory lambdazationTermFactory;
 
 	public Lambdazation() {
@@ -36,6 +39,7 @@ public final class Lambdazation {
 		lambdazationBlocks = new LambdazationBlocks(this);
 		lambdazationItems = new LambdazationItems(this);
 		lamblambdazationBiomes = new LambdazationBiomes(this);
+		lambdazationTileEntityTypes = new LambdazationTileEntityTypes(this);
 		lambdazationTermFactory = new LambdazationTermFactory(this);
 
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Block.class, lambdazationBlocks::registerBlocks);
@@ -44,6 +48,8 @@ public final class Lambdazation {
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Item.class, EventPriority.LOWEST, lambdazationItems::finalizeItems);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Biome.class, lamblambdazationBiomes::registerBiomes);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Biome.class, EventPriority.LOWEST, lamblambdazationBiomes::finalizeBiomes);
+		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(TileEntityType.class, lambdazationTileEntityTypes::registerTileEntityTypes);
+		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(TileEntityType.class, EventPriority.LOWEST, lambdazationTileEntityTypes::finalizeTileEntityTypes);
 
 		lambdazationCommonProxy.init();
 	}
