@@ -1,14 +1,17 @@
 package org.lambdazation.common.inventory;
 
 import org.lambdazation.Lambdazation;
+import org.lambdazation.common.item.ItemLambdaCrystal;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.InventoryBasic;
+import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 
 public final class ContainerLens extends Container {
@@ -16,12 +19,12 @@ public final class ContainerLens extends Container {
 
 	public final Lambdazation lambdazation;
 
-	public final IInventory lensInventory = new InventoryBasic(new TextComponentString("Lens"), 1);
+	public final InventoryLens inventoryLens = new InventoryLens();
 
 	public ContainerLens(Lambdazation lambdazation, IInventory playerInventory) {
 		this.lambdazation = lambdazation;
 
-		addSlot(new SlotLens(lensInventory, 0, 27, 47));
+		addSlot(new SlotLens(inventoryLens, 0, 27, 47));
 
 		for (int i = 0; i < 3; ++i)
 			for (int j = 0; j < 9; ++j)
@@ -39,7 +42,7 @@ public final class ContainerLens extends Container {
 	public void onContainerClosed(EntityPlayer playerIn) {
 		super.onContainerClosed(playerIn);
 		if (!playerIn.world.isRemote)
-			clearContainer(playerIn, playerIn.world, lensInventory);
+			clearContainer(playerIn, playerIn.world, inventoryLens);
 	}
 
 	@Override
@@ -72,6 +75,120 @@ public final class ContainerLens extends Container {
 		}
 
 		return affectedStack;
+	}
+
+	public final class InventoryLens implements IInventory {
+		private final NonNullList<ItemStack> inventoryContents;
+
+		public InventoryLens() {
+			inventoryContents = NonNullList.withSize(1, ItemStack.EMPTY);
+		}
+
+		@Override
+		public ITextComponent getName() {
+			return new TextComponentString("Lens");
+		}
+
+		@Override
+		public boolean hasCustomName() {
+			return false;
+		}
+
+		@Override
+		public ITextComponent getCustomName() {
+			return null;
+		}
+
+		@Override
+		public int getSizeInventory() {
+			return 1;
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return inventoryContents.stream().allMatch(ItemStack::isEmpty);
+		}
+
+		@Override
+		public ItemStack getStackInSlot(int index) {
+			return index >= 0 && index < getSizeInventory() ? inventoryContents.get(index) : ItemStack.EMPTY;
+		}
+
+		@Override
+		public ItemStack decrStackSize(int index, int count) {
+			return ItemStackHelper.getAndSplit(inventoryContents, index, count);
+		}
+
+		@Override
+		public ItemStack removeStackFromSlot(int index) {
+			return ItemStackHelper.getAndRemove(inventoryContents, index);
+		}
+
+		@Override
+		public void setInventorySlotContents(int index, ItemStack stack) {
+			if (index >= 0 && index < getSizeInventory())
+				inventoryContents.set(index, stack);
+
+			// FIXME Test code
+			ItemLambdaCrystal itemLambdaCrystal = lambdazation.lambdazationItems.itemLambdaCrystal;
+
+			if (stack.getItem().equals(itemLambdaCrystal)) {
+				System.out.println("capacity: " + itemLambdaCrystal.getCapacity(stack));
+				System.out.println("energy: " + itemLambdaCrystal.getEnergy(stack));
+				System.out.println("term: " + itemLambdaCrystal.getTerm(stack));
+				System.out.println("termState: " + itemLambdaCrystal.getTermState(stack));
+			}
+		}
+
+		@Override
+		public int getInventoryStackLimit() {
+			return 64;
+		}
+
+		@Override
+		public void markDirty() {
+
+		}
+
+		@Override
+		public boolean isUsableByPlayer(EntityPlayer player) {
+			return false;
+		}
+
+		@Override
+		public void openInventory(EntityPlayer player) {
+
+		}
+
+		@Override
+		public void closeInventory(EntityPlayer player) {
+
+		}
+
+		@Override
+		public boolean isItemValidForSlot(int index, ItemStack stack) {
+			return true;
+		}
+
+		@Override
+		public int getField(int id) {
+			return 0;
+		}
+
+		@Override
+		public void setField(int id, int value) {
+
+		}
+
+		@Override
+		public int getFieldCount() {
+			return 0;
+		}
+
+		@Override
+		public void clear() {
+			inventoryContents.clear();
+		}
 	}
 
 	public final class SlotLens extends Slot {

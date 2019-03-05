@@ -45,6 +45,9 @@ public final class ItemLambdaCrystal extends Item {
 	}
 
 	public int getCapacity(ItemStack itemStack) {
+		if (!equals(itemStack.getItem()))
+			throw new IllegalStateException();
+
 		NBTTagCompound tag = itemStack.getTag();
 		if (!tag.contains("capacity", 3))
 			return 0;
@@ -53,6 +56,9 @@ public final class ItemLambdaCrystal extends Item {
 	}
 
 	public int getEnergy(ItemStack itemStack) {
+		if (!equals(itemStack.getItem()))
+			throw new IllegalStateException();
+
 		NBTTagCompound tag = itemStack.getTag();
 		if (!tag.contains("energy", 3))
 			return 0;
@@ -61,6 +67,9 @@ public final class ItemLambdaCrystal extends Item {
 	}
 
 	public Term getTerm(ItemStack itemStack) {
+		if (!equals(itemStack.getItem()))
+			throw new IllegalStateException();
+
 		NBTTagCompound tag = itemStack.getTag();
 		if (!tag.contains("term", 7))
 			return null;
@@ -75,6 +84,9 @@ public final class ItemLambdaCrystal extends Item {
 	}
 
 	public TermState getTermState(ItemStack itemStack) {
+		if (!equals(itemStack.getItem()))
+			throw new IllegalStateException();
+
 		NBTTagCompound tag = itemStack.getTag();
 		if (!tag.contains("termState", 1))
 			return null;
