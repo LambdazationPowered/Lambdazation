@@ -28,7 +28,8 @@ public final class LambdazationTermFactory {
 
 		Map<Identifier, Integer> identifierMap = new HashMap<>();
 
-		for (Term currentTerm; (currentTerm = pendingTerms.pop()) != null;) {
+		while (!pendingTerms.isEmpty()) {
+			Term currentTerm = pendingTerms.pop();
 			if (currentTerm instanceof Var) {
 				Identifier varIdentifier = ((Var) currentTerm).identifier();
 
