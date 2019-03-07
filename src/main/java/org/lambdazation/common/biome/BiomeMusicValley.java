@@ -1,12 +1,13 @@
 package org.lambdazation.common.biome;
 
+import org.lambdazation.Lambdazation;
+
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.surfacebuilders.CompositeSurfaceBuilder;
-import org.lambdazation.Lambdazation;
 
 public final class BiomeMusicValley extends Biome {
 	public final Lambdazation lambdazation;

@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.common.core.LambdazationCommonProxy;
+import org.lambdazation.common.core.LambdazationEntityTypes;
 import org.lambdazation.common.core.LambdazationTermFactory;
 import org.lambdazation.common.core.LambdazationTileEntityTypes;
 import org.lambdazation.common.core.LambdazationBiomes;
@@ -13,6 +14,7 @@ import org.lambdazation.common.core.LambdazationItems;
 import org.lambdazation.server.core.LambdazationServerProxy;
 
 import net.minecraft.block.Block;
+import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.world.biome.Biome;
@@ -30,6 +32,7 @@ public final class Lambdazation {
 	public final LambdazationItems lambdazationItems;
 	public final LambdazationBiomes lamblambdazationBiomes;
 	public final LambdazationTileEntityTypes lambdazationTileEntityTypes;
+	public final LambdazationEntityTypes lambdazationEntityTypes;
 	public final LambdazationTermFactory lambdazationTermFactory;
 
 	public Lambdazation() {
@@ -40,6 +43,7 @@ public final class Lambdazation {
 		lambdazationItems = new LambdazationItems(this);
 		lamblambdazationBiomes = new LambdazationBiomes(this);
 		lambdazationTileEntityTypes = new LambdazationTileEntityTypes(this);
+		lambdazationEntityTypes = new LambdazationEntityTypes(this);
 		lambdazationTermFactory = new LambdazationTermFactory(this);
 
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Block.class, lambdazationBlocks::registerBlocks);
@@ -50,6 +54,8 @@ public final class Lambdazation {
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Biome.class, EventPriority.LOWEST, lamblambdazationBiomes::finalizeBiomes);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(TileEntityType.class, lambdazationTileEntityTypes::registerTileEntityTypes);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(TileEntityType.class, EventPriority.LOWEST, lambdazationTileEntityTypes::finalizeTileEntityTypes);
+		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(EntityType.class, lambdazationEntityTypes::registerEntityTypes);
+		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(EntityType.class, EventPriority.LOWEST, lambdazationEntityTypes::finalizeEntityTypes);
 
 		lambdazationCommonProxy.init();
 	}
