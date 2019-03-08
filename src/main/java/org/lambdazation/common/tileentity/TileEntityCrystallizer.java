@@ -6,6 +6,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntityLockable;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
@@ -27,6 +28,19 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		this.lambdazation = lambdazation;
 
 		inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
+	}
+
+	@Override
+	public void read(NBTTagCompound compound) {
+		super.read(compound);
+		ItemStackHelper.loadAllItems(compound, inventoryContents);
+	}
+
+	@Override
+	public NBTTagCompound write(NBTTagCompound compound) {
+		super.write(compound);
+		ItemStackHelper.saveAllItems(compound, inventoryContents);
+		return compound;
 	}
 
 	@Override
