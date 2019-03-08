@@ -4,6 +4,7 @@ import org.lambdazation.Lambdazation;
 import org.lambdazation.common.item.ItemLambdaCrystal;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ItemStackHelper;
@@ -19,24 +20,28 @@ public final class ContainerLens extends Container {
 
 	public final Lambdazation lambdazation;
 
-	public final InventoryLens inventoryLens = new InventoryLens();
+	public final InventoryPlayer inventoryPlayer;
+	public final InventoryLens inventoryLens;
 
-	public ContainerLens(Lambdazation lambdazation, IInventory playerInventory) {
+	public ContainerLens(Lambdazation lambdazation, InventoryPlayer inventoryPlayer) {
 		this.lambdazation = lambdazation;
+
+		this.inventoryPlayer = inventoryPlayer;
+		this.inventoryLens = new InventoryLens();
 
 		addSlot(new SlotLens(inventoryLens, 0, 27, 47));
 
 		for (int i = 0; i < 3; ++i)
 			for (int j = 0; j < 9; ++j)
-				addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+				addSlot(new Slot(inventoryPlayer, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
 
 		for (int k = 0; k < 9; ++k)
-			addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
+			addSlot(new Slot(inventoryPlayer, k, 8 + k * 18, 142));
 	}
 
 	@Override
 	public boolean canInteractWith(EntityPlayer playerIn) {
-		return true;
+		return inventoryLens.isUsableByPlayer(playerIn);
 	}
 
 	public void onContainerClosed(EntityPlayer playerIn) {
@@ -78,7 +83,7 @@ public final class ContainerLens extends Container {
 	}
 
 	public final class InventoryLens implements IInventory {
-		private final NonNullList<ItemStack> inventoryContents;
+		public final NonNullList<ItemStack> inventoryContents;
 
 		public InventoryLens() {
 			inventoryContents = NonNullList.withSize(1, ItemStack.EMPTY);
@@ -152,7 +157,7 @@ public final class ContainerLens extends Container {
 
 		@Override
 		public boolean isUsableByPlayer(EntityPlayer player) {
-			return false;
+			return true;
 		}
 
 		@Override

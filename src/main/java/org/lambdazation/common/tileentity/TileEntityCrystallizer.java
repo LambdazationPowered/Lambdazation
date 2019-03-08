@@ -1,45 +1,155 @@
 package org.lambdazation.common.tileentity;
 
-import net.minecraft.item.Item;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.Container;
+import net.minecraft.inventory.ISidedInventory;
+import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.items.ItemStackHandler;
-import org.lambdazation.Lambdazation;
-import org.lambdazation.common.item.ItemLambdaCrystal;
-import org.lamcalcj.ast.Lambda;
-import org.lamcalcj.utils.Utils;
-import scala.collection.immutable.HashMap;
-import scala.collection.immutable.Map;
+import net.minecraft.tileentity.TileEntityLockable;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ITickable;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 
-public final class TileEntityCrystallizer extends TileEntity {
+import org.lambdazation.Lambdazation;
+import org.lambdazation.common.inventory.ContainerCrystallizer;
+
+public final class TileEntityCrystallizer extends TileEntityLockable implements ISidedInventory, ITickable {
 	public final Lambdazation lambdazation;
+
+	public final NonNullList<ItemStack> inventoryContents;
 
 	public TileEntityCrystallizer(Lambdazation lambdazation) {
 		super(lambdazation.lambdazationTileEntityTypes.tileEntityTypeCrystallizer);
 
 		this.lambdazation = lambdazation;
+
+		inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
 	}
-	public ItemStack mergeCrystals() {
-		Map<Lambda.Identifier, Lambda.Identifier> identifierMap = new HashMap<>();
-		ItemStack itemStack0 = getItemStackInSlot(0);
-		ItemStack itemStack1 = getItemStackInSlot(1);
-		Item item0 = itemStack0.getItem();
-		Item item1 = itemStack1.getItem();
-		if (item0 instanceof ItemLambdaCrystal && item1 instanceof ItemLambdaCrystal) {
-			if (Utils.isAlphaEquivalent(((ItemLambdaCrystal) item0).getTerm(itemStack0), ((ItemLambdaCrystal) item1).getTerm(itemStack1),
-					identifierMap)) {
-				ItemStack newCrystal = new ItemLambdaCrystal(lambdazation, new Item.Properties()).getDefaultInstance();
-				NBTTagCompound nbtTagCompound = new NBTTagCompound();
-				nbtTagCompound.setInt("energy", ((ItemLambdaCrystal) item0).getEnergy(itemStack0) + ((ItemLambdaCrystal) item1).getEnergy(itemStack1));
-				newCrystal.setTag(nbtTagCompound);
-				return newCrystal;
-			}
-			else return null;
-		}
-		else return null;
+
+	@Override
+	public int getSizeInventory() {
+		return 3;
 	}
-	public ItemStack getItemStackInSlot(int slot){
-		return new ItemStackHandler().getStackInSlot(slot);
+
+	@Override
+	public boolean isEmpty() {
+		return inventoryContents.stream().allMatch(ItemStack::isEmpty);
+	}
+
+	@Override
+	public ItemStack getStackInSlot(int index) {
+		return index >= 0 && index < getSizeInventory() ? inventoryContents.get(index) : ItemStack.EMPTY;
+	}
+
+	@Override
+	public ItemStack decrStackSize(int index, int count) {
+		return ItemStackHelper.getAndSplit(inventoryContents, index, count);
+	}
+
+	@Override
+	public ItemStack removeStackFromSlot(int index) {
+		return ItemStackHelper.getAndRemove(inventoryContents, index);
+	}
+
+	@Override
+	public void setInventorySlotContents(int index, ItemStack stack) {
+		if (index >= 0 && index < getSizeInventory())
+			inventoryContents.set(index, stack);
+	}
+
+	@Override
+	public int getInventoryStackLimit() {
+		return 64;
+	}
+
+	@Override
+	public boolean isUsableByPlayer(EntityPlayer player) {
+		return true;
+	}
+
+	@Override
+	public void openInventory(EntityPlayer player) {
+
+	}
+
+	@Override
+	public void closeInventory(EntityPlayer player) {
+
+	}
+
+	@Override
+	public boolean isItemValidForSlot(int index, ItemStack stack) {
+		return true;
+	}
+
+	@Override
+	public int getField(int id) {
+		return 0;
+	}
+
+	@Override
+	public void setField(int id, int value) {
+
+	}
+
+	@Override
+	public int getFieldCount() {
+		return 0;
+	}
+
+	@Override
+	public void clear() {
+		inventoryContents.clear();
+	}
+
+	@Override
+	public ITextComponent getName() {
+		return new TextComponentString("Crystallizer");
+	}
+
+	@Override
+	public boolean hasCustomName() {
+		return false;
+	}
+
+	@Override
+	public ITextComponent getCustomName() {
+		return null;
+	}
+
+	@Override
+	public Container createContainer(InventoryPlayer playerInventory, EntityPlayer playerIn) {
+		return new ContainerCrystallizer(lambdazation, playerInventory, this);
+	}
+
+	@Override
+	public String getGuiID() {
+		return ContainerCrystallizer.GUI_ID.toString();
+	}
+
+	@Override
+	public void tick() {
+		// TODO NYI
+	}
+
+	@Override
+	public int[] getSlotsForFace(EnumFacing side) {
+		// TODO NYI
+		return new int[] {};
+	}
+
+	@Override
+	public boolean canInsertItem(int index, ItemStack itemStackIn, EnumFacing direction) {
+		// TODO NYI
+		return false;
+	}
+
+	@Override
+	public boolean canExtractItem(int index, ItemStack stack, EnumFacing direction) {
+		// TODO NYI
+		return false;
 	}
 }

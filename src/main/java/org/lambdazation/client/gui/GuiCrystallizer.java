@@ -1,7 +1,8 @@
 package org.lambdazation.client.gui;
 
 import org.lambdazation.Lambdazation;
-import org.lambdazation.common.inventory.ContainerLens;
+import org.lambdazation.common.inventory.ContainerCrystallizer;
+import org.lambdazation.common.tileentity.TileEntityCrystallizer;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -11,13 +12,13 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public final class GuiLens extends GuiContainer {
-	public static final ResourceLocation LENS_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/lens.png");
+public final class GuiCrystallizer extends GuiContainer {
+	public static final ResourceLocation CRYSTALLIZER_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/crystallizer.png");
 
 	public final Lambdazation lambdazation;
 
-	public GuiLens(Lambdazation lambdazation, InventoryPlayer inventoryPlayer) {
-		super(new ContainerLens(lambdazation, inventoryPlayer));
+	public GuiCrystallizer(Lambdazation lambdazation, InventoryPlayer inventoryPlayer, TileEntityCrystallizer tileEntityCrystallizer) {
+		super(new ContainerCrystallizer(lambdazation, inventoryPlayer, tileEntityCrystallizer));
 
 		this.lambdazation = lambdazation;
 	}
@@ -28,7 +29,7 @@ public final class GuiLens extends GuiContainer {
 
 		GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-		this.mc.getTextureManager().bindTexture(LENS_RESOURCE);
+		this.mc.getTextureManager().bindTexture(CRYSTALLIZER_RESOURCE);
 		int x = (width - xSize) / 2;
 		int y = (height - ySize) / 2;
 		this.drawTexturedModalRect(x, y, 0, 0, xSize, ySize);

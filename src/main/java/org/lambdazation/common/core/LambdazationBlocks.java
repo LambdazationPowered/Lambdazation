@@ -1,6 +1,7 @@
 package org.lambdazation.common.core;
 
 import org.lambdazation.Lambdazation;
+import org.lambdazation.common.block.BlockCrystallizer;
 import org.lambdazation.common.block.BlockLambdaOre;
 
 import net.minecraft.block.Block;
@@ -12,17 +13,24 @@ public final class LambdazationBlocks {
 	public final Lambdazation lambdazation;
 
 	public final BlockLambdaOre blockLambdaOre;
+	public final BlockCrystallizer blockCrystallizer;
 
 	public LambdazationBlocks(Lambdazation lambdazation) {
 		this.lambdazation = lambdazation;
 
-		blockLambdaOre = new BlockLambdaOre(lambdazation, Block.Properties.create(Material.ROCK)
+		blockLambdaOre = new BlockLambdaOre(lambdazation, Block.Properties
+			.create(Material.ROCK)
 			.hardnessAndResistance(3.0F, 3.0F));
 		blockLambdaOre.setRegistryName(new ResourceLocation("lambdazation:lambda_ore"));
+		blockCrystallizer = new BlockCrystallizer(lambdazation, Block.Properties
+			.create(Material.ROCK)
+			.hardnessAndResistance(3.5F, 3.5F));
+		blockCrystallizer.setRegistryName(new ResourceLocation("lambdazation:crystallizer"));
 	}
 
 	public void registerBlocks(RegistryEvent.Register<Block> e) {
 		e.getRegistry().register(blockLambdaOre);
+		e.getRegistry().register(blockCrystallizer);
 	}
 
 	public void finalizeBlocks(RegistryEvent.Register<Block> e) {
