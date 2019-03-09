@@ -43,7 +43,33 @@ public final class ContainerCrystallizer extends Container {
 	}
 
 	public ItemStack transferStackInSlot(EntityPlayer playerIn, int index) {
-		// TODO NYI
-		return ItemStack.EMPTY;
+		ItemStack affectedStack = ItemStack.EMPTY;
+
+		Slot slot = this.inventorySlots.get(index);
+		if (slot != null && slot.getHasStack()) {
+			ItemStack currentStack = slot.getStack();
+			affectedStack = currentStack.copy();
+
+			if (index >= 0 && index < 3) {
+				if (!this.mergeItemStack(currentStack, 3, 39, false))
+					return ItemStack.EMPTY;
+			} else if (index >= 3 && index < 39) {
+				if (!this.mergeItemStack(currentStack, 0, 3, false))
+					return ItemStack.EMPTY;
+			} else
+				return ItemStack.EMPTY;
+
+			if (currentStack.isEmpty())
+				slot.putStack(ItemStack.EMPTY);
+			else
+				slot.onSlotChanged();
+
+			if (currentStack.getCount() == affectedStack.getCount())
+				return ItemStack.EMPTY;
+
+			slot.onTake(playerIn, currentStack);
+		}
+
+		return affectedStack;
 	}
 }

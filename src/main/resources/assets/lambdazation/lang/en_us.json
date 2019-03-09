@@ -2,5 +2,9 @@
 	"itemGroup.lambdazation": "Lambdazation",
 	"item.lambdazation.lambda_crystal": "Lambda Crystal",
 	"item.lambdazation.lens": "Lens",
-	"block.lambdazation.lambda_ore": "Lambda Ore"
+	"block.lambdazation.lambda_ore": "Lambda Ore",
+	"block.lambdazation.crystallizer": "Crystallizer",
+	"entity.lambdazation.java": "Java",
+	"entity.lambdazation.csharp": "CSharp",
+	"biome.lambdazation.music_valley": "Music Valley"
 }

@@ -30,6 +30,9 @@ public final class ItemLens extends Item implements IInteractionObject {
 	public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
 		playerIn.swingArm(handIn);
 
+		if (worldIn.isRemote)
+			return new ActionResult<>(EnumActionResult.SUCCESS, playerIn.getHeldItem(handIn));
+
 		if (!(playerIn instanceof EntityPlayerMP))
 			return new ActionResult<ItemStack>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
 		EntityPlayerMP entityPlayerMP = (EntityPlayerMP) playerIn;

@@ -12,7 +12,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public final class GuiLens extends GuiContainer {
-	public static final ResourceLocation LENS_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/lens.png");
+	public static final ResourceLocation LENS_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/container/lens.png");
 
 	public final Lambdazation lambdazation;
 
