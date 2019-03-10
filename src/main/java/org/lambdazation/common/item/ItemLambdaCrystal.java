@@ -12,6 +12,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOError;
 import java.io.IOException;
+import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
 import org.lamcalcj.ast.Lambda.Abs;
@@ -44,58 +45,59 @@ public final class ItemLambdaCrystal extends Item {
 		}
 	}
 
-	public int getCapacity(ItemStack itemStack) {
+	public Optional<Integer> getCapacity(ItemStack itemStack) {
 		if (!equals(itemStack.getItem()))
-			throw new IllegalStateException();
+			return Optional.empty();
 
 		NBTTagCompound tag = itemStack.getTag();
 		if (!tag.contains("capacity", 3))
-			return 0;
+			return Optional.empty();
 		int capacity = tag.getInt("capacity");
-		return capacity;
+		return Optional.of(capacity);
 	}
 
-	public int getEnergy(ItemStack itemStack) {
+	public Optional<Integer> getEnergy(ItemStack itemStack) {
 		if (!equals(itemStack.getItem()))
-			throw new IllegalStateException();
+			return Optional.empty();
 
 		NBTTagCompound tag = itemStack.getTag();
 		if (!tag.contains("energy", 3))
-			return 0;
+			return Optional.empty();
 		int energy = tag.getInt("energy");
-		return energy;
+		return Optional.of(energy);
 	}
 
-	public Term getTerm(ItemStack itemStack) {
+	public Optional<Term> getTerm(ItemStack itemStack) {
 		if (!equals(itemStack.getItem()))
-			throw new IllegalStateException();
+			return Optional.empty();
 
 		NBTTagCompound tag = itemStack.getTag();
 		if (!tag.contains("term", 7))
-			return null;
+			return Optional.empty();
 		byte[] serializedTerm = tag.getByteArray("term");
 
+		Term term;
 		try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(serializedTerm))) {
-			Term term = lambdazation.lambdazationTermFactory.deserializeTerm(dis);
-			return term;
+			term = lambdazation.lambdazationTermFactory.deserializeTerm(dis);
 		} catch (IOException e) {
-			throw new IOError(e);
+			return Optional.empty();
 		}
+		return Optional.of(term);
 	}
 
-	public TermState getTermState(ItemStack itemStack) {
+	public Optional<TermState> getTermState(ItemStack itemStack) {
 		if (!equals(itemStack.getItem()))
-			throw new IllegalStateException();
+			return Optional.empty();
 
 		NBTTagCompound tag = itemStack.getTag();
 		if (!tag.contains("termState", 1))
-			return null;
+			return Optional.empty();
 		byte termStateOrdinal = tag.getByte("termState");
 
 		if (termStateOrdinal < 0 || termStateOrdinal >= TermState.values().length)
-			throw new IndexOutOfBoundsException();
+			return Optional.empty();
 		TermState termState = TermState.values()[termStateOrdinal];
-		return termState;
+		return Optional.of(termState);
 	}
 
 	public Builder builder() {

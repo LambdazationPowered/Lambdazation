@@ -16,11 +16,13 @@ import net.minecraft.util.text.TextComponentString;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.inventory.ContainerCrystallizer;
+import org.lambdazation.common.inventory.field.InventoryField;
 
 public final class TileEntityCrystallizer extends TileEntityLockable implements ISidedInventory, ITickable {
 	public final Lambdazation lambdazation;
 
 	public final NonNullList<ItemStack> inventoryContents;
+	public int crystallizeTime;
 
 	public TileEntityCrystallizer(Lambdazation lambdazation) {
 		super(lambdazation.lambdazationTileEntityTypes.tileEntityTypeCrystallizer);
@@ -28,6 +30,7 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		this.lambdazation = lambdazation;
 
 		inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
+		crystallizeTime = 0;
 	}
 
 	@Override
@@ -101,17 +104,24 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	@Override
 	public int getField(int id) {
-		return 0;
+		if (id < 0 || id >= InventoryFieldCrystallizer.values().length)
+			return 0;
+
+		int value = InventoryFieldCrystallizer.values()[id].getField(this);
+		return value;
 	}
 
 	@Override
 	public void setField(int id, int value) {
+		if (id < 0 || id >= InventoryFieldCrystallizer.values().length)
+			return;
 
+		InventoryFieldCrystallizer.values()[id].setField(this, value);
 	}
 
 	@Override
 	public int getFieldCount() {
-		return 0;
+		return InventoryFieldCrystallizer.values().length;
 	}
 
 	@Override
@@ -165,5 +175,24 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 	public boolean canExtractItem(int index, ItemStack stack, EnumFacing direction) {
 		// TODO NYI
 		return false;
+	}
+
+	public enum InventoryFieldCrystallizer implements InventoryField<TileEntityCrystallizer> {
+		CRYSTALLIZE_TIME {
+			@Override
+			public int getField(TileEntityCrystallizer inventory) {
+				return inventory.crystallizeTime;
+			}
+
+			@Override
+			public void setField(TileEntityCrystallizer inventory, int value) {
+				inventory.crystallizeTime = value;
+			}
+		};
+
+		@Override
+		public int localFieldID() {
+			return ordinal();
+		}
 	}
 }

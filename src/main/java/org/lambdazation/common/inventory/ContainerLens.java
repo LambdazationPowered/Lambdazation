@@ -20,34 +20,34 @@ public final class ContainerLens extends Container {
 
 	public final Lambdazation lambdazation;
 
-	public final InventoryPlayer inventoryPlayer;
-	public final InventoryLens inventoryLens;
+	public final InventoryPlayer playerInventory;
+	public final InventoryLens lensInventory;
 
-	public ContainerLens(Lambdazation lambdazation, InventoryPlayer inventoryPlayer) {
+	public ContainerLens(Lambdazation lambdazation, InventoryPlayer playerInventory) {
 		this.lambdazation = lambdazation;
 
-		this.inventoryPlayer = inventoryPlayer;
-		this.inventoryLens = new InventoryLens();
+		this.playerInventory = playerInventory;
+		this.lensInventory = new InventoryLens();
 
-		addSlot(new SlotLens(inventoryLens, 0, 27, 47));
+		addSlot(new SlotLens(lensInventory, 0, 27, 47));
 
 		for (int i = 0; i < 3; ++i)
 			for (int j = 0; j < 9; ++j)
-				addSlot(new Slot(inventoryPlayer, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+				addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
 
 		for (int k = 0; k < 9; ++k)
-			addSlot(new Slot(inventoryPlayer, k, 8 + k * 18, 142));
+			addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
 	}
 
 	@Override
 	public boolean canInteractWith(EntityPlayer playerIn) {
-		return inventoryLens.isUsableByPlayer(playerIn);
+		return lensInventory.isUsableByPlayer(playerIn);
 	}
 
 	public void onContainerClosed(EntityPlayer playerIn) {
 		super.onContainerClosed(playerIn);
 		if (!playerIn.world.isRemote)
-			clearContainer(playerIn, playerIn.world, inventoryLens);
+			clearContainer(playerIn, playerIn.world, lensInventory);
 	}
 
 	@Override

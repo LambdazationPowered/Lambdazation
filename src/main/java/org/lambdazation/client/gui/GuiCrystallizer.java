@@ -17,8 +17,8 @@ public final class GuiCrystallizer extends GuiContainer {
 
 	public final Lambdazation lambdazation;
 
-	public GuiCrystallizer(Lambdazation lambdazation, InventoryPlayer inventoryPlayer, TileEntityCrystallizer tileEntityCrystallizer) {
-		super(new ContainerCrystallizer(lambdazation, inventoryPlayer, tileEntityCrystallizer));
+	public GuiCrystallizer(Lambdazation lambdazation, InventoryPlayer playerInventory, TileEntityCrystallizer crystallizerInventory) {
+		super(new ContainerCrystallizer(lambdazation, playerInventory, crystallizerInventory));
 
 		this.lambdazation = lambdazation;
 	}

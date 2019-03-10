@@ -1,45 +1,61 @@
 package org.lambdazation.common.inventory;
 
 import org.lambdazation.Lambdazation;
+import org.lambdazation.common.inventory.field.InventoryField;
+import org.lambdazation.common.inventory.field.InventoryFieldCache;
+import org.lambdazation.common.inventory.field.InventoryRef;
 import org.lambdazation.common.tileentity.TileEntityCrystallizer;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 public final class ContainerCrystallizer extends Container {
 	public static final ResourceLocation GUI_ID = new ResourceLocation("lambdazation:crystallizer");
 
 	public final Lambdazation lambdazation;
 
-	public final InventoryPlayer inventoryPlayer;
-	public final TileEntityCrystallizer tileEntityCrystallizer;
+	public final InventoryPlayer playerInventory;
+	public final TileEntityCrystallizer crystallizerInventory;
+	public final InventoryFieldCache<ContainerCrystallizer> inventoryFieldCache;
 
-	public ContainerCrystallizer(Lambdazation lambdazation, InventoryPlayer inventoryPlayer,
-		TileEntityCrystallizer tileEntityCrystallizer) {
+	public ContainerCrystallizer(Lambdazation lambdazation, InventoryPlayer playerInventory,
+		TileEntityCrystallizer crystallizerInventory) {
 		this.lambdazation = lambdazation;
 
-		this.inventoryPlayer = inventoryPlayer;
-		this.tileEntityCrystallizer = tileEntityCrystallizer;
+		this.playerInventory = playerInventory;
+		this.crystallizerInventory = crystallizerInventory;
 
-		addSlot(new Slot(tileEntityCrystallizer, 0, 27, 47));
-		addSlot(new Slot(tileEntityCrystallizer, 1, 76, 47));
-		addSlot(new Slot(tileEntityCrystallizer, 2, 134, 47));
+		this.inventoryFieldCache = InventoryFieldCache
+			.builder(this, listeners)
+			.withInventory(playerInventory)
+			.withInventory(crystallizerInventory).build();
+
+		addSlot(new Slot(crystallizerInventory, 0, 27, 47));
+		addSlot(new Slot(crystallizerInventory, 1, 76, 47));
+		addSlot(new Slot(crystallizerInventory, 2, 134, 47));
 
 		for (int i = 0; i < 3; ++i)
 			for (int j = 0; j < 9; ++j)
-				addSlot(new Slot(inventoryPlayer, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+				addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
 
 		for (int k = 0; k < 9; ++k)
-			addSlot(new Slot(inventoryPlayer, k, 8 + k * 18, 142));
+			addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
+	}
+
+	public <T extends IInventory> int lookupInventoryField(InventoryRefCrystallizer<T> inventoryRef, InventoryField<T> inventoryField) {
+		return inventoryFieldCache.lookup(inventoryRef, inventoryField);
 	}
 
 	@Override
 	public boolean canInteractWith(EntityPlayer playerIn) {
-		return tileEntityCrystallizer.isUsableByPlayer(playerIn);
+		return crystallizerInventory.isUsableByPlayer(playerIn);
 	}
 
 	public ItemStack transferStackInSlot(EntityPlayer playerIn, int index) {
@@ -71,5 +87,37 @@ public final class ContainerCrystallizer extends Container {
 		}
 
 		return affectedStack;
+	}
+
+	@Override
+	public void detectAndSendChanges() {
+		super.detectAndSendChanges();
+
+		inventoryFieldCache.refresh();
+	}
+
+	@Override
+	@OnlyIn(Dist.CLIENT)
+	public void updateProgressBar(int id, int data) {
+		inventoryFieldCache.update(id, data);
+	}
+
+	public static abstract class InventoryRefCrystallizer<T extends IInventory> implements InventoryRef<ContainerCrystallizer, T> {
+		public static final InventoryRefCrystallizer<InventoryPlayer> PLAYER = new InventoryRefCrystallizer<InventoryPlayer>() {
+			@Override
+			public InventoryPlayer getInventory(ContainerCrystallizer container) {
+				return container.playerInventory;
+			}
+		};
+		public static final InventoryRefCrystallizer<TileEntityCrystallizer> CRYSTALLIZER = new InventoryRefCrystallizer<TileEntityCrystallizer>() {
+			@Override
+			public TileEntityCrystallizer getInventory(ContainerCrystallizer container) {
+				return container.crystallizerInventory;
+			}
+		};
+
+		InventoryRefCrystallizer() {
+			
+		}
 	}
 }

@@ -16,8 +16,8 @@ public final class GuiLens extends GuiContainer {
 
 	public final Lambdazation lambdazation;
 
-	public GuiLens(Lambdazation lambdazation, InventoryPlayer inventoryPlayer) {
-		super(new ContainerLens(lambdazation, inventoryPlayer));
+	public GuiLens(Lambdazation lambdazation, InventoryPlayer playerInventory) {
+		super(new ContainerLens(lambdazation, playerInventory));
 
 		this.lambdazation = lambdazation;
 	}

@@ -26,20 +26,20 @@ public final class LambdazationGuiFactory {
 
 	public GuiScreen openGui(FMLPlayMessages.OpenContainer msg) {
 		if (msg.getId().equals(ContainerLens.GUI_ID)) {
-			InventoryPlayer inventoryPlayer = Minecraft.getInstance().player.inventory;
+			InventoryPlayer playerInventory = Minecraft.getInstance().player.inventory;
 
-			return new GuiLens(lambdazation, inventoryPlayer);
+			return new GuiLens(lambdazation, playerInventory);
 		} else if (msg.getId().equals(ContainerCrystallizer.GUI_ID)) {
 			BlockPos blockPos = msg.getAdditionalData().readBlockPos();
 			TileEntity tileEntity = Minecraft.getInstance().world.getTileEntity(blockPos);
 
-			InventoryPlayer inventoryPlayer = Minecraft.getInstance().player.inventory;
+			InventoryPlayer playerInventory = Minecraft.getInstance().player.inventory;
 
 			if (!(tileEntity instanceof TileEntityCrystallizer))
 				return null;
-			TileEntityCrystallizer tileEntityCrystallizer = (TileEntityCrystallizer) tileEntity;
+			TileEntityCrystallizer crystallizerInventory = (TileEntityCrystallizer) tileEntity;
 
-			return new GuiCrystallizer(lambdazation, inventoryPlayer, tileEntityCrystallizer);
+			return new GuiCrystallizer(lambdazation, playerInventory, crystallizerInventory);
 		} else
 			return null;
 	}
