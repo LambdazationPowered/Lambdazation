@@ -36,8 +36,11 @@ public final class ContainerCrystallizer extends Container {
 		this.playerInventory = playerInventory;
 		this.crystallizerInventory = crystallizerInventory;
 
-		this.inventoryFieldCache = InventoryFieldCache.builder(this, listeners).withInventory(playerInventory)
-			.withInventory(crystallizerInventory).build();
+		this.inventoryFieldCache = InventoryFieldCache
+			.builder(this, listeners)
+			.withInventory(playerInventory)
+			.withInventory(crystallizerInventory)
+			.build();
 
 		addSlot(new Slot(crystallizerInventory, 0, 27, 47));
 		addSlot(new Slot(crystallizerInventory, 1, 76, 47));
@@ -135,6 +138,11 @@ public final class ContainerCrystallizer extends Container {
 
 		InventoryRefCrystallizer(String name, int ordinal) {
 			super(name, ordinal);
+		}
+
+		@Override
+		public int inventoryID() {
+			return ordinal();
 		}
 
 		public static InventoryRefCrystallizer<?> valueOf(String name) {
