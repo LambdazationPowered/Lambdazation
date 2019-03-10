@@ -44,6 +44,7 @@ public final class ContainerLens extends Container {
 		return lensInventory.isUsableByPlayer(playerIn);
 	}
 
+	@Override
 	public void onContainerClosed(EntityPlayer playerIn) {
 		super.onContainerClosed(playerIn);
 		if (!playerIn.world.isRemote)
