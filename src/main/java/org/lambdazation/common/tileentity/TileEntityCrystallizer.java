@@ -13,6 +13,13 @@ import net.minecraft.util.ITickable;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.wrapper.SidedInvWrapper;
+
+import java.util.Arrays;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.inventory.ContainerCrystallizer;
@@ -25,6 +32,16 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 	public final NonNullList<ItemStack> inventoryContents;
 	public NonNullList<ItemStack> prevInventoryContents;
 	public int crystallizeTime;
+
+	private final LazyOptional<? extends IItemHandler>[] itemHandlers = SidedInvWrapper.create(this, EnumFacing.DOWN,
+		EnumFacing.NORTH);
+
+	private static final int SLOT_INPUT_0 = 0;
+	private static final int SLOT_INPUT_1 = 1;
+	private static final int SLOT_OUTPUT_2 = 2;
+
+	private static final int[] SLOTS_INPUT = new int[] { SLOT_INPUT_0, SLOT_INPUT_1 };
+	private static final int[] SLOTS_OUTPUT = new int[] { SLOT_OUTPUT_2 };
 
 	public TileEntityCrystallizer(Lambdazation lambdazation) {
 		super(lambdazation.lambdazationTileEntityTypes.tileEntityTypeCrystallizer);
@@ -52,6 +69,12 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		compound.setInt("crystallizeTime", crystallizeTime);
 
 		return compound;
+	}
+
+	@Override
+	public void remove() {
+		super.remove();
+		Arrays.stream(itemHandlers).forEach(LazyOptional::invalidate);
 	}
 
 	@Override
@@ -107,7 +130,15 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	@Override
 	public boolean isItemValidForSlot(int index, ItemStack stack) {
-		return true;
+		switch (index) {
+		case SLOT_INPUT_0:
+		case SLOT_INPUT_1:
+			return true;
+		case SLOT_OUTPUT_2:
+			return false;
+		default:
+			return false;
+		}
 	}
 
 	@Override
@@ -174,6 +205,11 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		}
 	}
 
+	private void cache() {
+		prevInventoryContents = NonNullList.from(ItemStack.EMPTY,
+			inventoryContents.stream().map(ItemStack::copy).toArray(ItemStack[]::new));
+	}
+
 	private boolean changed() {
 		if (prevInventoryContents == null)
 			return true;
@@ -190,17 +226,16 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		return false;
 	}
 
-	private void cache() {
-		prevInventoryContents = NonNullList.from(ItemStack.EMPTY, inventoryContents.stream().map(ItemStack::copy).toArray(ItemStack[]::new));
-	}
-
 	private void update() {
+		if (world.isRemote)
+			return;
+
 		cache();
 
-		ItemStack resultItemStack = inventoryContents.get(2);
+		ItemStack resultItemStack = inventoryContents.get(SLOT_OUTPUT_2);
 		if (resultItemStack.isEmpty()) {
-			ItemStack firstItemStack = inventoryContents.get(0);
-			ItemStack secondItemStack = inventoryContents.get(1);
+			ItemStack firstItemStack = inventoryContents.get(SLOT_INPUT_0);
+			ItemStack secondItemStack = inventoryContents.get(SLOT_INPUT_1);
 			if (!lambdazation.lambdazationItems.itemLambdaCrystal.isAlphaEquivalent(firstItemStack, secondItemStack))
 				crystallizeTime = 0;
 			else
@@ -212,10 +247,13 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 	}
 
 	private void crystallized() {
+		if (world.isRemote)
+			return;
+
 		ItemLambdaCrystal itemLambdaCrystal = lambdazation.lambdazationItems.itemLambdaCrystal;
 
-		ItemStack firstItemStack = inventoryContents.get(0);
-		ItemStack secondItemStack = inventoryContents.get(1);
+		ItemStack firstItemStack = inventoryContents.get(SLOT_INPUT_0);
+		ItemStack secondItemStack = inventoryContents.get(SLOT_INPUT_1);
 
 		int capacity = itemLambdaCrystal.getCapacity(firstItemStack).orElse(0)
 			+ itemLambdaCrystal.getCapacity(secondItemStack).orElse(0);
@@ -226,9 +264,9 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		itemLambdaCrystal.setCapacity(resultItemStack, capacity);
 		itemLambdaCrystal.setEnergy(resultItemStack, energy);
 
-		inventoryContents.set(0, ItemStack.EMPTY);
-		inventoryContents.set(1, ItemStack.EMPTY);
-		inventoryContents.set(2, resultItemStack);
+		inventoryContents.set(SLOT_INPUT_0, ItemStack.EMPTY);
+		inventoryContents.set(SLOT_INPUT_1, ItemStack.EMPTY);
+		inventoryContents.set(SLOT_OUTPUT_2, resultItemStack);
 
 		cache();
 		markDirty();
@@ -236,20 +274,48 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	@Override
 	public int[] getSlotsForFace(EnumFacing side) {
-		// TODO NYI
-		return new int[] {};
+		switch (side) {
+		case DOWN:
+		case UP:
+			return SLOTS_OUTPUT;
+		case NORTH:
+		case SOUTH:
+		case WEST:
+		case EAST:
+			return SLOTS_INPUT;
+		default:
+			throw new IllegalStateException();
+		}
 	}
 
 	@Override
 	public boolean canInsertItem(int index, ItemStack itemStackIn, EnumFacing direction) {
-		// TODO NYI
-		return false;
+		return isItemValidForSlot(index, itemStackIn);
 	}
 
 	@Override
 	public boolean canExtractItem(int index, ItemStack stack, EnumFacing direction) {
-		// TODO NYI
-		return false;
+		return true;
+	}
+
+	@Override
+	public <T> LazyOptional<T> getCapability(Capability<T> cap, EnumFacing side) {
+		if (!removed && side != null && cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+			switch (side) {
+			case DOWN:
+			case UP:
+				return itemHandlers[0].cast();
+			case NORTH:
+			case SOUTH:
+			case WEST:
+			case EAST:
+				return itemHandlers[1].cast();
+			default:
+				throw new IllegalStateException();
+			}
+		}
+
+		return super.getCapability(cap, side);
 	}
 
 	public enum InventoryFieldCrystallizer implements InventoryField<TileEntityCrystallizer> {
