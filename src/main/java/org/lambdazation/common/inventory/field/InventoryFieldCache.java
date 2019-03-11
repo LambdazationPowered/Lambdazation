@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.lambdazation.common.utils.GeneralizedEnum;
+
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.IInventory;
@@ -69,36 +71,37 @@ public final class InventoryFieldCache<C extends Container> {
 		});
 	}
 
-	public static <C extends Container> Builder<C> builder(C container, List<IContainerListener> listeners) {
-		return new Builder<C>(container, listeners);
+	public static <C extends Container, E extends GeneralizedEnum<E> & InventoryRef<C, ?>> Builder<C, E> builder(
+		C container, List<IContainerListener> listeners, GeneralizedEnum.Metadata<E> inventoryRefMetadata) {
+		return new Builder<>(container, listeners, inventoryRefMetadata);
 	}
 
-	public static final class Builder<C extends Container> {
+	public static final class Builder<C extends Container, E extends GeneralizedEnum<E> & InventoryRef<C, ?>> {
 		private final C container;
 		private final List<IContainerListener> listeners;
-		private final Map<IInventory, Entry> entries;
-		private int fieldOffset;
+		private final GeneralizedEnum.Metadata<E> inventoryRefMetadata;
 
-		private Builder(C container, List<IContainerListener> listeners) {
+		private Builder(C container, List<IContainerListener> listeners, GeneralizedEnum.Metadata<E> inventoryRefMetadata) {
 			this.container = container;
 			this.listeners = listeners;
-			this.entries = new HashMap<>();
-			this.fieldOffset = 0;
-		}
-
-		public Builder<C> withInventory(IInventory inventory) {
-			int fieldCount = inventory.getFieldCount();
-			int[] fieldCache = new int[fieldCount];
-			for (int localFieldID = 0; localFieldID < fieldCount; localFieldID++)
-				fieldCache[localFieldID] = inventory.getField(localFieldID);
-
-			entries.put(inventory, new Entry(fieldOffset, fieldCache));
-			fieldOffset += fieldCount;
-
-			return this;
+			this.inventoryRefMetadata = inventoryRefMetadata;
 		}
 
 		public InventoryFieldCache<C> build() {
+			Map<IInventory, Entry> entries = new HashMap<>();
+
+			int fieldOffset = 0;
+			for (E inventoryRef : inventoryRefMetadata.values()) {
+				IInventory inventory = inventoryRef.getInventory(container);
+				int fieldCount = inventory.getFieldCount();
+				int[] fieldCache = new int[fieldCount];
+				for (int localFieldID = 0; localFieldID < fieldCount; localFieldID++)
+					fieldCache[localFieldID] = inventory.getField(localFieldID);
+
+				entries.put(inventory, new Entry(fieldOffset, fieldCache));
+				fieldOffset += fieldCount;
+			}
+
 			return new InventoryFieldCache<C>(container, listeners, entries);
 		}
 	}

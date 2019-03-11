@@ -1,7 +1,5 @@
 package org.lambdazation.common.inventory;
 
-import java.util.Arrays;
-
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.inventory.field.InventoryField;
 import org.lambdazation.common.inventory.field.InventoryFieldCache;
@@ -37,9 +35,7 @@ public final class ContainerCrystallizer extends Container {
 		this.crystallizerInventory = crystallizerInventory;
 
 		this.inventoryFieldCache = InventoryFieldCache
-			.builder(this, listeners)
-			.withInventory(playerInventory)
-			.withInventory(crystallizerInventory)
+			.builder(this, listeners, InventoryRefCrystallizer.METADATA)
 			.build();
 
 		addSlot(new Slot(crystallizerInventory, 0, 27, 47));
@@ -62,8 +58,8 @@ public final class ContainerCrystallizer extends Container {
 	public void addListener(IContainerListener listener) {
 		super.addListener(listener);
 
-		Arrays.stream(InventoryRefCrystallizer.values())
-			.map(inventoryRef -> inventoryRef.getInventory(this))
+		InventoryRefCrystallizer.METADATA.values().stream()
+			.map(InventoryRef -> InventoryRef.getInventory(this))
 			.forEach(inventory -> listener.sendAllWindowProperties(this, inventory));
 	}
 
@@ -119,22 +115,40 @@ public final class ContainerCrystallizer extends Container {
 
 	public static abstract class InventoryRefCrystallizer<T extends IInventory> extends GeneralizedEnum<InventoryRefCrystallizer<?>>
 		implements InventoryRef<ContainerCrystallizer, T> {
-		public static final InventoryRefCrystallizer<InventoryPlayer> PLAYER = new InventoryRefCrystallizer<InventoryPlayer>(
-			"PLAYER", 0) {
-			@Override
-			public InventoryPlayer getInventory(ContainerCrystallizer container) {
-				return container.playerInventory;
-			}
-		};
-		public static final InventoryRefCrystallizer<TileEntityCrystallizer> CRYSTALLIZER = new InventoryRefCrystallizer<TileEntityCrystallizer>(
-			"CRYSTALLIZER", 1) {
-			@Override
-			public TileEntityCrystallizer getInventory(ContainerCrystallizer container) {
-				return container.crystallizerInventory;
-			}
-		};
+		public static final InventoryRefCrystallizer<InventoryPlayer> PLAYER;
+		public static final InventoryRefCrystallizer<TileEntityCrystallizer> CRYSTALLIZER;
 
-		private static final InventoryRefCrystallizer<?>[] VALUES = new InventoryRefCrystallizer[] { PLAYER, CRYSTALLIZER };
+		public static final GeneralizedEnum.Metadata<InventoryRefCrystallizer<?>> METADATA;
+
+		static {
+			GeneralizedEnum.Metadata.Builder<InventoryRefCrystallizer<?>> builder = GeneralizedEnum.Metadata.<InventoryRefCrystallizer<?>> builder();
+
+			class Player extends InventoryRefCrystallizer<InventoryPlayer> {
+				Player(String name, int ordinal) {
+					super(name, ordinal);
+				}
+
+				@Override
+				public InventoryPlayer getInventory(ContainerCrystallizer container) {
+					return container.playerInventory;
+				}
+			}
+			PLAYER = builder.withValue("PLAYER", Player::new);
+
+			class Crystallizer extends InventoryRefCrystallizer<TileEntityCrystallizer> {
+				Crystallizer(String name, int ordinal) {
+					super(name, ordinal);
+				}
+
+				@Override
+				public TileEntityCrystallizer getInventory(ContainerCrystallizer container) {
+					return container.crystallizerInventory;
+				}
+			}
+			CRYSTALLIZER = builder.withValue("CRYSTALLIZER", Crystallizer::new);
+
+			METADATA = builder.build();
+		}
 
 		InventoryRefCrystallizer(String name, int ordinal) {
 			super(name, ordinal);
@@ -143,21 +157,6 @@ public final class ContainerCrystallizer extends Container {
 		@Override
 		public int inventoryID() {
 			return ordinal();
-		}
-
-		public static InventoryRefCrystallizer<?> valueOf(String name) {
-			switch (name) {
-			case "PLAYER":
-				return PLAYER;
-			case "CRYSTALLIZER":
-				return CRYSTALLIZER;
-			default:
-				throw new IllegalArgumentException("No enum constant " + name);
-			}
-		}
-
-		public static InventoryRefCrystallizer<?>[] values() {
-			return VALUES;
 		}
 	}
 }

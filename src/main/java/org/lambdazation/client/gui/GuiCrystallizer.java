@@ -2,7 +2,9 @@ package org.lambdazation.client.gui;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.inventory.ContainerCrystallizer;
+import org.lambdazation.common.inventory.ContainerCrystallizer.InventoryRefCrystallizer;
 import org.lambdazation.common.tileentity.TileEntityCrystallizer;
+import org.lambdazation.common.tileentity.TileEntityCrystallizer.InventoryFieldCrystallizer;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -33,5 +35,9 @@ public final class GuiCrystallizer extends GuiContainer {
 		int x = (width - xSize) / 2;
 		int y = (height - ySize) / 2;
 		this.drawTexturedModalRect(x, y, 0, 0, xSize, ySize);
+
+		drawString(fontRenderer, "Crystallize time: " + ((ContainerCrystallizer) this.inventorySlots)
+			.lookupInventoryField(InventoryRefCrystallizer.CRYSTALLIZER, InventoryFieldCrystallizer.CRYSTALLIZE_TIME),
+			0, 0, 0xFFFFFF);
 	}
 }

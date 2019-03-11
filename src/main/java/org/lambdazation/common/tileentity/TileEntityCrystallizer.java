@@ -157,6 +157,7 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 	@Override
 	public void tick() {
 		// TODO NYI
+		crystallizeTime++;
 	}
 
 	@Override
