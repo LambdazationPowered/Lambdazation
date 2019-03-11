@@ -17,11 +17,13 @@ import net.minecraft.util.text.TextComponentString;
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.inventory.ContainerCrystallizer;
 import org.lambdazation.common.inventory.field.InventoryField;
+import org.lambdazation.common.item.ItemLambdaCrystal;
 
 public final class TileEntityCrystallizer extends TileEntityLockable implements ISidedInventory, ITickable {
 	public final Lambdazation lambdazation;
 
 	public final NonNullList<ItemStack> inventoryContents;
+	public NonNullList<ItemStack> prevInventoryContents;
 	public int crystallizeTime;
 
 	public TileEntityCrystallizer(Lambdazation lambdazation) {
@@ -30,19 +32,25 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		this.lambdazation = lambdazation;
 
 		inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
+		prevInventoryContents = null;
 		crystallizeTime = 0;
 	}
 
 	@Override
 	public void read(NBTTagCompound compound) {
 		super.read(compound);
+
 		ItemStackHelper.loadAllItems(compound, inventoryContents);
+		crystallizeTime = compound.getInt("crystallizeTime");
 	}
 
 	@Override
 	public NBTTagCompound write(NBTTagCompound compound) {
 		super.write(compound);
+
 		ItemStackHelper.saveAllItems(compound, inventoryContents);
+		compound.setInt("crystallizeTime", crystallizeTime);
+
 		return compound;
 	}
 
@@ -156,8 +164,74 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	@Override
 	public void tick() {
-		// TODO NYI
-		crystallizeTime++;
+		if (changed())
+			update();
+
+		if (crystallizeTime > 0) {
+			crystallizeTime--;
+			if (crystallizeTime == 0)
+				crystallized();
+		}
+	}
+
+	private boolean changed() {
+		if (prevInventoryContents == null)
+			return true;
+		if (inventoryContents.size() != prevInventoryContents.size())
+			return true;
+
+		for (int i = 0; i < inventoryContents.size(); i++) {
+			ItemStack currentItemStack = inventoryContents.get(i);
+			ItemStack prevItemStack = prevInventoryContents.get(i);
+			if (!ItemStack.areItemStacksEqual(currentItemStack, prevItemStack))
+				return true;
+		}
+
+		return false;
+	}
+
+	private void cache() {
+		prevInventoryContents = NonNullList.from(ItemStack.EMPTY, inventoryContents.stream().map(ItemStack::copy).toArray(ItemStack[]::new));
+	}
+
+	private void update() {
+		cache();
+
+		ItemStack resultItemStack = inventoryContents.get(2);
+		if (resultItemStack.isEmpty()) {
+			ItemStack firstItemStack = inventoryContents.get(0);
+			ItemStack secondItemStack = inventoryContents.get(1);
+			if (!lambdazation.lambdazationItems.itemLambdaCrystal.isAlphaEquivalent(firstItemStack, secondItemStack))
+				crystallizeTime = 0;
+			else
+				crystallizeTime = 20 * 10;
+		} else
+			crystallizeTime = 0;
+
+		markDirty();
+	}
+
+	private void crystallized() {
+		ItemLambdaCrystal itemLambdaCrystal = lambdazation.lambdazationItems.itemLambdaCrystal;
+
+		ItemStack firstItemStack = inventoryContents.get(0);
+		ItemStack secondItemStack = inventoryContents.get(1);
+
+		int capacity = itemLambdaCrystal.getCapacity(firstItemStack).orElse(0)
+			+ itemLambdaCrystal.getCapacity(secondItemStack).orElse(0);
+		int energy = itemLambdaCrystal.getEnergy(firstItemStack).orElse(0)
+			+ itemLambdaCrystal.getEnergy(secondItemStack).orElse(0);
+
+		ItemStack resultItemStack = firstItemStack.copy();
+		itemLambdaCrystal.setCapacity(resultItemStack, capacity);
+		itemLambdaCrystal.setEnergy(resultItemStack, energy);
+
+		inventoryContents.set(0, ItemStack.EMPTY);
+		inventoryContents.set(1, ItemStack.EMPTY);
+		inventoryContents.set(2, resultItemStack);
+
+		cache();
+		markDirty();
 	}
 
 	@Override
