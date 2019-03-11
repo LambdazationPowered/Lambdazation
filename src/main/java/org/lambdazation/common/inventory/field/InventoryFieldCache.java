@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.lambdazation.common.utils.GeneralizedEnum;
+import org.lambdazation.common.utils.EnumValue;
 
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
@@ -71,17 +71,17 @@ public final class InventoryFieldCache<C extends Container> {
 		});
 	}
 
-	public static <C extends Container, E extends GeneralizedEnum<E> & InventoryRef<C, ?>> Builder<C, E> builder(
-		C container, List<IContainerListener> listeners, GeneralizedEnum.Metadata<E> inventoryRefMetadata) {
+	public static <C extends Container, E extends EnumValue<E> & InventoryRef<C, ?>> Builder<C, E> builder(
+		C container, List<IContainerListener> listeners, EnumValue.EnumObject<E> inventoryRefMetadata) {
 		return new Builder<>(container, listeners, inventoryRefMetadata);
 	}
 
-	public static final class Builder<C extends Container, E extends GeneralizedEnum<E> & InventoryRef<C, ?>> {
+	public static final class Builder<C extends Container, E extends EnumValue<E> & InventoryRef<C, ?>> {
 		private final C container;
 		private final List<IContainerListener> listeners;
-		private final GeneralizedEnum.Metadata<E> inventoryRefMetadata;
+		private final EnumValue.EnumObject<E> inventoryRefMetadata;
 
-		private Builder(C container, List<IContainerListener> listeners, GeneralizedEnum.Metadata<E> inventoryRefMetadata) {
+		private Builder(C container, List<IContainerListener> listeners, EnumValue.EnumObject<E> inventoryRefMetadata) {
 			this.container = container;
 			this.listeners = listeners;
 			this.inventoryRefMetadata = inventoryRefMetadata;

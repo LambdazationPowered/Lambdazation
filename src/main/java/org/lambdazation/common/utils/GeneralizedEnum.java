@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-public abstract class GeneralizedEnum<E extends GeneralizedEnum<E>> implements Comparable<E> {
+public abstract class GeneralizedEnum<E extends GeneralizedEnum<E>> implements EnumValue<E>, Comparable<E> {
 	private final String name;
 	private final int ordinal;
 
@@ -17,10 +17,12 @@ public abstract class GeneralizedEnum<E extends GeneralizedEnum<E>> implements C
 		this.ordinal = ordinal;
 	}
 
+	@Override
 	public final String name() {
 		return name;
 	}
 
+	@Override
 	public final int ordinal() {
 		return ordinal;
 	}
@@ -35,7 +37,7 @@ public abstract class GeneralizedEnum<E extends GeneralizedEnum<E>> implements C
 		return ordinal - o.ordinal();
 	}
 
-	public static final class Metadata<E extends GeneralizedEnum<E>> {
+	public static final class Metadata<E extends GeneralizedEnum<E>> implements EnumObject<E> {
 		private final List<E> values;
 		private final Map<String, E> mapping;
 
@@ -44,10 +46,12 @@ public abstract class GeneralizedEnum<E extends GeneralizedEnum<E>> implements C
 			this.mapping = mapping;
 		}
 
+		@Override
 		public List<E> values() {
 			return Collections.unmodifiableList(values);
 		}
 
+		@Override
 		public Optional<E> valueOf(String name) {
 			return Optional.ofNullable(mapping.get(name));
 		}

@@ -38,9 +38,9 @@ public final class ContainerCrystallizer extends Container {
 			.builder(this, listeners, InventoryRefCrystallizer.METADATA)
 			.build();
 
-		addSlot(new Slot(crystallizerInventory, 0, 27, 47));
-		addSlot(new Slot(crystallizerInventory, 1, 76, 47));
-		addSlot(new Slot(crystallizerInventory, 2, 134, 47));
+		addSlot(new SlotInput(crystallizerInventory, 0, 27, 47));
+		addSlot(new SlotInput(crystallizerInventory, 1, 76, 47));
+		addSlot(new SlotOutput(crystallizerInventory, 2, 134, 47));
 
 		for (int i = 0; i < 3; ++i)
 			for (int j = 0; j < 9; ++j)
@@ -111,6 +111,28 @@ public final class ContainerCrystallizer extends Container {
 		}
 
 		return affectedStack;
+	}
+
+	public final class SlotInput extends Slot {
+		public SlotInput(IInventory inventoryIn, int index, int xPosition, int yPosition) {
+			super(inventoryIn, index, xPosition, yPosition);
+		}
+
+		@Override
+		public boolean isItemValid(ItemStack stack) {
+			return stack.getItem().equals(lambdazation.lambdazationItems.itemLambdaCrystal);
+		}
+	}
+
+	public final class SlotOutput extends Slot {
+		public SlotOutput(IInventory inventoryIn, int index, int xPosition, int yPosition) {
+			super(inventoryIn, index, xPosition, yPosition);
+		}
+
+		@Override
+		public boolean isItemValid(ItemStack stack) {
+			return false;
+		}
 	}
 
 	public static abstract class InventoryRefCrystallizer<T extends IInventory> extends GeneralizedEnum<InventoryRefCrystallizer<?>>
