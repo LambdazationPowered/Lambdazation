@@ -1,6 +1,13 @@
 {
-    "parent": "block/cube_all",
     "textures": {
-        "all": "lambdazation:block/crystallizer"
-    }
+        "particle": "#texture"
+    },
+    "elements": [
+        {   "from": [ 0, 0, 0 ],
+            "to": [ 16, 16, 0 ],
+            "faces": {
+                "north": { "texture": "#texture", "cullface": "north" }
+            }
+        }
+    ]
 }

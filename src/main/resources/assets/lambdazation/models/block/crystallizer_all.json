@@ -1,0 +1,6 @@
+{
+    "parent": "lambdazation:block/crystallizer",
+    "textures": {
+        "texture": "lambdazation:block/crystallizer_all"
+    }
+}

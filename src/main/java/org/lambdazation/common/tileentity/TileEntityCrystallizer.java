@@ -22,9 +22,11 @@ import net.minecraftforge.items.wrapper.SidedInvWrapper;
 import java.util.Arrays;
 
 import org.lambdazation.Lambdazation;
+import org.lambdazation.common.block.BlockCrystallizer;
 import org.lambdazation.common.inventory.ContainerCrystallizer;
 import org.lambdazation.common.inventory.field.InventoryField;
 import org.lambdazation.common.item.ItemLambdaCrystal;
+import org.lambdazation.common.state.properties.SlotState;
 
 public final class TileEntityCrystallizer extends TileEntityLockable implements ISidedInventory, ITickable {
 	public final Lambdazation lambdazation;
@@ -34,14 +36,16 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 	public int crystallizeTime;
 
 	private final LazyOptional<? extends IItemHandler>[] itemHandlers = SidedInvWrapper.create(this, EnumFacing.DOWN,
-		EnumFacing.NORTH);
+		EnumFacing.UP, EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.WEST, EnumFacing.EAST);
 
 	private static final int SLOT_INPUT_0 = 0;
 	private static final int SLOT_INPUT_1 = 1;
 	private static final int SLOT_OUTPUT_2 = 2;
 
+	private static final int[] SLOTS_NONE = new int[] {};
 	private static final int[] SLOTS_INPUT = new int[] { SLOT_INPUT_0, SLOT_INPUT_1 };
 	private static final int[] SLOTS_OUTPUT = new int[] { SLOT_OUTPUT_2 };
+	private static final int[] SLOTS_ALL = new int[] { SLOT_INPUT_0, SLOT_INPUT_1, SLOT_OUTPUT_2 };
 
 	public TileEntityCrystallizer(Lambdazation lambdazation) {
 		super(lambdazation.lambdazationTileEntityTypes.tileEntityTypeCrystallizer);
@@ -274,15 +278,16 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	@Override
 	public int[] getSlotsForFace(EnumFacing side) {
-		switch (side) {
-		case DOWN:
-		case UP:
-			return SLOTS_OUTPUT;
-		case NORTH:
-		case SOUTH:
-		case WEST:
-		case EAST:
+		SlotState slotState = getBlockState().get(BlockCrystallizer.FACING_PROPERTY_MAP.get(side));
+		switch (slotState) {
+		case NONE:
+			return SLOTS_NONE;
+		case INPUT:
 			return SLOTS_INPUT;
+		case OUTPUT:
+			return SLOTS_OUTPUT;
+		case ALL:
+			return SLOTS_ALL;
 		default:
 			throw new IllegalStateException();
 		}
@@ -303,13 +308,17 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		if (!removed && side != null && cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
 			switch (side) {
 			case DOWN:
-			case UP:
 				return itemHandlers[0].cast();
-			case NORTH:
-			case SOUTH:
-			case WEST:
-			case EAST:
+			case UP:
 				return itemHandlers[1].cast();
+			case NORTH:
+				return itemHandlers[2].cast();
+			case SOUTH:
+				return itemHandlers[3].cast();
+			case WEST:
+				return itemHandlers[4].cast();
+			case EAST:
+				return itemHandlers[5].cast();
 			default:
 				throw new IllegalStateException();
 			}

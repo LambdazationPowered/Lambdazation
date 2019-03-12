@@ -1,0 +1,11 @@
+{
+    "parent": "block/cube",
+    "textures": {
+        "down": "lambdazation:block/crystallizer_output",
+        "up": "lambdazation:block/crystallizer_output",
+        "north": "lambdazation:block/crystallizer_input",
+        "south": "lambdazation:block/crystallizer_input",
+        "west": "lambdazation:block/crystallizer_input",
+        "east": "lambdazation:block/crystallizer_input"
+    }
+}
