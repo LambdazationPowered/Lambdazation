@@ -37,8 +37,8 @@ public final class BlockCrystallizer extends BlockContainer {
 	public static final EnumProperty<SlotState> SOUTH = SlotState.SLOT_STATE_SOUTH;
 	public static final EnumProperty<SlotState> WEST = SlotState.SLOT_STATE_WEST;
 	public static final EnumProperty<SlotState> EAST = SlotState.SLOT_STATE_EAST;
-	public static final Map<EnumFacing, EnumProperty<SlotState>> FACING_PROPERTY_MAP = ValueBuilder.<Map<EnumFacing, EnumProperty<SlotState>>>
-		build(new EnumMap<>(EnumFacing.class), builder -> {
+	public static final Map<EnumFacing, EnumProperty<SlotState>> FACING_PROPERTY_MAP = ValueBuilder
+		.<Map<EnumFacing, EnumProperty<SlotState>>> build(new EnumMap<>(EnumFacing.class), builder -> {
 			builder.put(EnumFacing.DOWN, DOWN);
 			builder.put(EnumFacing.UP, UP);
 			builder.put(EnumFacing.NORTH, NORTH);

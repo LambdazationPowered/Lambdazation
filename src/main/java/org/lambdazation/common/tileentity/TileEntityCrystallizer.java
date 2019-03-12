@@ -29,6 +29,15 @@ import org.lambdazation.common.item.ItemLambdaCrystal;
 import org.lambdazation.common.state.properties.SlotState;
 
 public final class TileEntityCrystallizer extends TileEntityLockable implements ISidedInventory, ITickable {
+	public static final int SLOT_INPUT_0 = 0;
+	public static final int SLOT_INPUT_1 = 1;
+	public static final int SLOT_OUTPUT_2 = 2;
+
+	public static final int[] SLOTS_NONE = new int[] {};
+	public static final int[] SLOTS_INPUT = new int[] { SLOT_INPUT_0, SLOT_INPUT_1 };
+	public static final int[] SLOTS_OUTPUT = new int[] { SLOT_OUTPUT_2 };
+	public static final int[] SLOTS_ALL = new int[] { SLOT_INPUT_0, SLOT_INPUT_1, SLOT_OUTPUT_2 };
+
 	public final Lambdazation lambdazation;
 
 	public final NonNullList<ItemStack> inventoryContents;
@@ -37,15 +46,6 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	private final LazyOptional<? extends IItemHandler>[] itemHandlers = SidedInvWrapper.create(this, EnumFacing.DOWN,
 		EnumFacing.UP, EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.WEST, EnumFacing.EAST);
-
-	private static final int SLOT_INPUT_0 = 0;
-	private static final int SLOT_INPUT_1 = 1;
-	private static final int SLOT_OUTPUT_2 = 2;
-
-	private static final int[] SLOTS_NONE = new int[] {};
-	private static final int[] SLOTS_INPUT = new int[] { SLOT_INPUT_0, SLOT_INPUT_1 };
-	private static final int[] SLOTS_OUTPUT = new int[] { SLOT_OUTPUT_2 };
-	private static final int[] SLOTS_ALL = new int[] { SLOT_INPUT_0, SLOT_INPUT_1, SLOT_OUTPUT_2 };
 
 	public TileEntityCrystallizer(Lambdazation lambdazation) {
 		super(lambdazation.lambdazationTileEntityTypes.tileEntityTypeCrystallizer);

@@ -63,6 +63,9 @@ public final class ItemLambdaCrystal extends Item {
 
 		NBTTagCompound tag = itemStack.getOrCreateTag();
 		tag.setInt("capacity", capacity);
+
+		int energy = getEnergy(itemStack).orElse(0);
+		itemStack.setDamage(Integer.MAX_VALUE - (int)((double) energy / (double) capacity * Integer.MAX_VALUE));
 	}
 
 	public Optional<Integer> getEnergy(ItemStack itemStack) {
@@ -82,6 +85,9 @@ public final class ItemLambdaCrystal extends Item {
 
 		NBTTagCompound tag = itemStack.getOrCreateTag();
 		tag.setInt("energy", energy);
+
+		int capacity = getCapacity(itemStack).orElse(0);
+		itemStack.setDamage(Integer.MAX_VALUE - (int)((double) energy / (double) capacity * Integer.MAX_VALUE));
 	}
 
 	public Optional<Term> getTerm(ItemStack itemStack) {
