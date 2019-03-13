@@ -19,10 +19,15 @@ public final class GuiCrystallizer extends GuiContainer {
 
 	public final Lambdazation lambdazation;
 
-	public GuiCrystallizer(Lambdazation lambdazation, InventoryPlayer playerInventory, TileEntityCrystallizer crystallizerInventory) {
+	public final ContainerCrystallizer containerCrystallizer;
+
+	public GuiCrystallizer(Lambdazation lambdazation, InventoryPlayer playerInventory,
+		TileEntityCrystallizer crystallizerInventory) {
 		super(new ContainerCrystallizer(lambdazation, playerInventory, crystallizerInventory));
 
 		this.lambdazation = lambdazation;
+
+		this.containerCrystallizer = (ContainerCrystallizer) inventorySlots;
 	}
 
 	@Override
@@ -36,7 +41,7 @@ public final class GuiCrystallizer extends GuiContainer {
 		int y = (height - ySize) / 2;
 		this.drawTexturedModalRect(x, y, 0, 0, xSize, ySize);
 
-		drawString(fontRenderer, "Crystallize time: " + ((ContainerCrystallizer) this.inventorySlots)
+		drawString(fontRenderer, "Crystallize time: " + containerCrystallizer
 			.lookupInventoryField(InventoryRefCrystallizer.CRYSTALLIZER, InventoryFieldCrystallizer.CRYSTALLIZE_TIME),
 			0, 0, 0xFFFFFF);
 	}

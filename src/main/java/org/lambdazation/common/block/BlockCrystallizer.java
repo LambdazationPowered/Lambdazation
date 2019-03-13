@@ -112,13 +112,13 @@ public final class BlockCrystallizer extends BlockContainer {
 		EnumFacing placementHorizontalFacing = context.getPlacementHorizontalFacing();
 		RelativeFacing relativeFacing = RelativeFacing.of(placementFacing.getOpposite(),
 			placementFacing.getAxis().equals(EnumFacing.Axis.Y)
-				? Rotation.values()[placementHorizontalFacing.getHorizontalIndex()]
+				? Rotation.values()[placementHorizontalFacing.getOpposite().getHorizontalIndex()]
 				: Rotation.NONE);
 
 		IBlockState resultState = getDefaultState();
 		for (EnumFacing facing : EnumFacing.values())
-			resultState = resultState.with(FACING_PROPERTY_MAP.get(facing),
-				getDefaultState().get(FACING_PROPERTY_MAP.get(relativeFacing.transform(facing))));
+			resultState = resultState.with(FACING_PROPERTY_MAP.get(relativeFacing.transform(facing)),
+				getDefaultState().get(FACING_PROPERTY_MAP.get(facing)));
 		return resultState;
 	}
 
@@ -126,8 +126,8 @@ public final class BlockCrystallizer extends BlockContainer {
 	public IBlockState rotate(IBlockState state, Rotation rot) {
 		IBlockState resultState = state;
 		for (EnumFacing facing : EnumFacing.values())
-			resultState = resultState.with(FACING_PROPERTY_MAP.get(facing),
-				state.get(FACING_PROPERTY_MAP.get(rot.rotate(facing))));
+			resultState = resultState.with(FACING_PROPERTY_MAP.get(rot.rotate(facing)),
+				state.get(FACING_PROPERTY_MAP.get(facing)));
 		return resultState;
 	}
 
@@ -135,8 +135,8 @@ public final class BlockCrystallizer extends BlockContainer {
 	public IBlockState mirror(IBlockState state, Mirror mirrorIn) {
 		IBlockState resultState = state;
 		for (EnumFacing facing : EnumFacing.values())
-			resultState = resultState.with(FACING_PROPERTY_MAP.get(facing),
-				state.get(FACING_PROPERTY_MAP.get(mirrorIn.mirror(facing))));
+			resultState = resultState.with(FACING_PROPERTY_MAP.get(mirrorIn.mirror(facing)),
+				state.get(FACING_PROPERTY_MAP.get(facing)));
 		return resultState;
 	}
 

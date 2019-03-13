@@ -1,7 +1,6 @@
 package org.lambdazation.common.inventory;
 
 import org.lambdazation.Lambdazation;
-import org.lambdazation.common.item.ItemLambdaCrystal;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -134,16 +133,6 @@ public final class ContainerLens extends Container {
 		public void setInventorySlotContents(int index, ItemStack stack) {
 			if (index >= 0 && index < getSizeInventory())
 				inventoryContents.set(index, stack);
-
-			// FIXME Test code
-			ItemLambdaCrystal itemLambdaCrystal = lambdazation.lambdazationItems.itemLambdaCrystal;
-
-			if (stack.getItem().equals(itemLambdaCrystal)) {
-				System.out.println("capacity: " + itemLambdaCrystal.getCapacity(stack));
-				System.out.println("energy: " + itemLambdaCrystal.getEnergy(stack));
-				System.out.println("term: " + itemLambdaCrystal.getTerm(stack));
-				System.out.println("termState: " + itemLambdaCrystal.getTermState(stack));
-			}
 		}
 
 		@Override
@@ -153,7 +142,7 @@ public final class ContainerLens extends Container {
 
 		@Override
 		public void markDirty() {
-
+			detectAndSendChanges();
 		}
 
 		@Override

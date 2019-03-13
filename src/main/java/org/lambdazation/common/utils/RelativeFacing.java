@@ -40,50 +40,49 @@ public final class RelativeFacing {
 		return INDEXED_INSTANCES[facing.ordinal()][rotation.ordinal()];
 	}
 
+	private static EnumFacing rotateAround(EnumFacing facing, EnumFacing.Axis axis, Rotation rotation) {
+		switch (rotation) {
+		case NONE:
+			return facing;
+		case CLOCKWISE_90:
+			return facing.rotateAround(axis);
+		case CLOCKWISE_180:
+			return facing.rotateAround(axis).rotateAround(axis);
+		case COUNTERCLOCKWISE_90:
+			return facing.rotateAround(axis).rotateAround(axis).rotateAround(axis);
+		default:
+			throw new IllegalStateException();
+		}
+	}
+
 	private static Map<EnumFacing, EnumFacing> buildMapping(EnumFacing facing, Rotation rotation) {
 		Map<EnumFacing, EnumFacing> mapping = new EnumMap<>(EnumFacing.class);
 		for (EnumFacing originalFacing : EnumFacing.values()) {
 			EnumFacing rotatedFacing;
-			switch (rotation) {
-			case NONE:
-				rotatedFacing = originalFacing;
+			switch (facing) {
+			case DOWN:
+				rotatedFacing = rotateAround(originalFacing, EnumFacing.Axis.X, Rotation.COUNTERCLOCKWISE_90);
 				break;
-			case CLOCKWISE_90:
-				rotatedFacing = originalFacing.rotateAround(EnumFacing.Axis.Z);
+			case UP:
+				rotatedFacing = rotateAround(originalFacing, EnumFacing.Axis.X, Rotation.CLOCKWISE_90);
 				break;
-			case CLOCKWISE_180:
-				rotatedFacing = originalFacing.rotateAround(EnumFacing.Axis.Z).rotateAround(EnumFacing.Axis.Z);
+			case NORTH:
+				rotatedFacing = rotateAround(originalFacing, EnumFacing.Axis.Y, Rotation.CLOCKWISE_180);
 				break;
-			case COUNTERCLOCKWISE_90:
-				rotatedFacing = originalFacing.rotateAround(EnumFacing.Axis.Z).rotateAround(EnumFacing.Axis.Z).rotateAround(EnumFacing.Axis.Z);
+			case SOUTH:
+				rotatedFacing = rotateAround(originalFacing, EnumFacing.Axis.Y, Rotation.NONE);
+				break;
+			case WEST:
+				rotatedFacing = rotateAround(originalFacing, EnumFacing.Axis.Y, Rotation.CLOCKWISE_90);
+				break;
+			case EAST:
+				rotatedFacing = rotateAround(originalFacing, EnumFacing.Axis.Y, Rotation.COUNTERCLOCKWISE_90);
 				break;
 			default:
 				throw new IllegalStateException();
 			}
 
-			EnumFacing resultFacing;
-			switch (facing) {
-			case DOWN:
-				resultFacing = rotatedFacing.rotateAround(EnumFacing.Axis.X).rotateAround(EnumFacing.Axis.X).rotateAround(EnumFacing.Axis.X);
-				break;
-			case UP:
-				resultFacing = rotatedFacing.rotateAround(EnumFacing.Axis.X);
-				break;
-			case NORTH:
-				resultFacing = rotatedFacing.rotateAround(EnumFacing.Axis.Y).rotateAround(EnumFacing.Axis.Y);
-				break;
-			case SOUTH:
-				resultFacing = rotatedFacing;
-				break;
-			case WEST:
-				resultFacing = rotatedFacing.rotateAround(EnumFacing.Axis.Y);
-				break;
-			case EAST:
-				resultFacing = rotatedFacing.rotateAround(EnumFacing.Axis.Y).rotateAround(EnumFacing.Axis.Y).rotateAround(EnumFacing.Axis.Y);
-				break;
-			default:
-				throw new IllegalStateException();
-			}
+			EnumFacing resultFacing = rotateAround(rotatedFacing, facing.getAxis(), rotation);
 
 			mapping.put(originalFacing, resultFacing);
 		}
