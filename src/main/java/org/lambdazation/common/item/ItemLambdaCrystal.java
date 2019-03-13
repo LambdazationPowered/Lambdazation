@@ -165,7 +165,18 @@ public final class ItemLambdaCrystal extends Item {
 	}
 
 	public enum TermState {
-		REDUCIBLE_FORM, BETA_NORMAL_FORM, BETA_ETA_NORMAL_FORM
+		REDUCIBLE_FORM("ReducibleForm"), BETA_NORMAL_FORM("BetaNormalForm"), BETA_ETA_NORMAL_FORM("BetaEtaNormalForm");
+
+		private final String displayName;
+
+		TermState(String displayName) {
+			this.displayName = displayName;
+		}
+
+		@Override
+		public String toString() {
+			return displayName;
+		}
 	}
 
 	public final class Builder {

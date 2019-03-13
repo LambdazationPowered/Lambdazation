@@ -3,9 +3,9 @@ package org.lambdazation.client.gui;
 import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
-import org.lambdazation.common.inventory.ContainerLens;
+import org.lambdazation.common.inventory.ContainerCalibrator;
 import org.lambdazation.common.item.ItemLambdaCrystal;
-import org.lamcalcj.pretty.PrettyPrint;
+import org.lambdazation.common.item.ItemLambdaCrystal.TermState;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -20,30 +20,35 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public final class GuiLens extends GuiContainer implements IContainerListener {
-	public static final ResourceLocation LENS_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/container/lens.png");
+public final class GuiCalibrator extends GuiContainer implements IContainerListener {
+	public static final ResourceLocation LENS_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/container/calibrator.png");
 
 	public final Lambdazation lambdazation;
 
-	public ContainerLens containerLens;
+	public ContainerCalibrator containerCalibrator;
 	public ItemStack prevItemStack;
-	public Optional<String> cachedTermSource;
+	public Optional<TermState> cachedTermState;
+	public Optional<Integer> cachedTermSize;
+	public Optional<Integer> cachedCapacity;
+	public Optional<Integer> cachedEnergy;
 
-	public GuiLens(Lambdazation lambdazation, InventoryPlayer playerInventory) {
-		super(new ContainerLens(lambdazation, playerInventory));
+	public GuiCalibrator(Lambdazation lambdazation, InventoryPlayer playerInventory) {
+		super(new ContainerCalibrator(lambdazation, playerInventory));
 
 		this.lambdazation = lambdazation;
 
-		this.containerLens = (ContainerLens) inventorySlots;
+		this.containerCalibrator = (ContainerCalibrator) inventorySlots;
 		this.prevItemStack = null;
-		this.cachedTermSource = Optional.empty();
+		this.cachedTermState = Optional.empty();
+		this.cachedCapacity = Optional.empty();
+		this.cachedEnergy = Optional.empty();
 	}
 
 	@Override
 	protected void initGui() {
 		super.initGui();
-		containerLens.removeListener(this);
-		containerLens.addListener(this);
+		containerCalibrator.removeListener(this);
+		containerCalibrator.addListener(this);
 	}
 
 	@Override
@@ -56,7 +61,9 @@ public final class GuiLens extends GuiContainer implements IContainerListener {
 		int x = (width - xSize) / 2;
 		int y = (height - ySize) / 2;
 		drawTexturedModalRect(x, y, 0, 0, xSize, ySize);
-		cachedTermSource.ifPresent(termSource -> drawString(fontRenderer, "TermSource: " + termSource, 0, 0, 0xFFFFFF));
+		cachedTermState.ifPresent(termState -> drawString(fontRenderer, "TermState: " + termState.toString(), 0, 0, 0xFFFFFF));
+		cachedCapacity.ifPresent(capacity -> drawString(fontRenderer, "Capacity: " + capacity, 0, 8, 0xFFFFFF));
+		cachedEnergy.ifPresent(energy -> drawString(fontRenderer, "Energy: " + energy, 0, 16, 0xFFFFFF));
 	}
 
 	public void detectChanges(ItemStack itemStack) {
@@ -64,12 +71,13 @@ public final class GuiLens extends GuiContainer implements IContainerListener {
 
 		if (prevItemStack == null || !ItemStack.areItemStacksEqual(itemStack, prevItemStack)) {
 			if (itemStack.getItem().equals(itemLambdaCrystal)) {
-				cachedTermSource = itemLambdaCrystal.getTerm(itemStack)
-					.map(term -> PrettyPrint.printLambda(term, PrettyPrint.printLambda$default$2(),
-						PrettyPrint.printLambda$default$3(), PrettyPrint.printLambda$default$4(),
-						PrettyPrint.printLambda$default$5(), PrettyPrint.printLambda$default$6()));
+				cachedTermState = itemLambdaCrystal.getTermState(itemStack);
+				cachedCapacity = itemLambdaCrystal.getCapacity(itemStack);
+				cachedEnergy = itemLambdaCrystal.getEnergy(itemStack);
 			} else {
-				cachedTermSource = Optional.empty();
+				cachedTermState = Optional.empty();
+				cachedCapacity = Optional.empty();
+				cachedEnergy = Optional.empty();
 			}
 			prevItemStack = itemStack;
 		}
@@ -77,13 +85,13 @@ public final class GuiLens extends GuiContainer implements IContainerListener {
 
 	@Override
 	public void sendAllContents(Container containerToSend, NonNullList<ItemStack> itemsList) {
-		if (containerToSend.equals(containerLens) && itemsList.size() >= 1)
+		if (containerToSend.equals(containerCalibrator) && itemsList.size() >= 1)
 			detectChanges(itemsList.get(0));
 	}
 
 	@Override
 	public void sendSlotContents(Container containerToSend, int slotInd, ItemStack stack) {
-		if (containerToSend.equals(containerLens) && slotInd == 0)
+		if (containerToSend.equals(containerCalibrator) && slotInd == 0)
 			detectChanges(stack);
 	}
 

@@ -1,6 +1,7 @@
 package org.lambdazation.common.core;
 
 import org.lambdazation.Lambdazation;
+import org.lambdazation.common.item.ItemCalibrator;
 import org.lambdazation.common.item.ItemLambdaCrystal;
 import org.lambdazation.common.item.ItemLens;
 
@@ -15,6 +16,7 @@ public final class LambdazationItems {
 
 	public final ItemLambdaCrystal itemLambdaCrystal;
 	public final ItemLens itemLens;
+	public final ItemCalibrator itemCalibrator;
 
 	public final ItemBlock itemBlockLambdaOre;
 	public final ItemBlock itemBlockCrystallizer;
@@ -32,6 +34,9 @@ public final class LambdazationItems {
 		itemLens = new ItemLens(lambdazation, new Item.Properties()
 			.group(lambdazation.lambdazationItemGroup));
 		itemLens.setRegistryName(new ResourceLocation("lambdazation:lens"));
+		itemCalibrator = new ItemCalibrator(lambdazation, new Item.Properties()
+			.group(lambdazation.lambdazationItemGroup));
+		itemCalibrator.setRegistryName(new ResourceLocation("lambdazation:calibrator"));
 
 		itemBlockLambdaOre = new ItemBlock(lambdazation.lambdazationBlocks.blockLambdaOre, new Item.Properties()
 			.group(lambdazation.lambdazationItemGroup)
@@ -46,6 +51,7 @@ public final class LambdazationItems {
 	public void registerItems(RegistryEvent.Register<Item> e) {
 		e.getRegistry().register(itemLambdaCrystal);
 		e.getRegistry().register(itemLens);
+		e.getRegistry().register(itemCalibrator);
 		e.getRegistry().register(itemBlockLambdaOre);
 		e.getRegistry().register(itemBlockCrystallizer);
 	}

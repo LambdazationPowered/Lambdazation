@@ -1,8 +1,10 @@
 package org.lambdazation.client.core;
 
 import org.lambdazation.Lambdazation;
+import org.lambdazation.client.gui.GuiCalibrator;
 import org.lambdazation.client.gui.GuiCrystallizer;
 import org.lambdazation.client.gui.GuiLens;
+import org.lambdazation.common.inventory.ContainerCalibrator;
 import org.lambdazation.common.inventory.ContainerCrystallizer;
 import org.lambdazation.common.inventory.ContainerLens;
 import org.lambdazation.common.tileentity.TileEntityCrystallizer;
@@ -29,6 +31,10 @@ public final class LambdazationGuiFactory {
 			InventoryPlayer playerInventory = Minecraft.getInstance().player.inventory;
 
 			return new GuiLens(lambdazation, playerInventory);
+		} else if (msg.getId().equals(ContainerCalibrator.GUI_ID)) {
+			InventoryPlayer playerInventory = Minecraft.getInstance().player.inventory;
+
+			return new GuiCalibrator(lambdazation, playerInventory);
 		} else if (msg.getId().equals(ContainerCrystallizer.GUI_ID)) {
 			BlockPos blockPos = msg.getAdditionalData().readBlockPos();
 			TileEntity tileEntity = Minecraft.getInstance().world.getTileEntity(blockPos);
