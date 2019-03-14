@@ -5,6 +5,7 @@
 	"item.lambdazation.calibrator": "Calibrator",
 	"block.lambdazation.lambda_ore": "Lambda Ore",
 	"block.lambdazation.crystallizer": "Crystallizer",
+	"block.lambdazation.transformer": "Transformer",
 	"entity.lambdazation.java": "Java",
 	"entity.lambdazation.csharp": "CSharp",
 	"biome.lambdazation.music_valley": "Music Valley"

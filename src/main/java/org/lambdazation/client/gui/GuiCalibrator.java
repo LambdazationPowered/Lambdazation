@@ -27,10 +27,11 @@ public final class GuiCalibrator extends GuiContainer implements IContainerListe
 
 	public ContainerCalibrator containerCalibrator;
 	public ItemStack prevItemStack;
-	public Optional<TermState> cachedTermState;
-	public Optional<Integer> cachedTermSize;
 	public Optional<Integer> cachedCapacity;
 	public Optional<Integer> cachedEnergy;
+	public Optional<TermState> cachedTermState;
+	public Optional<Integer> cachedTermSize;
+	public Optional<Integer> cachedTermDepth;
 
 	public GuiCalibrator(Lambdazation lambdazation, InventoryPlayer playerInventory) {
 		super(new ContainerCalibrator(lambdazation, playerInventory));
@@ -39,9 +40,11 @@ public final class GuiCalibrator extends GuiContainer implements IContainerListe
 
 		this.containerCalibrator = (ContainerCalibrator) inventorySlots;
 		this.prevItemStack = null;
-		this.cachedTermState = Optional.empty();
 		this.cachedCapacity = Optional.empty();
 		this.cachedEnergy = Optional.empty();
+		this.cachedTermState = Optional.empty();
+		this.cachedTermSize = Optional.empty();
+		this.cachedTermDepth = Optional.empty();
 	}
 
 	@Override
@@ -52,18 +55,29 @@ public final class GuiCalibrator extends GuiContainer implements IContainerListe
 	}
 
 	@Override
-	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
+	public void render(int mouseX, int mouseY, float partialTicks) {
 		drawDefaultBackground();
+		super.render(mouseX, mouseY, partialTicks);
+		renderHoveredToolTip(mouseX, mouseY);
+	}
 
+	@Override
+	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
+		cachedCapacity.ifPresent(capacity -> drawString(fontRenderer, "Capacity: " + capacity, 4 + 0, 4 + 0, 0xFFFFFF));
+		cachedEnergy.ifPresent(energy -> drawString(fontRenderer, "Energy: " + energy, 4 + 0, 4 + 8, 0xFFFFFF));
+		cachedTermState.ifPresent(termState -> drawString(fontRenderer, "TermState: " + termState, 4 + 0, 4 + 16, 0xFFFFFF));
+		cachedTermSize.ifPresent(termSize -> drawString(fontRenderer, "TermSize: " + termSize, 4 + 0, 4 + 24, 0xFFFFFF));
+		cachedTermDepth.ifPresent(termDepth -> drawString(fontRenderer, "TermDepth: " + termDepth, 4 + 0, 4 + 32, 0xFFFFFF));
+	}
+
+	@Override
+	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
 		GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
 
 		mc.getTextureManager().bindTexture(LENS_RESOURCE);
 		int x = (width - xSize) / 2;
 		int y = (height - ySize) / 2;
 		drawTexturedModalRect(x, y, 0, 0, xSize, ySize);
-		cachedTermState.ifPresent(termState -> drawString(fontRenderer, "TermState: " + termState.toString(), 0, 0, 0xFFFFFF));
-		cachedCapacity.ifPresent(capacity -> drawString(fontRenderer, "Capacity: " + capacity, 0, 8, 0xFFFFFF));
-		cachedEnergy.ifPresent(energy -> drawString(fontRenderer, "Energy: " + energy, 0, 16, 0xFFFFFF));
 	}
 
 	public void detectChanges(ItemStack itemStack) {
@@ -71,13 +85,17 @@ public final class GuiCalibrator extends GuiContainer implements IContainerListe
 
 		if (prevItemStack == null || !ItemStack.areItemStacksEqual(itemStack, prevItemStack)) {
 			if (itemStack.getItem().equals(itemLambdaCrystal)) {
-				cachedTermState = itemLambdaCrystal.getTermState(itemStack);
 				cachedCapacity = itemLambdaCrystal.getCapacity(itemStack);
 				cachedEnergy = itemLambdaCrystal.getEnergy(itemStack);
+				cachedTermState = itemLambdaCrystal.getTermState(itemStack);
+				cachedTermSize = itemLambdaCrystal.getTermSize(itemStack);
+				cachedTermDepth = itemLambdaCrystal.getTermDepth(itemStack);
 			} else {
-				cachedTermState = Optional.empty();
 				cachedCapacity = Optional.empty();
 				cachedEnergy = Optional.empty();
+				cachedTermState = Optional.empty();
+				cachedTermSize = Optional.empty();
+				cachedTermDepth = Optional.empty();
 			}
 			prevItemStack = itemStack;
 		}
@@ -97,11 +115,11 @@ public final class GuiCalibrator extends GuiContainer implements IContainerListe
 
 	@Override
 	public void sendWindowProperty(Container containerIn, int varToUpdate, int newValue) {
-		
+
 	}
 
 	@Override
 	public void sendAllWindowProperties(Container containerIn, IInventory inventory) {
-		
+
 	}
 }

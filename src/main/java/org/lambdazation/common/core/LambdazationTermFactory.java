@@ -7,19 +7,40 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
+import org.lambdazation.common.item.ItemLambdaCrystal;
+import org.lambdazation.common.item.ItemLambdaCrystal.TermState;
+import org.lambdazation.common.utils.GeneralizedBuilder;
 import org.lamcalcj.ast.Lambda.Abs;
 import org.lamcalcj.ast.Lambda.App;
 import org.lamcalcj.ast.Lambda.Identifier;
 import org.lamcalcj.ast.Lambda.Term;
 import org.lamcalcj.ast.Lambda.Var;
+import org.lamcalcj.compiler.Compiler;
+import org.lamcalcj.parser.Text;
+import org.lamcalcj.parser.Text$;
 
 public final class LambdazationTermFactory {
 	public final Lambdazation lambdazation;
 
+	public final PredefTerm predefTermId;
+	public final PredefTerm predefTermFix;
+
 	public LambdazationTermFactory(Lambdazation lambdazation) {
 		this.lambdazation = lambdazation;
+
+		this.predefTermId = PredefTerm.builder()
+			.name("id")
+			.term(parseTerm("¦Ëx.x", true).get())
+			.termState(TermState.BETA_ETA_NORMAL_FORM)
+			.build();
+		this.predefTermFix = PredefTerm.builder()
+			.name("fix")
+			.term(parseTerm("¦Ëf.(¦Ëx.f (x x)) (¦Ëx.f (x x))", true).get())
+			.termState(TermState.BETA_ETA_NORMAL_FORM)
+			.build();
 	}
 
 	public void serializeTerm(Term term, DataOutput output) throws IOException {
@@ -107,6 +128,92 @@ public final class LambdazationTermFactory {
 			if (identifier == null)
 				throw new IOException("Invalid serial id");
 			return identifier;
+		}
+	}
+
+	public Optional<Term> parseTerm(String source, boolean requireClosedTerm) {
+		Text text = Text$.MODULE$.apply(source, Text.apply$default$2());
+
+		Optional<Term> resultTerm = Compiler
+			.runLambdaParser(text, Compiler.runLambdaParser$default$2(), Compiler.runLambdaParser$default$3(), Compiler.runLambdaParser$default$4())
+			.fold(
+				parserError -> Optional.empty(),
+				parserResult -> requireClosedTerm && parserResult._1.nonEmpty() ? Optional.empty() : Optional.of(parserResult._2));
+
+		return resultTerm;
+	}
+
+	public static final class PredefTerm {
+		public final String name;
+		public final Term term;
+		public final TermState termState;
+
+		public PredefTerm(String name, Term term, TermState termState) {
+			this.name = name;
+			this.term = term;
+			this.termState = termState;
+		}
+
+		public Term applyTerm(Term argumentTerm) {
+			return new App(term, argumentTerm);
+		}
+
+		public Term acceptTerm(Term functionTerm) {
+			return new App(functionTerm, term);
+		}
+
+		public ItemLambdaCrystal.Builder withCrystal(ItemLambdaCrystal.Builder builder) {
+			return builder
+				.term(term)
+				.termState(termState)
+				.termSize(term.size())
+				.termDepth(term.depth());
+		}
+
+		public static Builder builder() {
+			return new Builder();
+		}
+
+		public static final class Builder implements GeneralizedBuilder<Builder, PredefTerm> {
+			private String name;
+			private Term term;
+			private TermState termState;
+
+			Builder() {
+
+			}
+
+			public Builder name(String name) {
+				this.name = name;
+				return this;
+			}
+
+			public Builder term(Term term) {
+				this.term = term;
+				return this;
+			}
+
+			public Builder termState(TermState termState) {
+				this.termState = termState;
+				return this;
+			}
+
+			private void validateState() {
+				if (name == null || term == null || termState == null)
+					throw new IllegalStateException("Property uninitialized");
+			}
+
+			@Override
+			public Builder concrete() {
+				return this;
+			}
+
+			@Override
+			public PredefTerm build() {
+				validateState();
+
+				return new PredefTerm(name, term, termState);
+			}
 		}
 	}
 

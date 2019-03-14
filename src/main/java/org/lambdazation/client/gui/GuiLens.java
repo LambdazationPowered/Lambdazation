@@ -47,16 +47,25 @@ public final class GuiLens extends GuiContainer implements IContainerListener {
 	}
 
 	@Override
-	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
+	public void render(int mouseX, int mouseY, float partialTicks) {
 		drawDefaultBackground();
+		super.render(mouseX, mouseY, partialTicks);
+		renderHoveredToolTip(mouseX, mouseY);
+	}
 
+	@Override
+	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
+		cachedTermSource.ifPresent(termSource -> drawString(fontRenderer, "TermSource: " + termSource, 4 + 0, 4 + 0, 0xFFFFFF));
+	}
+
+	@Override
+	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
 		GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
 
 		mc.getTextureManager().bindTexture(LENS_RESOURCE);
 		int x = (width - xSize) / 2;
 		int y = (height - ySize) / 2;
 		drawTexturedModalRect(x, y, 0, 0, xSize, ySize);
-		cachedTermSource.ifPresent(termSource -> drawString(fontRenderer, "TermSource: " + termSource, 0, 0, 0xFFFFFF));
 	}
 
 	public void detectChanges(ItemStack itemStack) {
@@ -89,11 +98,11 @@ public final class GuiLens extends GuiContainer implements IContainerListener {
 
 	@Override
 	public void sendWindowProperty(Container containerIn, int varToUpdate, int newValue) {
-		
+
 	}
 
 	@Override
 	public void sendAllWindowProperties(Container containerIn, IInventory inventory) {
-		
+
 	}
 }

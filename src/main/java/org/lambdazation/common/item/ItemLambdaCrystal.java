@@ -14,10 +14,8 @@ import java.io.IOException;
 import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
-import org.lamcalcj.ast.Lambda.Abs;
-import org.lamcalcj.ast.Lambda.Identifier;
+import org.lambdazation.common.utils.GeneralizedBuilder;
 import org.lamcalcj.ast.Lambda.Term;
-import org.lamcalcj.ast.Lambda.Var;
 import org.lamcalcj.utils.Utils;
 
 public final class ItemLambdaCrystal extends Item {
@@ -32,16 +30,14 @@ public final class ItemLambdaCrystal extends Item {
 	@Override
 	public void fillItemGroup(ItemGroup group, NonNullList<ItemStack> items) {
 		if (isInGroup(group)) {
-			 // TODO Random value
-			Identifier identifier = new Identifier("x");
-			Term term = new Abs(identifier, new Var(identifier));
-			TermState termState = TermState.BETA_ETA_NORMAL_FORM;
+			 // TODO Magic value
+			int capacity = 1024;
+			int energy = 1024;
 
 			items.add(builder()
-				.capacity(1024)
-				.energy(1024)
-				.term(term)
-				.termState(termState)
+				.capacity(capacity)
+				.energy(energy)
+				.accept(lambdazation.lambdazationTermFactory.predefTermId::withCrystal)
 				.build());
 		}
 	}
@@ -149,6 +145,44 @@ public final class ItemLambdaCrystal extends Item {
 		tag.setByte("termState", termStateOrdinal);
 	}
 
+	public Optional<Integer> getTermSize(ItemStack itemStack) {
+		if (!equals(itemStack.getItem()))
+			return Optional.empty();
+
+		NBTTagCompound tag = itemStack.getOrCreateTag();
+		if (!tag.contains("termSize", 3))
+			return Optional.empty();
+		int termSize = tag.getInt("termSize");
+		return Optional.of(termSize);
+	}
+
+	public void setTermSize(ItemStack itemStack, int termSize) {
+		if (!equals(itemStack.getItem()))
+			return;
+
+		NBTTagCompound tag = itemStack.getOrCreateTag();
+		tag.setInt("termSize", termSize);
+	}
+
+	public Optional<Integer> getTermDepth(ItemStack itemStack) {
+		if (!equals(itemStack.getItem()))
+			return Optional.empty();
+
+		NBTTagCompound tag = itemStack.getOrCreateTag();
+		if (!tag.contains("termDepth", 3))
+			return Optional.empty();
+		int termDepth = tag.getInt("termDepth");
+		return Optional.of(termDepth);
+	}
+
+	public void setTermDepth(ItemStack itemStack, int termDepth) {
+		if (!equals(itemStack.getItem()))
+			return;
+
+		NBTTagCompound tag = itemStack.getOrCreateTag();
+		tag.setInt("termDepth", termDepth);
+	}
+
 	public boolean isAlphaEquivalent(ItemStack firstItemStack, ItemStack secondItemStack) {
 		if (!equals(firstItemStack.getItem()) || !equals(secondItemStack.getItem()))
 			return false;
@@ -179,12 +213,18 @@ public final class ItemLambdaCrystal extends Item {
 		}
 	}
 
-	public final class Builder {
+	public final class Builder implements GeneralizedBuilder<Builder, ItemStack> {
 		private Integer capacity;
 		private Integer energy;
 		private Term term;
 		private TermState termState;
+		private Integer termSize;
+		private Integer termDepth;
 
+		Builder() {
+
+		}
+		
 		public Builder capacity(int capacity) {
 			this.capacity = capacity;
 			return this;
@@ -205,11 +245,27 @@ public final class ItemLambdaCrystal extends Item {
 			return this;
 		}
 
+		public Builder termSize(Integer termSize) {
+			this.termSize = termSize;
+			return this;
+		}
+
+		public Builder termDepth(Integer termDepth) {
+			this.termDepth = termDepth;
+			return this;
+		}
+
 		private void validateState() {
-			if (capacity == null || energy == null || term == null || termState == null)
+			if (capacity == null || energy == null || term == null || termState == null || termSize == null || termDepth == null)
 				throw new IllegalStateException("Property uninitialized");
 		}
 
+		@Override
+		public Builder concrete() {
+			return this;
+		}
+
+		@Override
 		public ItemStack build() {
 			validateState();
 
@@ -218,6 +274,8 @@ public final class ItemLambdaCrystal extends Item {
 			setEnergy(itemStack, energy);
 			setTerm(itemStack, term);
 			setTermState(itemStack, termState);
+			setTermSize(itemStack, termSize);
+			setTermDepth(itemStack, termDepth);
 
 			return itemStack;
 		}

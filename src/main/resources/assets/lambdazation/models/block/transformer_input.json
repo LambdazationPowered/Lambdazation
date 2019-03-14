@@ -1,0 +1,6 @@
+{
+    "parent": "lambdazation:block/transformer",
+    "textures": {
+        "texture": "lambdazation:block/transformer_input"
+    }
+}

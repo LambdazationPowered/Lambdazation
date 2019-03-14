@@ -22,13 +22,16 @@ import net.minecraftforge.items.wrapper.SidedInvWrapper;
 import java.util.Arrays;
 
 import org.lambdazation.Lambdazation;
-import org.lambdazation.common.block.BlockCrystallizer;
-import org.lambdazation.common.inventory.ContainerCrystallizer;
+import org.lambdazation.common.block.BlockTransformer;
+import org.lambdazation.common.inventory.ContainerTransformer;
 import org.lambdazation.common.inventory.field.InventoryField;
 import org.lambdazation.common.item.ItemLambdaCrystal;
+import org.lambdazation.common.item.ItemLambdaCrystal.TermState;
 import org.lambdazation.common.state.properties.SlotState;
+import org.lamcalcj.ast.Lambda.App;
+import org.lamcalcj.ast.Lambda.Term;
 
-public final class TileEntityCrystallizer extends TileEntityLockable implements ISidedInventory, ITickable {
+public final class TileEntityTransformer extends TileEntityLockable implements ISidedInventory, ITickable {
 	public static final int SLOT_INPUT_0 = 0;
 	public static final int SLOT_INPUT_1 = 1;
 	public static final int SLOT_OUTPUT_2 = 2;
@@ -42,19 +45,19 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	public final NonNullList<ItemStack> inventoryContents;
 	public NonNullList<ItemStack> prevInventoryContents;
-	public int crystallizeTime;
+	public int transformTime;
 
 	private final LazyOptional<? extends IItemHandler>[] itemHandlers = SidedInvWrapper.create(this, EnumFacing.DOWN,
 		EnumFacing.UP, EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.WEST, EnumFacing.EAST);
 
-	public TileEntityCrystallizer(Lambdazation lambdazation) {
-		super(lambdazation.lambdazationTileEntityTypes.tileEntityTypeCrystallizer);
+	public TileEntityTransformer(Lambdazation lambdazation) {
+		super(lambdazation.lambdazationTileEntityTypes.tileEntityTypeTransformer);
 
 		this.lambdazation = lambdazation;
 
 		inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
 		prevInventoryContents = null;
-		crystallizeTime = 0;
+		transformTime = 0;
 	}
 
 	@Override
@@ -62,7 +65,7 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		super.read(compound);
 
 		ItemStackHelper.loadAllItems(compound, inventoryContents);
-		crystallizeTime = compound.getInt("crystallizeTime");
+		transformTime = compound.getInt("transformTime");
 	}
 
 	@Override
@@ -70,7 +73,7 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		super.write(compound);
 
 		ItemStackHelper.saveAllItems(compound, inventoryContents);
-		compound.setInt("crystallizeTime", crystallizeTime);
+		compound.setInt("transformTime", transformTime);
 
 		return compound;
 	}
@@ -147,24 +150,24 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	@Override
 	public int getField(int id) {
-		if (id < 0 || id >= InventoryFieldCrystallizer.values().length)
+		if (id < 0 || id >= InventoryFieldTransformer.values().length)
 			return 0;
 
-		int value = InventoryFieldCrystallizer.values()[id].getField(this);
+		int value = InventoryFieldTransformer.values()[id].getField(this);
 		return value;
 	}
 
 	@Override
 	public void setField(int id, int value) {
-		if (id < 0 || id >= InventoryFieldCrystallizer.values().length)
+		if (id < 0 || id >= InventoryFieldTransformer.values().length)
 			return;
 
-		InventoryFieldCrystallizer.values()[id].setField(this, value);
+		InventoryFieldTransformer.values()[id].setField(this, value);
 	}
 
 	@Override
 	public int getFieldCount() {
-		return InventoryFieldCrystallizer.values().length;
+		return InventoryFieldTransformer.values().length;
 	}
 
 	@Override
@@ -174,7 +177,7 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	@Override
 	public ITextComponent getName() {
-		return new TextComponentString("Crystallizer");
+		return new TextComponentString("Transformer");
 	}
 
 	@Override
@@ -189,12 +192,12 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	@Override
 	public Container createContainer(InventoryPlayer playerInventory, EntityPlayer playerIn) {
-		return new ContainerCrystallizer(lambdazation, playerInventory, this);
+		return new ContainerTransformer(lambdazation, playerInventory, this);
 	}
 
 	@Override
 	public String getGuiID() {
-		return ContainerCrystallizer.GUI_ID.toString();
+		return ContainerTransformer.GUI_ID.toString();
 	}
 
 	@Override
@@ -202,10 +205,10 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		if (changed())
 			update();
 
-		if (crystallizeTime > 0) {
-			crystallizeTime--;
-			if (crystallizeTime == 0)
-				crystallized();
+		if (transformTime > 0) {
+			transformTime--;
+			if (transformTime == 0)
+				transformed();
 		}
 	}
 
@@ -238,42 +241,57 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 		ItemLambdaCrystal itemLambdaCrystal = lambdazation.lambdazationItems.itemLambdaCrystal;
 
-		ItemStack firstItemStack = inventoryContents.get(SLOT_INPUT_0);
-		ItemStack secondItemStack = inventoryContents.get(SLOT_INPUT_1);
+		ItemStack functionItemStack = inventoryContents.get(SLOT_INPUT_0);
+		ItemStack argumentItemStack = inventoryContents.get(SLOT_INPUT_1);
 		ItemStack resultItemStack = inventoryContents.get(SLOT_OUTPUT_2);
 
-		if (!firstItemStack.isEmpty() && firstItemStack.getItem().equals(itemLambdaCrystal)
-			&& !secondItemStack.isEmpty() && secondItemStack.getItem().equals(itemLambdaCrystal)
+		if (!functionItemStack.isEmpty() && functionItemStack.getItem().equals(itemLambdaCrystal)
+			&& !argumentItemStack.isEmpty() && argumentItemStack.getItem().equals(itemLambdaCrystal)
 			&& resultItemStack.isEmpty()) {
-			if (!lambdazation.lambdazationItems.itemLambdaCrystal.isAlphaEquivalent(firstItemStack, secondItemStack))
-				crystallizeTime = 0;
+			int functionTermSize = itemLambdaCrystal.getTermSize(functionItemStack).orElse(0);
+			int argumentEnergy = itemLambdaCrystal.getEnergy(argumentItemStack).orElse(0);
+
+			if (argumentEnergy < functionTermSize)
+				transformTime = 0;
 			else
-				crystallizeTime = 20 * 10;
+				transformTime = 20 * 10;
 		} else
-			crystallizeTime = 0;
+			transformTime = 0;
 
 		markDirty();
 	}
 
-	private void crystallized() {
+	private void transformed() {
 		if (world.isRemote)
 			return;
 
 		ItemLambdaCrystal itemLambdaCrystal = lambdazation.lambdazationItems.itemLambdaCrystal;
 
-		ItemStack firstItemStack = inventoryContents.get(SLOT_INPUT_0);
-		ItemStack secondItemStack = inventoryContents.get(SLOT_INPUT_1);
+		ItemStack functionItemStack = inventoryContents.get(SLOT_INPUT_0);
+		ItemStack argumentItemStack = inventoryContents.get(SLOT_INPUT_1);
 
-		int capacity = itemLambdaCrystal.getCapacity(firstItemStack).orElse(0)
-			+ itemLambdaCrystal.getCapacity(secondItemStack).orElse(0);
-		int energy = itemLambdaCrystal.getEnergy(firstItemStack).orElse(0)
-			+ itemLambdaCrystal.getEnergy(secondItemStack).orElse(0);
+		Term functionTerm = itemLambdaCrystal.getTerm(functionItemStack).orElse(lambdazation.lambdazationTermFactory.predefTermId.term);
+		int functionTermSize = itemLambdaCrystal.getTermSize(functionItemStack).orElse(0);
+		int argumentCapacity = itemLambdaCrystal.getCapacity(argumentItemStack).orElse(0);
+		int argumentEnergy = itemLambdaCrystal.getEnergy(argumentItemStack).orElse(0);
+		Term argumentTerm = itemLambdaCrystal.getTerm(argumentItemStack).orElse(lambdazation.lambdazationTermFactory.predefTermFix.applyTerm(functionTerm));
 
-		ItemStack resultItemStack = firstItemStack.copy();
-		itemLambdaCrystal.setCapacity(resultItemStack, capacity);
-		itemLambdaCrystal.setEnergy(resultItemStack, energy);
+		int capacity = argumentCapacity;
+		int energy = argumentEnergy - functionTermSize;
+		Term term = new App(functionTerm, argumentTerm);
+		TermState termState = TermState.REDUCIBLE_FORM;
+		int termSize = term.size();
+		int termDepth = term.depth();
 
-		inventoryContents.set(SLOT_INPUT_0, ItemStack.EMPTY);
+		ItemStack resultItemStack = itemLambdaCrystal.builder()
+			.capacity(capacity)
+			.energy(energy)
+			.term(term)
+			.termState(termState)
+			.termSize(termSize)
+			.termDepth(termDepth)
+			.build();
+
 		inventoryContents.set(SLOT_INPUT_1, ItemStack.EMPTY);
 		inventoryContents.set(SLOT_OUTPUT_2, resultItemStack);
 
@@ -283,7 +301,7 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	@Override
 	public int[] getSlotsForFace(EnumFacing side) {
-		SlotState slotState = getBlockState().get(BlockCrystallizer.FACING_PROPERTY_MAP.get(side));
+		SlotState slotState = getBlockState().get(BlockTransformer.FACING_PROPERTY_MAP.get(side));
 		switch (slotState) {
 		case NONE:
 			return SLOTS_NONE;
@@ -332,16 +350,16 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		return super.getCapability(cap, side);
 	}
 
-	public enum InventoryFieldCrystallizer implements InventoryField<TileEntityCrystallizer> {
-		CRYSTALLIZE_TIME {
+	public enum InventoryFieldTransformer implements InventoryField<TileEntityTransformer> {
+		TRANSFORM_TIME {
 			@Override
-			public int getField(TileEntityCrystallizer inventory) {
-				return inventory.crystallizeTime;
+			public int getField(TileEntityTransformer inventory) {
+				return inventory.transformTime;
 			}
 
 			@Override
-			public void setField(TileEntityCrystallizer inventory, int value) {
-				inventory.crystallizeTime = value;
+			public void setField(TileEntityTransformer inventory, int value) {
+				inventory.transformTime = value;
 			}
 		};
 

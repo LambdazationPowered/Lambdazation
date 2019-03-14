@@ -1,0 +1,76 @@
+{
+    "multipart": [
+        {   "when": { "north": "none" },
+            "apply": { "model": "lambdazation:block/transformer_none", "uvlock": true }
+        },
+        {   "when": { "north": "input" },
+            "apply": { "model": "lambdazation:block/transformer_input", "uvlock": true }
+        },
+        {   "when": { "north": "output" },
+            "apply": { "model": "lambdazation:block/transformer_output", "uvlock": true }
+        },
+        {   "when": { "north": "all" },
+            "apply": { "model": "lambdazation:block/transformer_all", "uvlock": true }
+        },
+        {   "when": { "east": "none" },
+            "apply": { "model": "lambdazation:block/transformer_none", "y": 90, "uvlock": true }
+        },
+        {   "when": { "east": "input" },
+            "apply": { "model": "lambdazation:block/transformer_input", "y": 90, "uvlock": true }
+        },
+        {   "when": { "east": "output" },
+            "apply": { "model": "lambdazation:block/transformer_output", "y": 90, "uvlock": true }
+        },
+        {   "when": { "east": "all" },
+            "apply": { "model": "lambdazation:block/transformer_all", "y": 90, "uvlock": true }
+        },
+        {   "when": { "south": "none" },
+            "apply": { "model": "lambdazation:block/transformer_none", "y": 180, "uvlock": true }
+        },
+        {   "when": { "south": "input" },
+            "apply": { "model": "lambdazation:block/transformer_input", "y": 180, "uvlock": true }
+        },
+        {   "when": { "south": "output" },
+            "apply": { "model": "lambdazation:block/transformer_output", "y": 180, "uvlock": true }
+        },
+        {   "when": { "south": "all" },
+            "apply": { "model": "lambdazation:block/transformer_all", "y": 180, "uvlock": true }
+        },
+        {   "when": { "west": "none" },
+            "apply": { "model": "lambdazation:block/transformer_none", "y": 270, "uvlock": true }
+        },
+        {   "when": { "west": "input" },
+            "apply": { "model": "lambdazation:block/transformer_input", "y": 270, "uvlock": true }
+        },
+        {   "when": { "west": "output" },
+            "apply": { "model": "lambdazation:block/transformer_output", "y": 270, "uvlock": true }
+        },
+        {   "when": { "west": "all" },
+            "apply": { "model": "lambdazation:block/transformer_all", "y": 270, "uvlock": true }
+        },
+        {   "when": { "down": "none" },
+            "apply": { "model": "lambdazation:block/transformer_none", "x": 90, "uvlock": true }
+        },
+        {   "when": { "down": "input" },
+            "apply": { "model": "lambdazation:block/transformer_input", "x": 90, "uvlock": true }
+        },
+        {   "when": { "down": "output" },
+            "apply": { "model": "lambdazation:block/transformer_output", "x": 90, "uvlock": true }
+        },
+        {   "when": { "down": "all" },
+            "apply": { "model": "lambdazation:block/transformer_all", "x": 90, "uvlock": true }
+        },
+        {   "when": { "up": "none" },
+            "apply": { "model": "lambdazation:block/transformer_none", "x": 270, "uvlock": true }
+        },
+        {   "when": { "up": "input" },
+            "apply": { "model": "lambdazation:block/transformer_input", "x": 270, "uvlock": true }
+        },
+        {   "when": { "up": "output" },
+            "apply": { "model": "lambdazation:block/transformer_output", "x": 270, "uvlock": true }
+        },
+        {   "when": { "up": "all" },
+            "apply": { "model": "lambdazation:block/transformer_all", "x": 270, "uvlock": true }
+        }
+    ]
+}

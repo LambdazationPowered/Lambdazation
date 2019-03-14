@@ -60,7 +60,7 @@ public abstract class GeneralizedEnum<E extends GeneralizedEnum<E>> implements E
 			return new Builder<>();
 		}
 
-		public static final class Builder<E extends GeneralizedEnum<E>> {
+		public static final class Builder<E extends GeneralizedEnum<E>> implements GeneralizedBuilder<Builder<E>, Metadata<E>> {
 			private final List<E> values;
 			private final Map<String, E> mapping;
 			private int ordinal;
@@ -86,6 +86,12 @@ public abstract class GeneralizedEnum<E extends GeneralizedEnum<E>> implements E
 				return value;
 			}
 
+			@Override
+			public Builder<E> concrete() {
+				return this;
+			}
+
+			@Override
 			public Metadata<E> build() {
 				return new Metadata<>(values, mapping);
 			}

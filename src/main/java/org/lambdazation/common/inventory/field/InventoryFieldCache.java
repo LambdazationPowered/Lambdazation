@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.lambdazation.common.utils.EnumValue;
+import org.lambdazation.common.utils.GeneralizedBuilder;
 
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
@@ -76,7 +77,8 @@ public final class InventoryFieldCache<C extends Container> {
 		return new Builder<>(container, listeners, inventoryRefMetadata);
 	}
 
-	public static final class Builder<C extends Container, E extends EnumValue<E> & InventoryRef<C, ?>> {
+	public static final class Builder<C extends Container, E extends EnumValue<E> & InventoryRef<C, ?>>
+		implements GeneralizedBuilder<Builder<C, E>, InventoryFieldCache<C>> {
 		private final C container;
 		private final List<IContainerListener> listeners;
 		private final EnumValue.EnumObject<E> inventoryRefMetadata;
@@ -87,6 +89,12 @@ public final class InventoryFieldCache<C extends Container> {
 			this.inventoryRefMetadata = inventoryRefMetadata;
 		}
 
+		@Override
+		public Builder<C, E> concrete() {
+			return this;
+		}
+
+		@Override
 		public InventoryFieldCache<C> build() {
 			Map<IInventory, Entry> entries = new HashMap<>();
 

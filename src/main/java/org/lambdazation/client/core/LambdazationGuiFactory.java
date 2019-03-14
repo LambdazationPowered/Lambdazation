@@ -4,10 +4,13 @@ import org.lambdazation.Lambdazation;
 import org.lambdazation.client.gui.GuiCalibrator;
 import org.lambdazation.client.gui.GuiCrystallizer;
 import org.lambdazation.client.gui.GuiLens;
+import org.lambdazation.client.gui.GuiTransformer;
 import org.lambdazation.common.inventory.ContainerCalibrator;
 import org.lambdazation.common.inventory.ContainerCrystallizer;
 import org.lambdazation.common.inventory.ContainerLens;
+import org.lambdazation.common.inventory.ContainerTransformer;
 import org.lambdazation.common.tileentity.TileEntityCrystallizer;
+import org.lambdazation.common.tileentity.TileEntityTransformer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -46,6 +49,17 @@ public final class LambdazationGuiFactory {
 			TileEntityCrystallizer crystallizerInventory = (TileEntityCrystallizer) tileEntity;
 
 			return new GuiCrystallizer(lambdazation, playerInventory, crystallizerInventory);
+		} else if (msg.getId().equals(ContainerTransformer.GUI_ID)) {
+			BlockPos blockPos = msg.getAdditionalData().readBlockPos();
+			TileEntity tileEntity = Minecraft.getInstance().world.getTileEntity(blockPos);
+
+			InventoryPlayer playerInventory = Minecraft.getInstance().player.inventory;
+
+			if (!(tileEntity instanceof TileEntityTransformer))
+				return null;
+			TileEntityTransformer transformerInventory = (TileEntityTransformer) tileEntity;
+
+			return new GuiTransformer(lambdazation, playerInventory, transformerInventory);
 		} else
 			return null;
 	}
