@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.lambdazation.common.utils.EnumValue;
 import org.lambdazation.common.utils.GeneralizedBuilder;
+import org.lambdazation.common.utils.StreamIterable;
 
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
@@ -99,7 +100,7 @@ public final class InventoryFieldCache<C extends Container> {
 			Map<IInventory, Entry> entries = new HashMap<>();
 
 			int fieldOffset = 0;
-			for (E inventoryRef : inventoryRefMetadata.values()) {
+			for (E inventoryRef : StreamIterable.of(inventoryRefMetadata.values())) {
 				IInventory inventory = inventoryRef.getInventory(container);
 				int fieldCount = inventory.getFieldCount();
 				int[] fieldCache = new int[fieldCount];

@@ -58,7 +58,7 @@ public final class ContainerCrystallizer extends Container {
 	public void addListener(IContainerListener listener) {
 		super.addListener(listener);
 
-		InventoryRefCrystallizer.METADATA.values().stream()
+		InventoryRefCrystallizer.METADATA.values()
 			.map(InventoryRef -> InventoryRef.getInventory(this))
 			.forEach(inventory -> listener.sendAllWindowProperties(this, inventory));
 	}
@@ -143,7 +143,7 @@ public final class ContainerCrystallizer extends Container {
 		public static final GeneralizedEnum.Metadata<InventoryRefCrystallizer<?>> METADATA;
 
 		static {
-			GeneralizedEnum.Metadata.Builder<InventoryRefCrystallizer<?>> builder = GeneralizedEnum.Metadata.<InventoryRefCrystallizer<?>> builder();
+			GeneralizedEnum.Metadata.Builder<InventoryRefCrystallizer<?>> builder = GeneralizedEnum.Metadata.builder();
 
 			class Player extends InventoryRefCrystallizer<InventoryPlayer> {
 				Player(String name, int ordinal) {

@@ -1,7 +1,7 @@
 package org.lambdazation.common.utils;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface EnumValue<E extends EnumValue<E>> {
 	String name();
@@ -9,7 +9,11 @@ public interface EnumValue<E extends EnumValue<E>> {
 	int ordinal();
 
 	interface EnumObject<E extends EnumValue<E>> {
-		List<E> values();
+		int size();
+
+		Optional<E> valueAt(int ordinal);
+
+		Stream<E> values();
 
 		Optional<E> valueOf(String name);
 	}

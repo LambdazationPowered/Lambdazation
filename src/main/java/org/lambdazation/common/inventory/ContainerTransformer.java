@@ -58,7 +58,7 @@ public final class ContainerTransformer extends Container {
 	public void addListener(IContainerListener listener) {
 		super.addListener(listener);
 
-		InventoryRefTransformer.METADATA.values().stream()
+		InventoryRefTransformer.METADATA.values()
 			.map(InventoryRef -> InventoryRef.getInventory(this))
 			.forEach(inventory -> listener.sendAllWindowProperties(this, inventory));
 	}
@@ -143,7 +143,7 @@ public final class ContainerTransformer extends Container {
 		public static final GeneralizedEnum.Metadata<InventoryRefTransformer<?>> METADATA;
 
 		static {
-			GeneralizedEnum.Metadata.Builder<InventoryRefTransformer<?>> builder = GeneralizedEnum.Metadata.<InventoryRefTransformer<?>> builder();
+			GeneralizedEnum.Metadata.Builder<InventoryRefTransformer<?>> builder = GeneralizedEnum.Metadata.builder();
 
 			class Player extends InventoryRefTransformer<InventoryPlayer> {
 				Player(String name, int ordinal) {

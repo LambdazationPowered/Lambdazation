@@ -2,11 +2,11 @@ package org.lambdazation.common.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public final class BoxedEnum<T extends Enum<T>> implements EnumValue<BoxedEnum<T>>, Comparable<BoxedEnum<T>> {
 	protected final T enumValue;
@@ -51,8 +51,18 @@ public final class BoxedEnum<T extends Enum<T>> implements EnumValue<BoxedEnum<T
 		}
 
 		@Override
-		public List<BoxedEnum<T>> values() {
-			return Collections.unmodifiableList(values);
+		public int size() {
+			return values.size();
+		}
+
+		@Override
+		public Optional<BoxedEnum<T>> valueAt(int ordinal) {
+			return Optional.ofNullable(values.get(ordinal));
+		}
+
+		@Override
+		public Stream<BoxedEnum<T>> values() {
+			return values.stream();
 		}
 
 		@Override

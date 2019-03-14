@@ -1,12 +1,12 @@
 package org.lambdazation.common.utils;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 public abstract class GeneralizedEnum<E extends GeneralizedEnum<E>> implements EnumValue<E>, Comparable<E> {
 	private final String name;
@@ -47,8 +47,18 @@ public abstract class GeneralizedEnum<E extends GeneralizedEnum<E>> implements E
 		}
 
 		@Override
-		public List<E> values() {
-			return Collections.unmodifiableList(values);
+		public int size() {
+			return values.size();
+		}
+
+		@Override
+		public Optional<E> valueAt(int ordinal) {
+			return Optional.ofNullable(values.get(ordinal));
+		}
+
+		@Override
+		public Stream<E> values() {
+			return values.stream();
 		}
 
 		@Override
