@@ -120,7 +120,7 @@ public final class ContainerCrystallizer extends Container {
 
 		@Override
 		public boolean isItemValid(ItemStack stack) {
-			return stack.getItem().equals(lambdazation.lambdazationItems.itemLambdaCrystal);
+			return inventory.isItemValidForSlot(getSlotIndex(), stack);
 		}
 	}
 
@@ -131,7 +131,7 @@ public final class ContainerCrystallizer extends Container {
 
 		@Override
 		public boolean isItemValid(ItemStack stack) {
-			return false;
+			return inventory.isItemValidForSlot(getSlotIndex(), stack);
 		}
 	}
 

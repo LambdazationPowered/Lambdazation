@@ -4,7 +4,7 @@ import org.lambdazation.Lambdazation;
 import org.lambdazation.common.inventory.field.InventoryField;
 import org.lambdazation.common.inventory.field.InventoryFieldCache;
 import org.lambdazation.common.inventory.field.InventoryRef;
-import org.lambdazation.common.tileentity.TileEntityTransformer;
+import org.lambdazation.common.tileentity.TileEntityCharger;
 import org.lambdazation.common.utils.GeneralizedEnum;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -18,29 +18,29 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-public final class ContainerTransformer extends Container {
-	public static final ResourceLocation GUI_ID = new ResourceLocation("lambdazation:transformer");
+public final class ContainerCharger extends Container {
+	public static final ResourceLocation GUI_ID = new ResourceLocation("lambdazation:charger");
 
 	public final Lambdazation lambdazation;
 
 	public final InventoryPlayer playerInventory;
-	public final TileEntityTransformer transformerInventory;
-	public final InventoryFieldCache<ContainerTransformer> inventoryFieldCache;
+	public final TileEntityCharger chargerInventory;
+	public final InventoryFieldCache<ContainerCharger> inventoryFieldCache;
 
-	public ContainerTransformer(Lambdazation lambdazation, InventoryPlayer playerInventory,
-		TileEntityTransformer transformerInventory) {
+	public ContainerCharger(Lambdazation lambdazation, InventoryPlayer playerInventory,
+		TileEntityCharger chargerInventory) {
 		this.lambdazation = lambdazation;
 
 		this.playerInventory = playerInventory;
-		this.transformerInventory = transformerInventory;
+		this.chargerInventory = chargerInventory;
 
 		this.inventoryFieldCache = InventoryFieldCache
-			.builder(this, listeners, InventoryRefTransformer.METADATA)
+			.builder(this, listeners, InventoryRefCharger.METADATA)
 			.build();
 
-		addSlot(new SlotInput(transformerInventory, 0, 27, 47));
-		addSlot(new SlotInput(transformerInventory, 1, 76, 47));
-		addSlot(new SlotOutput(transformerInventory, 2, 134, 47));
+		addSlot(new SlotInput(chargerInventory, 0, 27, 47));
+		addSlot(new SlotFuel(chargerInventory, 1, 76, 47));
+		addSlot(new SlotOutput(chargerInventory, 2, 134, 47));
 
 		for (int i = 0; i < 3; ++i)
 			for (int j = 0; j < 9; ++j)
@@ -50,7 +50,7 @@ public final class ContainerTransformer extends Container {
 			addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
 	}
 
-	public <T extends IInventory> int lookupInventoryField(InventoryRefTransformer<T> inventoryRef, InventoryField<T> inventoryField) {
+	public <T extends IInventory> int lookupInventoryField(InventoryRefCharger<T> inventoryRef, InventoryField<T> inventoryField) {
 		return inventoryFieldCache.lookup(inventoryRef, inventoryField);
 	}
 
@@ -58,7 +58,7 @@ public final class ContainerTransformer extends Container {
 	public void addListener(IContainerListener listener) {
 		super.addListener(listener);
 
-		InventoryRefTransformer.METADATA.values()
+		InventoryRefCharger.METADATA.values()
 			.map(InventoryRef -> InventoryRef.getInventory(this))
 			.forEach(inventory -> listener.sendAllWindowProperties(this, inventory));
 	}
@@ -78,7 +78,7 @@ public final class ContainerTransformer extends Container {
 
 	@Override
 	public boolean canInteractWith(EntityPlayer playerIn) {
-		return transformerInventory.isUsableByPlayer(playerIn);
+		return chargerInventory.isUsableByPlayer(playerIn);
 	}
 
 	@Override
@@ -124,6 +124,17 @@ public final class ContainerTransformer extends Container {
 		}
 	}
 
+	public final class SlotFuel extends Slot {
+		public SlotFuel(IInventory inventoryIn, int index, int xPosition, int yPosition) {
+			super(inventoryIn, index, xPosition, yPosition);
+		}
+
+		@Override
+		public boolean isItemValid(ItemStack stack) {
+			return inventory.isItemValidForSlot(getSlotIndex(), stack);
+		}
+	}
+
 	public final class SlotOutput extends Slot {
 		public SlotOutput(IInventory inventoryIn, int index, int xPosition, int yPosition) {
 			super(inventoryIn, index, xPosition, yPosition);
@@ -135,44 +146,44 @@ public final class ContainerTransformer extends Container {
 		}
 	}
 
-	public static abstract class InventoryRefTransformer<T extends IInventory> extends GeneralizedEnum<InventoryRefTransformer<?>>
-		implements InventoryRef<ContainerTransformer, T> {
-		public static final InventoryRefTransformer<InventoryPlayer> PLAYER;
-		public static final InventoryRefTransformer<TileEntityTransformer> TRANSFORMER;
+	public static abstract class InventoryRefCharger<T extends IInventory> extends GeneralizedEnum<InventoryRefCharger<?>>
+		implements InventoryRef<ContainerCharger, T> {
+		public static final InventoryRefCharger<InventoryPlayer> PLAYER;
+		public static final InventoryRefCharger<TileEntityCharger> CHARGER;
 
-		public static final GeneralizedEnum.Metadata<InventoryRefTransformer<?>> METADATA;
+		public static final GeneralizedEnum.Metadata<InventoryRefCharger<?>> METADATA;
 
 		static {
-			GeneralizedEnum.Metadata.Builder<InventoryRefTransformer<?>> builder = GeneralizedEnum.Metadata.builder();
+			GeneralizedEnum.Metadata.Builder<InventoryRefCharger<?>> builder = GeneralizedEnum.Metadata.builder();
 
-			class Player extends InventoryRefTransformer<InventoryPlayer> {
+			class Player extends InventoryRefCharger<InventoryPlayer> {
 				Player(String name, int ordinal) {
 					super(name, ordinal);
 				}
 
 				@Override
-				public InventoryPlayer getInventory(ContainerTransformer container) {
+				public InventoryPlayer getInventory(ContainerCharger container) {
 					return container.playerInventory;
 				}
 			}
 			PLAYER = builder.withValue("PLAYER", Player::new);
 
-			class Transformer extends InventoryRefTransformer<TileEntityTransformer> {
-				Transformer(String name, int ordinal) {
+			class Charger extends InventoryRefCharger<TileEntityCharger> {
+				Charger(String name, int ordinal) {
 					super(name, ordinal);
 				}
 
 				@Override
-				public TileEntityTransformer getInventory(ContainerTransformer container) {
-					return container.transformerInventory;
+				public TileEntityCharger getInventory(ContainerCharger container) {
+					return container.chargerInventory;
 				}
 			}
-			TRANSFORMER = builder.withValue("TRANSFORMER", Transformer::new);
+			CHARGER = builder.withValue("CHARGER", Charger::new);
 
 			METADATA = builder.build();
 		}
 
-		InventoryRefTransformer(String name, int ordinal) {
+		InventoryRefCharger(String name, int ordinal) {
 			super(name, ordinal);
 		}
 

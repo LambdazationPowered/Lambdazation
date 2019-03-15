@@ -1,0 +1,6 @@
+{
+    "parent": "lambdazation:block/charger",
+    "textures": {
+        "texture": "lambdazation:block/charger_output"
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "parent": "block/cube",
+    "textures": {
+        "down": "lambdazation:block/charger_output",
+        "up": "lambdazation:block/charger_output",
+        "north": "lambdazation:block/charger_input",
+        "south": "lambdazation:block/charger_input",
+        "west": "lambdazation:block/charger_input",
+        "east": "lambdazation:block/charger_input"
+    }
+}

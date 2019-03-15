@@ -52,9 +52,9 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 		this.lambdazation = lambdazation;
 
-		inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
-		prevInventoryContents = null;
-		crystallizeTime = 0;
+		this.inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
+		this.prevInventoryContents = null;
+		this.crystallizeTime = 0;
 	}
 
 	@Override
@@ -136,8 +136,9 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 	public boolean isItemValidForSlot(int index, ItemStack stack) {
 		switch (index) {
 		case SLOT_INPUT_0:
+			return stack.getItem().equals(lambdazation.lambdazationItems.itemLambdaCrystal);
 		case SLOT_INPUT_1:
-			return true;
+			return stack.getItem().equals(lambdazation.lambdazationItems.itemLambdaCrystal);
 		case SLOT_OUTPUT_2:
 			return false;
 		default:
@@ -202,11 +203,8 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		if (changed())
 			update();
 
-		if (crystallizeTime > 0) {
-			crystallizeTime--;
-			if (crystallizeTime == 0)
-				crystallized();
-		}
+		if (crystallizeTime > 0 && advance())
+			crystallized();
 	}
 
 	private void cache() {
@@ -255,6 +253,14 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		markDirty();
 	}
 
+	private boolean advance() {
+		crystallizeTime--;
+
+		markDirty();
+
+		return crystallizeTime <= 0;
+	}
+
 	private void crystallized() {
 		if (world.isRemote)
 			return;
@@ -272,9 +278,11 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		ItemStack resultItemStack = firstItemStack.copy();
 		itemLambdaCrystal.setCapacity(resultItemStack, capacity);
 		itemLambdaCrystal.setEnergy(resultItemStack, energy);
+		firstItemStack.shrink(1);
+		secondItemStack.shrink(1);
 
-		inventoryContents.set(SLOT_INPUT_0, ItemStack.EMPTY);
-		inventoryContents.set(SLOT_INPUT_1, ItemStack.EMPTY);
+		inventoryContents.set(SLOT_INPUT_0, firstItemStack.isEmpty() ? ItemStack.EMPTY : firstItemStack);
+		inventoryContents.set(SLOT_INPUT_1, secondItemStack.isEmpty() ? ItemStack.EMPTY : secondItemStack);
 		inventoryContents.set(SLOT_OUTPUT_2, resultItemStack);
 
 		cache();

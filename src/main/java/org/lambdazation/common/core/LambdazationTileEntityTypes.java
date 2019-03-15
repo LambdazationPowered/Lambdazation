@@ -1,6 +1,7 @@
 package org.lambdazation.common.core;
 
 import org.lambdazation.Lambdazation;
+import org.lambdazation.common.tileentity.TileEntityCharger;
 import org.lambdazation.common.tileentity.TileEntityCrystallizer;
 import org.lambdazation.common.tileentity.TileEntityTransformer;
 
@@ -13,6 +14,7 @@ public final class LambdazationTileEntityTypes {
 
 	public final TileEntityType<TileEntityCrystallizer> tileEntityTypeCrystallizer;
 	public final TileEntityType<TileEntityTransformer> tileEntityTypeTransformer;
+	public final TileEntityType<TileEntityCharger> tileEntityTypeCharger;
 
 	public LambdazationTileEntityTypes(Lambdazation lambdazation) {
 		this.lambdazation = lambdazation;
@@ -25,11 +27,16 @@ public final class LambdazationTileEntityTypes {
 			.create(() -> new TileEntityTransformer(lambdazation))
 			.build(null);
 		tileEntityTypeTransformer.setRegistryName(new ResourceLocation("lambdazation:transformer"));
+		tileEntityTypeCharger = TileEntityType.Builder
+			.create(() -> new TileEntityCharger(lambdazation))
+			.build(null);
+		tileEntityTypeCharger.setRegistryName(new ResourceLocation("lambdazation:charger"));
 	}
 
 	public void registerTileEntityTypes(RegistryEvent.Register<TileEntityType<?>> e) {
 		e.getRegistry().register(tileEntityTypeCrystallizer);
 		e.getRegistry().register(tileEntityTypeTransformer);
+		e.getRegistry().register(tileEntityTypeCharger);
 	}
 
 	public void finalizeTileEntityTypes(RegistryEvent.Register<TileEntityType<?>> e) {

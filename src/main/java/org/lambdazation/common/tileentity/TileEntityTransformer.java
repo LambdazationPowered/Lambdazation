@@ -55,9 +55,9 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 
 		this.lambdazation = lambdazation;
 
-		inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
-		prevInventoryContents = null;
-		transformTime = 0;
+		this.inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
+		this.prevInventoryContents = null;
+		this.transformTime = 0;
 	}
 
 	@Override
@@ -139,8 +139,9 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 	public boolean isItemValidForSlot(int index, ItemStack stack) {
 		switch (index) {
 		case SLOT_INPUT_0:
+			return stack.getItem().equals(lambdazation.lambdazationItems.itemLambdaCrystal);
 		case SLOT_INPUT_1:
-			return true;
+			return stack.getItem().equals(lambdazation.lambdazationItems.itemLambdaCrystal);
 		case SLOT_OUTPUT_2:
 			return false;
 		default:
@@ -205,11 +206,8 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 		if (changed())
 			update();
 
-		if (transformTime > 0) {
-			transformTime--;
-			if (transformTime == 0)
-				transformed();
-		}
+		if (transformTime > 0 && advance())
+			transformed();
 	}
 
 	private void cache() {
@@ -261,6 +259,13 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 		markDirty();
 	}
 
+	private boolean advance() {
+		transformTime--;
+
+		markDirty();
+
+		return transformTime <= 0;
+	}
 	private void transformed() {
 		if (world.isRemote)
 			return;
@@ -291,8 +296,9 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 			.termSize(termSize)
 			.termDepth(termDepth)
 			.build();
+		argumentItemStack.shrink(1);
 
-		inventoryContents.set(SLOT_INPUT_1, ItemStack.EMPTY);
+		inventoryContents.set(SLOT_INPUT_1, argumentItemStack.isEmpty() ? ItemStack.EMPTY : argumentItemStack);
 		inventoryContents.set(SLOT_OUTPUT_2, resultItemStack);
 
 		cache();

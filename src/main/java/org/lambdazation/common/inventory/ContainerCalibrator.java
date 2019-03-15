@@ -166,7 +166,7 @@ public final class ContainerCalibrator extends Container {
 		public boolean isItemValidForSlot(int index, ItemStack stack) {
 			switch (index) {
 			case SLOT_INPUT_0:
-				return true;
+				return stack.getItem().equals(lambdazation.lambdazationItems.itemLambdaCrystal);
 			default:
 				return false;
 			}
@@ -200,7 +200,7 @@ public final class ContainerCalibrator extends Container {
 
 		@Override
 		public boolean isItemValid(ItemStack stack) {
-			return stack.getItem().equals(lambdazation.lambdazationItems.itemLambdaCrystal);
+			return inventory.isItemValidForSlot(getSlotIndex(), stack);
 		}
 	}
 }

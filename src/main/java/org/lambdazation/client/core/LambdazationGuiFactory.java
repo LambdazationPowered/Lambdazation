@@ -2,13 +2,16 @@ package org.lambdazation.client.core;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.client.gui.GuiCalibrator;
+import org.lambdazation.client.gui.GuiCharger;
 import org.lambdazation.client.gui.GuiCrystallizer;
 import org.lambdazation.client.gui.GuiLens;
 import org.lambdazation.client.gui.GuiTransformer;
 import org.lambdazation.common.inventory.ContainerCalibrator;
+import org.lambdazation.common.inventory.ContainerCharger;
 import org.lambdazation.common.inventory.ContainerCrystallizer;
 import org.lambdazation.common.inventory.ContainerLens;
 import org.lambdazation.common.inventory.ContainerTransformer;
+import org.lambdazation.common.tileentity.TileEntityCharger;
 import org.lambdazation.common.tileentity.TileEntityCrystallizer;
 import org.lambdazation.common.tileentity.TileEntityTransformer;
 
@@ -60,6 +63,17 @@ public final class LambdazationGuiFactory {
 			TileEntityTransformer transformerInventory = (TileEntityTransformer) tileEntity;
 
 			return new GuiTransformer(lambdazation, playerInventory, transformerInventory);
+		} else if (msg.getId().equals(ContainerCharger.GUI_ID)) {
+			BlockPos blockPos = msg.getAdditionalData().readBlockPos();
+			TileEntity tileEntity = Minecraft.getInstance().world.getTileEntity(blockPos);
+
+			InventoryPlayer playerInventory = Minecraft.getInstance().player.inventory;
+
+			if (!(tileEntity instanceof TileEntityCharger))
+				return null;
+			TileEntityCharger chargerInventory = (TileEntityCharger) tileEntity;
+
+			return new GuiCharger(lambdazation, playerInventory, chargerInventory);
 		} else
 			return null;
 	}
