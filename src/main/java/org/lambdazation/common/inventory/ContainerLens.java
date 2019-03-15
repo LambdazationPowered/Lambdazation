@@ -83,6 +83,8 @@ public final class ContainerLens extends Container {
 	}
 
 	public final class InventoryLens implements IInventory {
+		public static final int SLOT_INPUT_0 = 0;
+
 		public final NonNullList<ItemStack> inventoryContents;
 
 		public InventoryLens() {
@@ -162,7 +164,12 @@ public final class ContainerLens extends Container {
 
 		@Override
 		public boolean isItemValidForSlot(int index, ItemStack stack) {
-			return true;
+			switch (index) {
+			case SLOT_INPUT_0:
+				return true;
+			default:
+				return false;
+			}
 		}
 
 		@Override

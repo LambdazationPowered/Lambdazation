@@ -86,7 +86,7 @@ public final class GuiLens extends GuiContainer implements IContainerListener {
 
 	@Override
 	public void sendAllContents(Container containerToSend, NonNullList<ItemStack> itemsList) {
-		if (containerToSend.equals(containerLens) && itemsList.size() >= 1)
+		if (containerToSend.equals(containerLens) && itemsList.size() > 0)
 			detectChanges(itemsList.get(0));
 	}
 

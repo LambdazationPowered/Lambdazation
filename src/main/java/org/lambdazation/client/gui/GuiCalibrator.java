@@ -103,7 +103,7 @@ public final class GuiCalibrator extends GuiContainer implements IContainerListe
 
 	@Override
 	public void sendAllContents(Container containerToSend, NonNullList<ItemStack> itemsList) {
-		if (containerToSend.equals(containerCalibrator) && itemsList.size() >= 1)
+		if (containerToSend.equals(containerCalibrator) && itemsList.size() > 0)
 			detectChanges(itemsList.get(0));
 	}
 
