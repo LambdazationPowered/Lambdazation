@@ -34,8 +34,7 @@ public final class ContainerCrystallizer extends Container {
 		this.playerInventory = playerInventory;
 		this.crystallizerInventory = crystallizerInventory;
 
-		this.inventoryFieldCache = InventoryFieldCache
-			.builder(this, listeners, InventoryRefCrystallizer.METADATA)
+		this.inventoryFieldCache = InventoryFieldCache.builder(this, listeners, InventoryRefCrystallizer.METADATA)
 			.build();
 
 		addSlot(new SlotInput(crystallizerInventory, 0, 27, 47));
@@ -50,7 +49,8 @@ public final class ContainerCrystallizer extends Container {
 			addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
 	}
 
-	public <T extends IInventory> int lookupInventoryField(InventoryRefCrystallizer<T> inventoryRef, InventoryField<T> inventoryField) {
+	public <T extends IInventory> int lookupInventoryField(InventoryRefCrystallizer<T> inventoryRef,
+		InventoryField<T> inventoryField) {
 		return inventoryFieldCache.lookup(inventoryRef, inventoryField);
 	}
 
@@ -58,8 +58,7 @@ public final class ContainerCrystallizer extends Container {
 	public void addListener(IContainerListener listener) {
 		super.addListener(listener);
 
-		InventoryRefCrystallizer.METADATA.values()
-			.map(InventoryRef -> InventoryRef.getInventory(this))
+		InventoryRefCrystallizer.METADATA.values().map(InventoryRef -> InventoryRef.getInventory(this))
 			.forEach(inventory -> listener.sendAllWindowProperties(this, inventory));
 	}
 
@@ -135,8 +134,8 @@ public final class ContainerCrystallizer extends Container {
 		}
 	}
 
-	public static abstract class InventoryRefCrystallizer<T extends IInventory> extends GeneralizedEnum<InventoryRefCrystallizer<?>>
-		implements InventoryRef<ContainerCrystallizer, T> {
+	public static abstract class InventoryRefCrystallizer<T extends IInventory>
+		extends GeneralizedEnum<InventoryRefCrystallizer<?>> implements InventoryRef<ContainerCrystallizer, T> {
 		public static final InventoryRefCrystallizer<InventoryPlayer> PLAYER;
 		public static final InventoryRefCrystallizer<TileEntityCrystallizer> CRYSTALLIZER;
 

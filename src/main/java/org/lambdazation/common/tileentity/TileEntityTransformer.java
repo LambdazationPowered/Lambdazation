@@ -247,9 +247,11 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 			&& !argumentItemStack.isEmpty() && argumentItemStack.getItem().equals(itemLambdaCrystal)
 			&& resultItemStack.isEmpty()) {
 			int functionTermSize = itemLambdaCrystal.getTermSize(functionItemStack).orElse(0);
+			int argumentCapacity = itemLambdaCrystal.getCapacity(argumentItemStack).orElse(0);
 			int argumentEnergy = itemLambdaCrystal.getEnergy(argumentItemStack).orElse(0);
+			int argumentTermSize = itemLambdaCrystal.getTermSize(argumentItemStack).orElse(0);
 
-			if (argumentEnergy < functionTermSize)
+			if (argumentCapacity < functionTermSize + argumentTermSize + 1 || argumentEnergy < functionTermSize)
 				transformTime = 0;
 			else
 				transformTime = 20 * 10;
@@ -266,6 +268,7 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 
 		return transformTime <= 0;
 	}
+
 	private void transformed() {
 		if (world.isRemote)
 			return;
@@ -275,11 +278,13 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 		ItemStack functionItemStack = inventoryContents.get(SLOT_INPUT_0);
 		ItemStack argumentItemStack = inventoryContents.get(SLOT_INPUT_1);
 
-		Term functionTerm = itemLambdaCrystal.getTerm(functionItemStack).orElse(lambdazation.lambdazationTermFactory.predefTermId.term);
+		Term functionTerm = itemLambdaCrystal.getTerm(functionItemStack)
+			.orElse(lambdazation.lambdazationTermFactory.predefTermId.term);
 		int functionTermSize = itemLambdaCrystal.getTermSize(functionItemStack).orElse(0);
 		int argumentCapacity = itemLambdaCrystal.getCapacity(argumentItemStack).orElse(0);
 		int argumentEnergy = itemLambdaCrystal.getEnergy(argumentItemStack).orElse(0);
-		Term argumentTerm = itemLambdaCrystal.getTerm(argumentItemStack).orElse(lambdazation.lambdazationTermFactory.predefTermFix.applyTerm(functionTerm));
+		Term argumentTerm = itemLambdaCrystal.getTerm(argumentItemStack)
+			.orElse(lambdazation.lambdazationTermFactory.predefTermFix.applyTerm(functionTerm));
 
 		int capacity = argumentCapacity;
 		int energy = argumentEnergy - functionTermSize;
@@ -288,14 +293,8 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 		int termSize = term.size();
 		int termDepth = term.depth();
 
-		ItemStack resultItemStack = itemLambdaCrystal.builder()
-			.capacity(capacity)
-			.energy(energy)
-			.term(term)
-			.termState(termState)
-			.termSize(termSize)
-			.termDepth(termDepth)
-			.build();
+		ItemStack resultItemStack = itemLambdaCrystal.builder().capacity(capacity).energy(energy).term(term)
+			.termState(termState).termSize(termSize).termDepth(termDepth).build();
 		argumentItemStack.shrink(1);
 
 		inventoryContents.set(SLOT_INPUT_1, argumentItemStack.isEmpty() ? ItemStack.EMPTY : argumentItemStack);

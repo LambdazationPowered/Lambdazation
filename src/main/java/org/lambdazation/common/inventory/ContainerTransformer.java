@@ -34,8 +34,7 @@ public final class ContainerTransformer extends Container {
 		this.playerInventory = playerInventory;
 		this.transformerInventory = transformerInventory;
 
-		this.inventoryFieldCache = InventoryFieldCache
-			.builder(this, listeners, InventoryRefTransformer.METADATA)
+		this.inventoryFieldCache = InventoryFieldCache.builder(this, listeners, InventoryRefTransformer.METADATA)
 			.build();
 
 		addSlot(new SlotInput(transformerInventory, 0, 27, 47));
@@ -50,7 +49,8 @@ public final class ContainerTransformer extends Container {
 			addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
 	}
 
-	public <T extends IInventory> int lookupInventoryField(InventoryRefTransformer<T> inventoryRef, InventoryField<T> inventoryField) {
+	public <T extends IInventory> int lookupInventoryField(InventoryRefTransformer<T> inventoryRef,
+		InventoryField<T> inventoryField) {
 		return inventoryFieldCache.lookup(inventoryRef, inventoryField);
 	}
 
@@ -58,8 +58,7 @@ public final class ContainerTransformer extends Container {
 	public void addListener(IContainerListener listener) {
 		super.addListener(listener);
 
-		InventoryRefTransformer.METADATA.values()
-			.map(InventoryRef -> InventoryRef.getInventory(this))
+		InventoryRefTransformer.METADATA.values().map(InventoryRef -> InventoryRef.getInventory(this))
 			.forEach(inventory -> listener.sendAllWindowProperties(this, inventory));
 	}
 
@@ -135,8 +134,8 @@ public final class ContainerTransformer extends Container {
 		}
 	}
 
-	public static abstract class InventoryRefTransformer<T extends IInventory> extends GeneralizedEnum<InventoryRefTransformer<?>>
-		implements InventoryRef<ContainerTransformer, T> {
+	public static abstract class InventoryRefTransformer<T extends IInventory>
+		extends GeneralizedEnum<InventoryRefTransformer<?>> implements InventoryRef<ContainerTransformer, T> {
 		public static final InventoryRefTransformer<InventoryPlayer> PLAYER;
 		public static final InventoryRefTransformer<TileEntityTransformer> TRANSFORMER;
 
