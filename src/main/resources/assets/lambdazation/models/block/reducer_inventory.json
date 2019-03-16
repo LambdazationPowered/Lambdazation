@@ -1,0 +1,11 @@
+{
+    "parent": "block/cube",
+    "textures": {
+        "down": "lambdazation:block/reducer_output",
+        "up": "lambdazation:block/reducer_output",
+        "north": "lambdazation:block/reducer_input",
+        "south": "lambdazation:block/reducer_input",
+        "west": "lambdazation:block/reducer_input",
+        "east": "lambdazation:block/reducer_input"
+    }
+}

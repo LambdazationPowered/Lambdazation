@@ -1,0 +1,6 @@
+{
+    "parent": "lambdazation:block/reducer",
+    "textures": {
+        "texture": "lambdazation:block/reducer_input"
+    }
+}
