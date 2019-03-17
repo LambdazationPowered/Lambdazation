@@ -11,7 +11,6 @@ import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.item.ItemLambdaCrystal;
-import org.lambdazation.common.item.ItemLambdaCrystal.TermState;
 import org.lambdazation.common.utils.GeneralizedBuilder;
 import org.lamcalcj.ast.Lambda.Abs;
 import org.lamcalcj.ast.Lambda.App;
@@ -31,23 +30,32 @@ public final class LambdazationTermFactory {
 	public LambdazationTermFactory(Lambdazation lambdazation) {
 		this.lambdazation = lambdazation;
 
-		this.predefTermId = PredefTerm.builder()
+		this.predefTermId = PredefTerm
+			.builder()
 			.name("id")
-			.term(parseTerm("λx.x", true).get())
-			.termState(TermState.BETA_ETA_NORMAL_FORM)
+			.term(parseTerm("位x.x", true).get())
 			.build();
-		this.predefTermFix = PredefTerm.builder()
+		this.predefTermFix = PredefTerm
+			.builder()
 			.name("fix")
-			.term(parseTerm("λf.(λx.f (x x)) (λx.f (x x))", true).get())
-			.termState(TermState.BETA_ETA_NORMAL_FORM)
+			.term(parseTerm("位f.(位x.f (x x)) (位x.f (x x))", true).get())
 			.build();
 	}
 
-	public void serializeTerm(Term term, DataOutput output) throws IOException {
-		Deque<Term> pendingTerms = new ArrayDeque<>();
-		pendingTerms.add(term);
+	public TermStatistics serializeTerm(Term term, DataOutput output) throws IOException {
+		int termSize = term.size();
+		int termDepth = term.depth();
+		TermState termState = TermState.BETA_ETA_NORMAL_FORM;
+		int termHash = 1;
 
+		Deque<Term> pendingTerms = new ArrayDeque<>();
 		Map<Identifier, Integer> identifierMap = new HashMap<>();
+		boolean pendingBetaRedex = false;
+		boolean pendingEtaRedex = false;
+		Identifier pendingEtaRedexIdentifier = null;
+		Map<Identifier, Boolean> potentialEtaRedexIdentifiers = new HashMap<>();
+
+		pendingTerms.add(term);
 
 		while (!pendingTerms.isEmpty()) {
 			Term currentTerm = pendingTerms.pop();
@@ -55,37 +63,83 @@ public final class LambdazationTermFactory {
 				Identifier varIdentifier = ((Var) currentTerm).identifier();
 
 				output.writeByte(0);
-				serializeIdentifier(varIdentifier, output, identifierMap);
+				termHash = 31 * termHash + 0;
+				termHash = 31 * termHash + serializeIdentifier(varIdentifier, output, identifierMap);
+
+				if (!termState.equals(TermState.REDUCIBLE_FORM)) {
+					Boolean identifierState = potentialEtaRedexIdentifiers.get(varIdentifier);
+					if (identifierState != null)
+						if (identifierState)
+							potentialEtaRedexIdentifiers.put(varIdentifier, false);
+						else
+							potentialEtaRedexIdentifiers.remove(varIdentifier);
+					pendingBetaRedex = false;
+					pendingEtaRedex = false;
+					pendingEtaRedexIdentifier = null;
+				}
 			} else if (currentTerm instanceof Abs) {
 				Identifier absBinding = ((Abs) currentTerm).binding();
 				Term absTerm = ((Abs) currentTerm).term();
 
 				output.writeByte(1);
-				serializeIdentifier(absBinding, output, identifierMap);
+				termHash = 31 * termHash + 1;
+				termHash = 31 * termHash + serializeIdentifier(absBinding, output, identifierMap);
 				pendingTerms.push(absTerm);
+
+				if (!termState.equals(TermState.REDUCIBLE_FORM)) {
+					if (pendingBetaRedex) {
+						termState = TermState.REDUCIBLE_FORM;
+						pendingBetaRedex = false;
+						potentialEtaRedexIdentifiers = null;
+					} else if (termState.equals(TermState.BETA_ETA_NORMAL_FORM)) {
+						pendingEtaRedex = true;
+						pendingEtaRedexIdentifier = absBinding;
+					}
+				}
 			} else if (currentTerm instanceof App) {
 				Term appTerm = ((App) currentTerm).term();
 				Term appArgument = ((App) currentTerm).argument();
 
 				output.writeByte(2);
+				termHash = 31 * termHash + 2;
 				pendingTerms.push(appArgument);
 				pendingTerms.push(appTerm);
+
+				if (!termState.equals(TermState.REDUCIBLE_FORM)) {
+					if (pendingEtaRedex) {
+						if (appArgument instanceof Var) {
+							Identifier varIdentifier = ((Var) appArgument).identifier();
+
+							if (pendingEtaRedexIdentifier.equals(varIdentifier))
+								potentialEtaRedexIdentifiers.put(varIdentifier, true);
+						}
+						pendingEtaRedex = false;
+						pendingEtaRedexIdentifier = null;
+					}
+					pendingBetaRedex = true;
+				}
 			} else
 				throw new IllegalStateException();
 		}
+
+		if (termState.equals(TermState.BETA_ETA_NORMAL_FORM) && !potentialEtaRedexIdentifiers.isEmpty())
+			termState = TermState.BETA_NORMAL_FORM;
+
+		return new TermStatistics(termSize, termDepth, termState, termHash);
 	}
 
-	private void serializeIdentifier(Identifier identifier, DataOutput output, Map<Identifier, Integer> identifierMap)
+	private int serializeIdentifier(Identifier identifier, DataOutput output, Map<Identifier, Integer> identifierMap)
 		throws IOException {
 		Integer serialId = identifierMap.get(identifier);
 		if (serialId == null) {
-			identifierMap.put(identifier, identifierMap.size());
+			identifierMap.put(identifier, serialId = identifierMap.size());
 			output.writeBoolean(true);
 			output.writeUTF(identifier.name());
 		} else {
 			output.writeBoolean(false);
 			output.writeInt(serialId);
 		}
+		return serialId;
 	}
 
 	public Term deserializeTerm(DataInput input) throws IOException {
@@ -134,11 +188,11 @@ public final class LambdazationTermFactory {
 	public Optional<Term> parseTerm(String source, boolean requireClosedTerm) {
 		Text text = Text$.MODULE$.apply(source, Text.apply$default$2());
 
-		Optional<Term> resultTerm = Compiler
-			.runLambdaParser(text, Compiler.runLambdaParser$default$2(), Compiler.runLambdaParser$default$3(), Compiler.runLambdaParser$default$4())
-			.fold(
-				parserError -> Optional.empty(),
-				parserResult -> requireClosedTerm && parserResult._1.nonEmpty() ? Optional.empty() : Optional.of(parserResult._2));
+		Optional<Term> resultTerm = Compiler.runLambdaParser(text, Compiler.runLambdaParser$default$2(),
+			Compiler.runLambdaParser$default$3(), Compiler.runLambdaParser$default$4())
+			.fold(parserError -> Optional.empty(),
+				parserResult -> requireClosedTerm && parserResult._1.nonEmpty() ? Optional.empty()
+					: Optional.of(parserResult._2));
 
 		return resultTerm;
 	}
@@ -146,12 +200,10 @@ public final class LambdazationTermFactory {
 	public static final class PredefTerm {
 		public final String name;
 		public final Term term;
-		public final TermState termState;
 
-		public PredefTerm(String name, Term term, TermState termState) {
+		public PredefTerm(String name, Term term) {
 			this.name = name;
 			this.term = term;
-			this.termState = termState;
 		}
 
 		public Term applyTerm(Term argumentTerm) {
@@ -163,11 +215,7 @@ public final class LambdazationTermFactory {
 		}
 
 		public ItemLambdaCrystal.Builder withCrystal(ItemLambdaCrystal.Builder builder) {
-			return builder
-				.term(term)
-				.termState(termState)
-				.termSize(term.size())
-				.termDepth(term.depth());
+			return builder.term(term);
 		}
 
 		public static Builder builder() {
@@ -177,7 +225,6 @@ public final class LambdazationTermFactory {
 		public static final class Builder implements GeneralizedBuilder<Builder, PredefTerm> {
 			private String name;
 			private Term term;
-			private TermState termState;
 
 			Builder() {
 
@@ -193,13 +240,8 @@ public final class LambdazationTermFactory {
 				return this;
 			}
 
-			public Builder termState(TermState termState) {
-				this.termState = termState;
-				return this;
-			}
-
 			private void validateState() {
-				if (name == null || term == null || termState == null)
+				if (name == null || term == null)
 					throw new IllegalStateException("Property uninitialized");
 			}
 
@@ -212,12 +254,46 @@ public final class LambdazationTermFactory {
 			public PredefTerm build() {
 				validateState();
 
-				return new PredefTerm(name, term, termState);
+				return new PredefTerm(name, term);
 			}
 		}
 	}
 
-	private final class TermBuilder {
+	public static final class TermStatistics {
+		public final int termSize;
+		public final int termDepth;
+		public final TermState termState;
+		public final int termHash;
+
+		public TermStatistics(int termSize, int termDepth, TermState termState, int termHash) {
+			this.termState = termState;
+			this.termSize = termSize;
+			this.termDepth = termDepth;
+			this.termHash = termHash;
+		}
+
+		@Override
+		public String toString() {
+			return "[termSize: " + termSize + ", termDepth: " + termDepth + ", termState:" + termState + ", termHash: " + termHash + "]";
+		}
+	}
+
+	public enum TermState {
+		REDUCIBLE_FORM("ReducibleForm"), BETA_NORMAL_FORM("BetaNormalForm"), BETA_ETA_NORMAL_FORM("BetaEtaNormalForm");
+
+		private final String displayName;
+
+		TermState(String displayName) {
+			this.displayName = displayName;
+		}
+
+		@Override
+		public String toString() {
+			return displayName;
+		}
+	}
+
+	private static final class TermBuilder {
 		private final Deque<PendingTerm> pendingTerms = new ArrayDeque<>();
 
 		public void pushVar(Identifier varIdentifier) {

@@ -26,7 +26,6 @@ import org.lambdazation.common.block.BlockTransformer;
 import org.lambdazation.common.inventory.ContainerTransformer;
 import org.lambdazation.common.inventory.field.InventoryField;
 import org.lambdazation.common.item.ItemLambdaCrystal;
-import org.lambdazation.common.item.ItemLambdaCrystal.TermState;
 import org.lambdazation.common.state.properties.SlotState;
 import org.lamcalcj.ast.Lambda.App;
 import org.lamcalcj.ast.Lambda.Term;
@@ -289,12 +288,13 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 		int capacity = argumentCapacity;
 		int energy = argumentEnergy - functionTermSize;
 		Term term = new App(functionTerm, argumentTerm);
-		TermState termState = TermState.REDUCIBLE_FORM;
-		int termSize = term.size();
-		int termDepth = term.depth();
 
-		ItemStack resultItemStack = itemLambdaCrystal.builder().capacity(capacity).energy(energy).term(term)
-			.termState(termState).termSize(termSize).termDepth(termDepth).build();
+		ItemStack resultItemStack = itemLambdaCrystal
+			.builder()
+			.capacity(capacity)
+			.energy(energy)
+			.term(term)
+			.build();
 		argumentItemStack.shrink(1);
 
 		inventoryContents.set(SLOT_INPUT_1, argumentItemStack.isEmpty() ? ItemStack.EMPTY : argumentItemStack);

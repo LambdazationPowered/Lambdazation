@@ -3,9 +3,9 @@ package org.lambdazation.client.gui;
 import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
+import org.lambdazation.common.core.LambdazationTermFactory.TermState;
 import org.lambdazation.common.inventory.ContainerCalibrator;
 import org.lambdazation.common.item.ItemLambdaCrystal;
-import org.lambdazation.common.item.ItemLambdaCrystal.TermState;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;

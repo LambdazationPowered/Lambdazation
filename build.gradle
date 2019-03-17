@@ -19,6 +19,8 @@ archivesBaseName = 'lambdazation'
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 
+compileJava.options.encoding = 'UTF-8'
+
 minecraft {
     mappings channel: 'snapshot', version: '20180921-1.13'
 
