@@ -197,6 +197,60 @@ public final class LambdazationTermFactory {
 		return resultTerm;
 	}
 
+	public boolean isAlphaEquivalent(DataInput firstInput, DataInput secondInput) {
+		try {
+			for (int pendingTerm = 1; pendingTerm > 0; pendingTerm--) {
+				byte firstTermType = firstInput.readByte();
+				byte secondTermType = secondInput.readByte();
+				if (firstTermType != secondTermType)
+					return false;
+				byte termType = firstTermType = secondTermType;
+				switch (termType) {
+				case 0:
+					if (!isIdentifierEquivalent(firstInput, secondInput))
+						return false;
+					break;
+				case 1:
+					if (!isIdentifierEquivalent(firstInput, secondInput))
+						return false;
+					pendingTerm++;
+					break;
+				case 2:
+					pendingTerm++;
+					pendingTerm++;
+					break;
+				default:
+					return false;
+				}
+			}
+			return true;
+		} catch (IOException e) {
+			return false;
+		}
+	}
+
+	private boolean isIdentifierEquivalent(DataInput firstInput, DataInput secondInput) {
+		try {
+			boolean firstNewIdentifier = firstInput.readBoolean();
+			boolean secondNewIdentifier = secondInput.readBoolean();
+			if (firstNewIdentifier != secondNewIdentifier)
+				return false;
+			boolean newIdentifier = firstNewIdentifier = secondNewIdentifier;
+			if (newIdentifier) {
+				firstInput.readUTF();
+				secondInput.readUTF();
+			} else {
+				int firstSerialId = firstInput.readInt();
+				int secondSerialId = secondInput.readInt();
+				if (firstSerialId != secondSerialId)
+					return false;
+			}
+			return true;
+		} catch (IOException e) {
+			return false;
+		}
+	}
+
 	public static final class PredefTerm {
 		public final String name;
 		public final Term term;

@@ -18,7 +18,6 @@ import org.lambdazation.common.core.LambdazationTermFactory.TermState;
 import org.lambdazation.common.core.LambdazationTermFactory.TermStatistics;
 import org.lambdazation.common.utils.GeneralizedBuilder;
 import org.lamcalcj.ast.Lambda.Term;
-import org.lamcalcj.utils.Utils;
 
 public final class ItemLambdaCrystal extends Item {
 	public final Lambdazation lambdazation;
@@ -32,7 +31,7 @@ public final class ItemLambdaCrystal extends Item {
 	@Override
 	public void fillItemGroup(ItemGroup group, NonNullList<ItemStack> items) {
 		if (isInGroup(group)) {
-			 // TODO Magic value
+			// TODO Magic value
 			int capacity = 1024;
 			int energy = 1024;
 
@@ -156,12 +155,12 @@ public final class ItemLambdaCrystal extends Item {
 	public Optional<TermState> getTermState(ItemStack itemStack) {
 		if (!equals(itemStack.getItem()))
 			return Optional.empty();
-	
+
 		NBTTagCompound tag = itemStack.getOrCreateTag();
 		if (!tag.contains("termState", 1))
 			return Optional.empty();
 		byte termStateOrdinal = tag.getByte("termState");
-	
+
 		if (termStateOrdinal < 0 || termStateOrdinal >= TermState.values().length)
 			return Optional.empty();
 		TermState termState = TermState.values()[termStateOrdinal];
@@ -183,11 +182,23 @@ public final class ItemLambdaCrystal extends Item {
 		if (!equals(firstItemStack.getItem()) || !equals(secondItemStack.getItem()))
 			return false;
 
-		// GIB ME DO-NOTATION!
-		return getTerm(firstItemStack)
-			.flatMap(firstTerm -> getTerm(secondItemStack)
-				.map(secondTerm -> Utils.isAlphaEquivalent(firstTerm, secondTerm, Utils.isAlphaEquivalent$default$3())))
-			.orElse(false);
+		NBTTagCompound firstTag = firstItemStack.getOrCreateTag();
+		if (!firstTag.contains("term", 7))
+			return false;
+		byte[] firstSerializedTerm = firstTag.getByteArray("term");
+		NBTTagCompound secondTag = secondItemStack.getOrCreateTag();
+		if (!secondTag.contains("term", 7))
+			return false;
+		byte[] secondSerializedTerm = secondTag.getByteArray("term");
+
+		boolean result;
+		try (DataInputStream firstInput = new DataInputStream(new ByteArrayInputStream(firstSerializedTerm));
+			DataInputStream secondInput = new DataInputStream(new ByteArrayInputStream(secondSerializedTerm))) {
+			result = lambdazation.lambdazationTermFactory.isAlphaEquivalent(firstInput, secondInput);
+		} catch (IOException e) {
+			return false;
+		}
+		return result;
 	}
 
 	public Builder builder() {
