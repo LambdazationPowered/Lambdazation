@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
@@ -99,6 +100,7 @@ public final class ItemLambdaCrystal extends Item {
 		Term term;
 		try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(serializedTerm))) {
 			term = lambdazation.lambdazationTermFactory.deserializeTerm(dis);
+			readEOF(dis);
 		} catch (IOException e) {
 			return Optional.empty();
 		}
@@ -195,10 +197,17 @@ public final class ItemLambdaCrystal extends Item {
 		try (DataInputStream firstInput = new DataInputStream(new ByteArrayInputStream(firstSerializedTerm));
 			DataInputStream secondInput = new DataInputStream(new ByteArrayInputStream(secondSerializedTerm))) {
 			result = lambdazation.lambdazationTermFactory.isAlphaEquivalent(firstInput, secondInput);
+			readEOF(firstInput);
+			readEOF(secondInput);
 		} catch (IOException e) {
 			return false;
 		}
 		return result;
+	}
+
+	private void readEOF(InputStream inputStream) throws IOException {
+		if (inputStream.read() >= 0)
+			throw new IOException("EOF expected");
 	}
 
 	public Builder builder() {
