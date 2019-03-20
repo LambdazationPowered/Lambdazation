@@ -5,7 +5,7 @@ import org.lambdazation.common.inventory.field.InventoryField;
 import org.lambdazation.common.inventory.field.InventoryFieldCache;
 import org.lambdazation.common.inventory.field.InventoryRef;
 import org.lambdazation.common.tileentity.TileEntityTransformer;
-import org.lambdazation.common.utils.GeneralizedEnum;
+import org.lambdazation.common.util.GeneralizedEnum;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;

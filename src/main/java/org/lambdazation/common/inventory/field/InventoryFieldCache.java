@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.lambdazation.common.utils.EnumValue;
-import org.lambdazation.common.utils.GeneralizedBuilder;
-import org.lambdazation.common.utils.StreamIterable;
+import org.lambdazation.common.util.EnumValue;
+import org.lambdazation.common.util.GeneralizedBuilder;
+import org.lambdazation.common.util.StreamIterable;
 
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;

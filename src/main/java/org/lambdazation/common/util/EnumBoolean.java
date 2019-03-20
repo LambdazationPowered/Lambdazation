@@ -1,4 +1,4 @@
-package org.lambdazation.common.utils;
+package org.lambdazation.common.util;
 
 public final class EnumBoolean extends GeneralizedEnum<EnumBoolean> {
 	public static final EnumBoolean FALSE;

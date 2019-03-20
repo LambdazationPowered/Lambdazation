@@ -7,8 +7,8 @@ import java.util.Map;
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.state.properties.SlotState;
 import org.lambdazation.common.tileentity.TileEntityCharger;
-import org.lambdazation.common.utils.RelativeFacing;
-import org.lambdazation.common.utils.ValueBuilder;
+import org.lambdazation.common.util.RelativeFacing;
+import org.lambdazation.common.util.ValueBuilder;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;

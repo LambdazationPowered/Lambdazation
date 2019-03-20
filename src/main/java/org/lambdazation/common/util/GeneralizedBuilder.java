@@ -1,4 +1,4 @@
-package org.lambdazation.common.utils;
+package org.lambdazation.common.util;
 
 import java.util.function.Function;
 

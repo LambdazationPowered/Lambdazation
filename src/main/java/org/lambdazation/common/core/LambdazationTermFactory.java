@@ -11,7 +11,8 @@ import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.item.ItemLambdaCrystal;
-import org.lambdazation.common.utils.GeneralizedBuilder;
+import org.lambdazation.common.util.GeneralizedBuilder;
+import org.lambdazation.common.util.IO;
 import org.lamcalcj.ast.Lambda.Abs;
 import org.lamcalcj.ast.Lambda.App;
 import org.lamcalcj.ast.Lambda.Identifier;
@@ -237,8 +238,8 @@ public final class LambdazationTermFactory {
 				return false;
 			boolean newIdentifier = firstNewIdentifier = secondNewIdentifier;
 			if (newIdentifier) {
-				firstInput.readUTF();
-				secondInput.readUTF();
+				IO.skipUTF(firstInput);
+				IO.skipUTF(secondInput);
 			} else {
 				int firstSerialId = firstInput.readInt();
 				int secondSerialId = secondInput.readInt();
@@ -347,7 +348,7 @@ public final class LambdazationTermFactory {
 		}
 	}
 
-	private static final class TermBuilder {
+	private final class TermBuilder {
 		private final Deque<PendingTerm> pendingTerms = new ArrayDeque<>();
 
 		public void pushVar(Identifier varIdentifier) {
