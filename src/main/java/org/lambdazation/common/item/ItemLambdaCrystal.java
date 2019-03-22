@@ -11,9 +11,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
+import org.lambdazation.common.core.LambdazationTermFactory.TermMetadata;
+import org.lambdazation.common.core.LambdazationTermFactory.TermNaming;
 import org.lambdazation.common.core.LambdazationTermFactory.TermState;
 import org.lambdazation.common.core.LambdazationTermFactory.TermStatistics;
 import org.lambdazation.common.util.GeneralizedBuilder;
@@ -95,12 +98,22 @@ public final class ItemLambdaCrystal extends Item {
 		NBTTagCompound tag = itemStack.getOrCreateTag();
 		if (!tag.contains("term", 7))
 			return Optional.empty();
+		if (!tag.contains("termNaming", 7))
+			return Optional.empty();
 		byte[] serializedTerm = tag.getByteArray("term");
+		byte[] serializedTermNaming = tag.getByteArray("termNaming");
 
+		TermNaming termNaming;
+		try (DataInputStream dataInput = new DataInputStream(new ByteArrayInputStream(serializedTermNaming))) {
+			termNaming = TermNaming.deserialize(dataInput);
+			IO.readEOF(dataInput);
+		} catch (IOException e) {
+			return Optional.empty();
+		}
 		Term term;
-		try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(serializedTerm))) {
-			term = lambdazation.lambdazationTermFactory.deserializeTerm(dis);
-			IO.readEOF(dis);
+		try (DataInputStream dataInput = new DataInputStream(new ByteArrayInputStream(serializedTerm))) {
+			term = lambdazation.lambdazationTermFactory.deserializeTerm(termNaming, dataInput);
+			IO.readEOF(dataInput);
 		} catch (IOException e) {
 			return Optional.empty();
 		}
@@ -111,14 +124,23 @@ public final class ItemLambdaCrystal extends Item {
 		if (!equals(itemStack.getItem()))
 			return;
 
-		TermStatistics termStatistics;
-		ByteArrayOutputStream baos;
-		try (DataOutputStream dos = new DataOutputStream(baos = new ByteArrayOutputStream())) {
-			termStatistics = lambdazation.lambdazationTermFactory.serializeTerm(term, dos);
+		TermMetadata termMetadata;
+		ByteArrayOutputStream termOutput;
+		try (DataOutputStream dataOutput = new DataOutputStream(termOutput = new ByteArrayOutputStream())) {
+			termMetadata = lambdazation.lambdazationTermFactory.serializeTerm(term, dataOutput);
 		} catch (IOException e) {
 			return;
 		}
-		byte[] serializedTerm = baos.toByteArray();
+		byte[] serializedTerm = termOutput.toByteArray();
+		TermNaming termNaming = termMetadata.termNaming;
+		ByteArrayOutputStream termNamingOutput;
+		try (DataOutputStream dataOutput = new DataOutputStream(termNamingOutput = new ByteArrayOutputStream())) {
+			termNaming.serialize(dataOutput);
+		} catch (IOException e) {
+			return;
+		}
+		byte[] serializedTermNaming = termNamingOutput.toByteArray();
+		TermStatistics termStatistics = termMetadata.termStatistics;
 		int termSize = termStatistics.termSize;
 		int termDepth = termStatistics.termDepth;
 		byte termStateOrdinal = (byte) termStatistics.termState.ordinal();
@@ -126,6 +148,7 @@ public final class ItemLambdaCrystal extends Item {
 
 		NBTTagCompound tag = itemStack.getOrCreateTag();
 		tag.setByteArray("term", serializedTerm);
+		tag.setByteArray("termNaming", serializedTermNaming);
 		tag.setInt("termSize", termSize);
 		tag.setInt("termDepth", termDepth);
 		tag.setByte("termState", termStateOrdinal);
@@ -193,16 +216,7 @@ public final class ItemLambdaCrystal extends Item {
 			return false;
 		byte[] secondSerializedTerm = secondTag.getByteArray("term");
 
-		boolean result;
-		try (DataInputStream firstInput = new DataInputStream(new ByteArrayInputStream(firstSerializedTerm));
-			DataInputStream secondInput = new DataInputStream(new ByteArrayInputStream(secondSerializedTerm))) {
-			result = lambdazation.lambdazationTermFactory.isAlphaEquivalent(firstInput, secondInput);
-			IO.readEOF(firstInput);
-			IO.readEOF(secondInput);
-		} catch (IOException e) {
-			return false;
-		}
-		return result;
+		return Arrays.equals(firstSerializedTerm, secondSerializedTerm);
 	}
 
 	public Builder builder() {

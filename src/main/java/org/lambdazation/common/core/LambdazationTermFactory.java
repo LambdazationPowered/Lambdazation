@@ -4,15 +4,14 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.item.ItemLambdaCrystal;
 import org.lambdazation.common.util.GeneralizedBuilder;
-import org.lambdazation.common.util.IO;
 import org.lamcalcj.ast.Lambda.Abs;
 import org.lamcalcj.ast.Lambda.App;
 import org.lamcalcj.ast.Lambda.Identifier;
@@ -21,6 +20,13 @@ import org.lamcalcj.ast.Lambda.Var;
 import org.lamcalcj.compiler.Compiler;
 import org.lamcalcj.parser.Text;
 import org.lamcalcj.parser.Text$;
+
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 public final class LambdazationTermFactory {
 	public final Lambdazation lambdazation;
@@ -43,18 +49,19 @@ public final class LambdazationTermFactory {
 			.build();
 	}
 
-	public TermStatistics serializeTerm(Term term, DataOutput output) throws IOException {
+	public TermMetadata serializeTerm(Term term, DataOutput output) throws IOException {
 		int termSize = term.size();
 		int termDepth = term.depth();
 		TermState termState = TermState.BETA_ETA_NORMAL_FORM;
 		int termHash = 1;
 
 		Deque<Term> pendingTerms = new ArrayDeque<>();
-		Map<Identifier, Integer> identifierMap = new HashMap<>();
+		Object2IntMap<Identifier> identifierMap = new Object2IntOpenHashMap<>();
+		TermNaming.Builder termNamingBuilder = TermNaming.builder();
 		boolean pendingBetaRedex = false;
 		boolean pendingEtaRedex = false;
 		Identifier pendingEtaRedexIdentifier = null;
-		Map<Identifier, Boolean> potentialEtaRedexIdentifiers = new HashMap<>();
+		Object2BooleanMap<Identifier> potentialEtaRedexIdentifiers = new Object2BooleanOpenHashMap<>();
 
 		pendingTerms.add(term);
 
@@ -65,15 +72,14 @@ public final class LambdazationTermFactory {
 
 				output.writeByte(0);
 				termHash = 31 * termHash + 0;
-				termHash = 31 * termHash + serializeIdentifier(varIdentifier, output, identifierMap);
+				termHash = 31 * termHash + serializeIdentifier(varIdentifier, output, identifierMap, termNamingBuilder);
 
 				if (!termState.equals(TermState.REDUCIBLE_FORM)) {
-					Boolean identifierState = potentialEtaRedexIdentifiers.get(varIdentifier);
-					if (identifierState != null)
-						if (identifierState)
-							potentialEtaRedexIdentifiers.put(varIdentifier, false);
-						else
-							potentialEtaRedexIdentifiers.remove(varIdentifier);
+					boolean identifierState = potentialEtaRedexIdentifiers.getBoolean(varIdentifier);
+					if (identifierState)
+						potentialEtaRedexIdentifiers.put(varIdentifier, false);
+					else
+						potentialEtaRedexIdentifiers.removeBoolean(varIdentifier);
 					pendingBetaRedex = false;
 					pendingEtaRedex = false;
 					pendingEtaRedexIdentifier = null;
@@ -84,7 +90,7 @@ public final class LambdazationTermFactory {
 
 				output.writeByte(1);
 				termHash = 31 * termHash + 1;
-				termHash = 31 * termHash + serializeIdentifier(absBinding, output, identifierMap);
+				termHash = 31 * termHash + serializeIdentifier(absBinding, output, identifierMap, termNamingBuilder);
 				pendingTerms.push(absTerm);
 
 				if (!termState.equals(TermState.REDUCIBLE_FORM)) {
@@ -126,36 +132,35 @@ public final class LambdazationTermFactory {
 		if (termState.equals(TermState.BETA_ETA_NORMAL_FORM) && !potentialEtaRedexIdentifiers.isEmpty())
 			termState = TermState.BETA_NORMAL_FORM;
 
-		return new TermStatistics(termSize, termDepth, termState, termHash);
+		TermStatistics termStatistics = new TermStatistics(termSize, termDepth, termState, termHash);
+		TermNaming termNaming = termNamingBuilder.build();
+		return new TermMetadata(termNaming, termStatistics);
 	}
 
-	private int serializeIdentifier(Identifier identifier, DataOutput output, Map<Identifier, Integer> identifierMap)
-		throws IOException {
-		Integer serialId = identifierMap.get(identifier);
-		if (serialId == null) {
-			identifierMap.put(identifier, serialId = identifierMap.size());
-			output.writeBoolean(true);
-			output.writeUTF(identifier.name());
-		} else {
-			output.writeBoolean(false);
-			output.writeInt(serialId);
-		}
+	private int serializeIdentifier(Identifier identifier, DataOutput output, Object2IntMap<Identifier> identifierMap,
+		TermNaming.Builder termNamingBuilder) throws IOException {
+		int serialId;
+		if (identifierMap.containsKey(identifier))
+			serialId = identifierMap.getInt(identifier);
+		else
+			identifierMap.put(identifier, serialId = termNamingBuilder.putIdentifier(identifier.name()));
+		output.writeInt(serialId);
 		return serialId;
 	}
 
-	public Term deserializeTerm(DataInput input) throws IOException {
+	public Term deserializeTerm(TermNaming termNaming, DataInput input) throws IOException {
 		TermBuilder termBuilder = new TermBuilder();
-		Map<Integer, Identifier> identifierMap = new HashMap<>();
+		Int2ObjectMap<Identifier> identifierMap = new Int2ObjectOpenHashMap<>();
 
 		while (!termBuilder.isCompleted()) {
 			byte termType = input.readByte();
 			switch (termType) {
 			case 0:
-				Identifier varIdentifier = deserializeIdentifier(input, identifierMap);
+				Identifier varIdentifier = deserializeIdentifier(termNaming, input, identifierMap);
 				termBuilder.pushVar(varIdentifier);
 				break;
 			case 1:
-				Identifier absBinding = deserializeIdentifier(input, identifierMap);
+				Identifier absBinding = deserializeIdentifier(termNaming, input, identifierMap);
 				termBuilder.pushAbs(absBinding);
 				break;
 			case 2:
@@ -169,21 +174,18 @@ public final class LambdazationTermFactory {
 		return termBuilder.buildTerm();
 	}
 
-	private Identifier deserializeIdentifier(DataInput input, Map<Integer, Identifier> identifierMap)
-		throws IOException {
-		boolean newIdentifier = input.readBoolean();
-		if (newIdentifier) {
-			String name = input.readUTF();
-			Identifier identifier = new Identifier(name);
-			identifierMap.put(identifierMap.size(), identifier);
-			return identifier;
-		} else {
-			int serialId = input.readInt();
-			Identifier identifier = identifierMap.get(serialId);
-			if (identifier == null)
-				throw new IOException("Invalid serial id");
-			return identifier;
+	private Identifier deserializeIdentifier(TermNaming termNaming, DataInput input,
+		Int2ObjectMap<Identifier> identifierMap) throws IOException {
+		int serialId = input.readInt();
+		if (!termNaming.isValidSerialId(serialId))
+			throw new IOException("Invalid serial id");
+		Identifier identifier = identifierMap.get(serialId);
+		if (identifier == null) {
+			String identifierName = termNaming.identifierName(serialId);
+			identifier = new Identifier(identifierName);
+			identifierMap.put(serialId, identifier);
 		}
+		return identifier;
 	}
 
 	public Optional<Term> parseTerm(String source, boolean requireClosedTerm) {
@@ -196,60 +198,6 @@ public final class LambdazationTermFactory {
 					: Optional.of(parserResult._2));
 
 		return resultTerm;
-	}
-
-	public boolean isAlphaEquivalent(DataInput firstInput, DataInput secondInput) {
-		try {
-			for (int pendingTerm = 1; pendingTerm > 0; pendingTerm--) {
-				byte firstTermType = firstInput.readByte();
-				byte secondTermType = secondInput.readByte();
-				if (firstTermType != secondTermType)
-					return false;
-				byte termType = firstTermType = secondTermType;
-				switch (termType) {
-				case 0:
-					if (!isIdentifierEquivalent(firstInput, secondInput))
-						return false;
-					break;
-				case 1:
-					if (!isIdentifierEquivalent(firstInput, secondInput))
-						return false;
-					pendingTerm++;
-					break;
-				case 2:
-					pendingTerm++;
-					pendingTerm++;
-					break;
-				default:
-					return false;
-				}
-			}
-			return true;
-		} catch (IOException e) {
-			return false;
-		}
-	}
-
-	private boolean isIdentifierEquivalent(DataInput firstInput, DataInput secondInput) {
-		try {
-			boolean firstNewIdentifier = firstInput.readBoolean();
-			boolean secondNewIdentifier = secondInput.readBoolean();
-			if (firstNewIdentifier != secondNewIdentifier)
-				return false;
-			boolean newIdentifier = firstNewIdentifier = secondNewIdentifier;
-			if (newIdentifier) {
-				IO.skipUTF(firstInput);
-				IO.skipUTF(secondInput);
-			} else {
-				int firstSerialId = firstInput.readInt();
-				int secondSerialId = secondInput.readInt();
-				if (firstSerialId != secondSerialId)
-					return false;
-			}
-			return true;
-		} catch (IOException e) {
-			return false;
-		}
 	}
 
 	public static final class PredefTerm {
@@ -314,6 +262,88 @@ public final class LambdazationTermFactory {
 		}
 	}
 
+	public enum TermState {
+		REDUCIBLE_FORM("ReducibleForm"), BETA_NORMAL_FORM("BetaNormalForm"), BETA_ETA_NORMAL_FORM("BetaEtaNormalForm");
+
+		private final String displayName;
+
+		TermState(String displayName) {
+			this.displayName = displayName;
+		}
+
+		@Override
+		public String toString() {
+			return displayName;
+		}
+	}
+
+	public static final class TermNaming {
+		private final String[] identifierNames;
+
+		TermNaming(String[] identifierNames) {
+			this.identifierNames = identifierNames;
+		}
+
+		public boolean isValidSerialId(int serialId) {
+			return serialId >= 0 && serialId < identifierNames.length;
+		}
+
+		public int identifierCount() {
+			return identifierNames.length;
+		}
+
+		public String identifierName(int serialId) {
+			if (!isValidSerialId(serialId))
+				throw new IndexOutOfBoundsException();
+			return identifierNames[serialId];
+		}
+
+		public void serialize(DataOutput output) throws IOException {
+			int identifierCount = identifierNames.length;
+			output.writeInt(identifierCount);
+			for (String identifierName : identifierNames)
+				output.writeUTF(identifierName);
+		}
+
+		public static TermNaming deserialize(DataInput input) throws IOException {
+			int identifierCount = input.readInt();
+			if (identifierCount < 0)
+				throw new IOException("Invalid identifier count");
+			String[] identifierNames = new String[identifierCount];
+			for (int i = 0; i < identifierNames.length; i++)
+				identifierNames[i] = input.readUTF();
+			return new TermNaming(identifierNames);
+		}
+
+		public static Builder builder() {
+			return new Builder();
+		}
+
+		public static final class Builder implements GeneralizedBuilder<Builder, TermNaming> {
+			private final List<String> termNaming;
+
+			public Builder() {
+				termNaming = new ArrayList<>();
+			}
+
+			public int putIdentifier(String identifierName) {
+				int serialId = termNaming.size();
+				termNaming.add(identifierName);
+				return serialId;
+			}
+
+			@Override
+			public Builder concrete() {
+				return this;
+			}
+
+			@Override
+			public TermNaming build() {
+				return new TermNaming(termNaming.toArray(new String[termNaming.size()]));
+			}
+		}
+	}
+
 	public static final class TermStatistics {
 		public final int termSize;
 		public final int termDepth;
@@ -333,22 +363,17 @@ public final class LambdazationTermFactory {
 		}
 	}
 
-	public enum TermState {
-		REDUCIBLE_FORM("ReducibleForm"), BETA_NORMAL_FORM("BetaNormalForm"), BETA_ETA_NORMAL_FORM("BetaEtaNormalForm");
+	public static final class TermMetadata {
+		public final TermNaming termNaming;
+		public final TermStatistics termStatistics;
 
-		private final String displayName;
-
-		TermState(String displayName) {
-			this.displayName = displayName;
-		}
-
-		@Override
-		public String toString() {
-			return displayName;
+		public TermMetadata(TermNaming termNaming, TermStatistics termStatistics) {
+			this.termNaming = termNaming;
+			this.termStatistics = termStatistics;
 		}
 	}
 
-	private final class TermBuilder {
+	private static final class TermBuilder {
 		private final Deque<PendingTerm> pendingTerms = new ArrayDeque<>();
 
 		public void pushVar(Identifier varIdentifier) {
