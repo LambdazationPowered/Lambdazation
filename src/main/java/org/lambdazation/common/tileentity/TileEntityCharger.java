@@ -63,7 +63,7 @@ public final class TileEntityCharger extends TileEntityLockable implements ISide
 		this.inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
 		this.chargeSpeed = 1;
 		this.burnSpeed = 1;
-		this.capacity = 65535;
+		this.capacity = 8192;
 		this.energy = 0;
 		this.burnTime = 0;
 	}
