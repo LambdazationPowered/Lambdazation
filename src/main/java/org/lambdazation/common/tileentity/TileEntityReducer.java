@@ -40,6 +40,7 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 
 	public final NonNullList<ItemStack> inventoryContents;
 	public NonNullList<ItemStack> prevInventoryContents;
+	public int reduceSpeed;
 	public int reduceTime;
 
 	private final LazyOptional<? extends IItemHandler>[] itemHandlers = SidedInvWrapper.create(this, EnumFacing.DOWN,
@@ -52,6 +53,7 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 
 		this.inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
 		this.prevInventoryContents = null;
+		this.reduceSpeed = 1;
 		this.reduceTime = 0;
 	}
 
@@ -60,6 +62,7 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 		super.read(compound);
 
 		ItemStackHelper.loadAllItems(compound, inventoryContents);
+		reduceSpeed = compound.getInt("reduceSpeed");
 		reduceTime = compound.getInt("reduceTime");
 	}
 
@@ -68,6 +71,7 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 		super.write(compound);
 
 		ItemStackHelper.saveAllItems(compound, inventoryContents);
+		compound.setInt("reduceSpeed", reduceSpeed);
 		compound.setInt("reduceTime", reduceTime);
 
 		return compound;
@@ -251,6 +255,17 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 	}
 
 	public enum InventoryFieldReducer implements InventoryField<TileEntityReducer> {
+		REDUCE_SPEED {
+			@Override
+			public int getField(TileEntityReducer inventory) {
+				return inventory.reduceSpeed;
+			}
+
+			@Override
+			public void setField(TileEntityReducer inventory, int value) {
+				inventory.reduceSpeed = value;
+			}
+		},
 		REDUCE_TIME {
 			@Override
 			public int getField(TileEntityReducer inventory) {
