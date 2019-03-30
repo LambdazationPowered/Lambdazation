@@ -16,7 +16,9 @@ import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.core.LambdazationTermFactory.TermMetadata;
+import org.lambdazation.common.core.LambdazationTermFactory.TermNamer;
 import org.lambdazation.common.core.LambdazationTermFactory.TermNaming;
+import org.lambdazation.common.core.LambdazationTermFactory.TermRef;
 import org.lambdazation.common.core.LambdazationTermFactory.TermState;
 import org.lambdazation.common.core.LambdazationTermFactory.TermStatistics;
 import org.lambdazation.common.util.GeneralizedBuilder;
@@ -98,21 +100,22 @@ public final class ItemLambdaCrystal extends Item {
 		NBTTagCompound tag = itemStack.getOrCreateTag();
 		if (!tag.contains("term", 7))
 			return Optional.empty();
-		if (!tag.contains("termNaming", 7))
-			return Optional.empty();
 		byte[] serializedTerm = tag.getByteArray("term");
-		byte[] serializedTermNaming = tag.getByteArray("termNaming");
+		byte[] serializedTermNaming = tag.contains("termNaming", 7) ? tag.getByteArray("termNaming") : null;
 
-		TermNaming termNaming;
-		try (DataInputStream dataInput = new DataInputStream(new ByteArrayInputStream(serializedTermNaming))) {
-			termNaming = TermNaming.deserialize(dataInput);
-			IO.readEOF(dataInput);
-		} catch (IOException e) {
-			return Optional.empty();
-		}
+		TermNamer termNamer;
+		if (serializedTermNaming == null)
+			termNamer = TermNamer.ALPHABET_NAMER;
+		else
+			try (DataInputStream dataInput = new DataInputStream(new ByteArrayInputStream(serializedTermNaming))) {
+				termNamer = TermNaming.deserialize(dataInput);
+				IO.readEOF(dataInput);
+			} catch (IOException e) {
+				return Optional.empty();
+			}
 		Term term;
 		try (DataInputStream dataInput = new DataInputStream(new ByteArrayInputStream(serializedTerm))) {
-			term = lambdazation.lambdazationTermFactory.deserializeTerm(termNaming, dataInput);
+			term = lambdazation.lambdazationTermFactory.deserializeTerm(termNamer, dataInput);
 			IO.readEOF(dataInput);
 		} catch (IOException e) {
 			return Optional.empty();
@@ -203,6 +206,54 @@ public final class ItemLambdaCrystal extends Item {
 		return Optional.of(termHash);
 	}
 
+	public Optional<TermRef> getTermRef(ItemStack itemStack) {
+		if (!equals(itemStack.getItem()))
+			return Optional.empty();
+
+		NBTTagCompound tag = itemStack.getOrCreateTag();
+		if (!tag.contains("term", 7))
+			return Optional.empty();
+		if (!tag.contains("termSize", 3))
+			return Optional.empty();
+		if (!tag.contains("termDepth", 3))
+			return Optional.empty();
+		if (!tag.contains("termState", 1))
+			return Optional.empty();
+		if (!tag.contains("termHash", 3))
+			return Optional.empty();
+		byte[] serializedTerm = tag.getByteArray("term");
+		int termSize = tag.getInt("termSize");
+		int termDepth = tag.getInt("termDepth");
+		byte termStateOrdinal = tag.getByte("termState");
+		int termHash = tag.getInt("termHash");
+
+		if (termStateOrdinal < 0 || termStateOrdinal >= TermState.values().length)
+			return Optional.empty();
+		TermState termState = TermState.values()[termStateOrdinal];
+		TermRef termRef = new TermRef(serializedTerm, termSize, termDepth, termState, termHash);
+
+		return Optional.ofNullable(termRef);
+	}
+
+	public void setTermRef(ItemStack itemStack, TermRef termRef) {
+		if (!equals(itemStack.getItem()))
+			return;
+
+		byte[] serializedTerm = termRef.serializedTerm;
+		int termSize = termRef.termSize;
+		int termDepth = termRef.termDepth;
+		byte termStateOrdinal = (byte) termRef.termState.ordinal();
+		int termHash = termRef.termHash;
+
+		NBTTagCompound tag = itemStack.getOrCreateTag();
+		tag.setByteArray("term", serializedTerm);
+		tag.removeTag("termNaming");
+		tag.setInt("termSize", termSize);
+		tag.setInt("termDepth", termDepth);
+		tag.setByte("termState", termStateOrdinal);
+		tag.setInt("termHash", termHash);
+	}
+
 	public boolean isAlphaEquivalent(ItemStack firstItemStack, ItemStack secondItemStack) {
 		if (!equals(firstItemStack.getItem()) || !equals(secondItemStack.getItem()))
 			return false;
@@ -227,6 +278,7 @@ public final class ItemLambdaCrystal extends Item {
 		private Integer capacity;
 		private Integer energy;
 		private Term term;
+		private TermRef termRef;
 
 		Builder() {
 
@@ -244,11 +296,18 @@ public final class ItemLambdaCrystal extends Item {
 
 		public Builder term(Term term) {
 			this.term = term;
+			this.termRef = null;
+			return this;
+		}
+
+		public Builder termRef(TermRef termRef) {
+			this.termRef = termRef;
+			this.term = null;
 			return this;
 		}
 
 		private void validateState() {
-			if (capacity == null || energy == null || term == null)
+			if (capacity == null || energy == null || (term == null && termRef == null))
 				throw new IllegalStateException("Property uninitialized");
 		}
 
@@ -264,7 +323,10 @@ public final class ItemLambdaCrystal extends Item {
 			ItemStack itemStack = new ItemStack(lambdazation.lambdazationItems.itemLambdaCrystal);
 			setCapacity(itemStack, capacity);
 			setEnergy(itemStack, energy);
-			setTerm(itemStack, term);
+			if (term != null)
+				setTerm(itemStack, term);
+			if (termRef != null)
+				setTermRef(itemStack, termRef);
 
 			return itemStack;
 		}

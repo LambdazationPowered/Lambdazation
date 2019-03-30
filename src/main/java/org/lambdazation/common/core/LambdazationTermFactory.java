@@ -1,10 +1,15 @@
 package org.lambdazation.common.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +25,10 @@ import org.lamcalcj.ast.Lambda.Var;
 import org.lamcalcj.compiler.Compiler;
 import org.lamcalcj.parser.Text;
 import org.lamcalcj.parser.Text$;
+import org.lamcalcj.reducer.BetaReducer;
+import org.lamcalcj.reducer.EtaConverter;
+import org.lamcalcj.reducer.Result;
+import org.lamcalcj.reducer.Strategy;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -27,16 +36,20 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 
 public final class LambdazationTermFactory {
 	public final Lambdazation lambdazation;
 
+	public final TermCache termCache;
 	public final PredefTerm predefTermId;
 	public final PredefTerm predefTermFix;
 
 	public LambdazationTermFactory(Lambdazation lambdazation) {
 		this.lambdazation = lambdazation;
 
+		this.termCache = new TermCache();
 		this.predefTermId = PredefTerm
 			.builder()
 			.name("id")
@@ -148,7 +161,7 @@ public final class LambdazationTermFactory {
 		return serialId;
 	}
 
-	public Term deserializeTerm(TermNaming termNaming, DataInput input) throws IOException {
+	public Term deserializeTerm(TermNamer termNamer, DataInput input) throws IOException {
 		TermBuilder termBuilder = new TermBuilder();
 		Int2ObjectMap<Identifier> identifierMap = new Int2ObjectOpenHashMap<>();
 
@@ -156,11 +169,11 @@ public final class LambdazationTermFactory {
 			byte termType = input.readByte();
 			switch (termType) {
 			case 0:
-				Identifier varIdentifier = deserializeIdentifier(termNaming, input, identifierMap);
+				Identifier varIdentifier = deserializeIdentifier(termNamer, input, identifierMap);
 				termBuilder.pushVar(varIdentifier);
 				break;
 			case 1:
-				Identifier absBinding = deserializeIdentifier(termNaming, input, identifierMap);
+				Identifier absBinding = deserializeIdentifier(termNamer, input, identifierMap);
 				termBuilder.pushAbs(absBinding);
 				break;
 			case 2:
@@ -174,14 +187,14 @@ public final class LambdazationTermFactory {
 		return termBuilder.buildTerm();
 	}
 
-	private Identifier deserializeIdentifier(TermNaming termNaming, DataInput input,
+	private Identifier deserializeIdentifier(TermNamer termNamer, DataInput input,
 		Int2ObjectMap<Identifier> identifierMap) throws IOException {
 		int serialId = input.readInt();
-		if (!termNaming.isValidSerialId(serialId))
+		if (!termNamer.isValidSerialId(serialId))
 			throw new IOException("Invalid serial id");
 		Identifier identifier = identifierMap.get(serialId);
 		if (identifier == null) {
-			String identifierName = termNaming.identifierName(serialId);
+			String identifierName = termNamer.identifierName(serialId);
 			identifier = new Identifier(identifierName);
 			identifierMap.put(serialId, identifier);
 		}
@@ -277,21 +290,57 @@ public final class LambdazationTermFactory {
 		}
 	}
 
-	public static final class TermNaming {
+	public interface TermNamer {
+		static TermNamer EMPTY_NAMER = new TermNamer() {
+			@Override
+			public boolean isValidSerialId(int serialId) {
+				return serialId >= 0;
+			}
+
+			@Override
+			public String identifierName(int serialId) {
+				if (!isValidSerialId(serialId))
+					throw new IndexOutOfBoundsException();
+				return "";
+			}
+		};
+
+		static TermNamer ALPHABET_NAMER = new TermNamer() {
+			@Override
+			public boolean isValidSerialId(int serialId) {
+				return serialId >= 0;
+			}
+
+			@Override
+			public String identifierName(int serialId) {
+				if (!isValidSerialId(serialId))
+					throw new IndexOutOfBoundsException();
+				StringBuilder builder = new StringBuilder();
+				builder.append((char) ('a' + serialId % 26));
+				if (serialId >= 26)
+					builder.append(serialId / 26 - 1);
+				return builder.toString();
+			}
+		};
+
+		boolean isValidSerialId(int serialId);
+
+		String identifierName(int serialId);
+	}
+
+	public static final class TermNaming implements TermNamer {
 		private final String[] identifierNames;
 
 		TermNaming(String[] identifierNames) {
 			this.identifierNames = identifierNames;
 		}
 
+		@Override
 		public boolean isValidSerialId(int serialId) {
 			return serialId >= 0 && serialId < identifierNames.length;
 		}
 
-		public int identifierCount() {
-			return identifierNames.length;
-		}
-
+		@Override
 		public String identifierName(int serialId) {
 			if (!isValidSerialId(serialId))
 				throw new IndexOutOfBoundsException();
@@ -370,6 +419,267 @@ public final class LambdazationTermFactory {
 		public TermMetadata(TermNaming termNaming, TermStatistics termStatistics) {
 			this.termNaming = termNaming;
 			this.termStatistics = termStatistics;
+		}
+	}
+
+	public static class TermRef {
+		public final byte[] serializedTerm;
+		public final int termSize;
+		public final int termDepth;
+		public final TermState termState;
+		public final int termHash;
+
+		public TermRef(byte[] serializedTerm, int termSize, int termDepth, TermState termState, int termHash) {
+			this.serializedTerm = serializedTerm;
+			this.termSize = termSize;
+			this.termDepth = termDepth;
+			this.termState = termState;
+			this.termHash = termHash;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == this)
+				return true;
+			if (!(obj instanceof TermRef))
+				return false;
+			if (termHash != ((TermRef) obj).termHash)
+				return false;
+			byte[] firstSerializedTerm = serializedTerm;
+			byte[] secondSerializedTerm = ((TermRef) obj).serializedTerm;
+			return Arrays.equals(firstSerializedTerm, secondSerializedTerm);
+		}
+
+		@Override
+		public int hashCode() {
+			return termHash;
+		}
+	}
+
+	public final class TermCache {
+		final TermPool primaryTermPool;
+		final TermPool secondaryTermPool;
+
+		TermCache() {
+			primaryTermPool = new TermPool(null, 0xFFFFFF, 0x7FFFFF, 20 * 60 * 10, -1);
+			secondaryTermPool = new TermPool(primaryTermPool, 0xFFFF, 0x7FFF, 20 * 10, 20 * 60);
+		}
+
+		public void purgeCache(boolean force, int time) {
+			primaryTermPool.purgePool(force, time);
+			secondaryTermPool.purgePool(force, time);
+		}
+
+		public TermRef reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) {
+			Entry entry = secondaryTermPool.acquireEntry(termRef, time);
+			int currentStep = 0;
+			while (currentStep < maxStep && entry.termSize <= maxSize) {
+				if (entry.nextEntry == null)
+					break;
+				if (currentStep + entry.nextEntryStep > maxStep)
+					break;
+				if (entry.nextEntrySizePeak > maxSize)
+					break;
+				currentStep += entry.nextEntryStep;
+				entry = entry.nextEntry;
+			}
+			if (currentStep >= maxStep || entry.termState.equals(TermState.BETA_ETA_NORMAL_FORM))
+				return entry;
+			return reduceEntry(entry, maxStep - currentStep, maxSize, time);
+		}
+
+		TermRef reduceEntry(Entry entry, int maxStep, int maxSize, int time) {
+			Term term;
+			try (DataInputStream dataInput = new DataInputStream(new ByteArrayInputStream(entry.serializedTerm))) {
+				term = deserializeTerm(TermNamer.EMPTY_NAMER, dataInput);
+			} catch (IOException e) {
+				return entry;
+			}
+
+			boolean successful = true;
+			int currentStep = 0;
+			int sizePeak = 0;
+			if (successful && currentStep <= maxStep && term.size() <= maxSize) {
+				Result result = BetaReducer.betaReduction(term, new Strategy(scala.Option.apply(maxStep - currentStep),
+					scala.Option.apply(maxSize), scala.Option.empty(), false, false));
+				successful = result.abortReason().successful();
+				currentStep += result.step();
+				sizePeak = Math.max(sizePeak, result.sizePeak());
+				term = result.term();
+			}
+			if (successful && currentStep <= maxStep && term.size() <= maxSize) {
+				Result result = EtaConverter.etaConversion(term, new Strategy(scala.Option.apply(maxStep - currentStep),
+					scala.Option.apply(maxSize), scala.Option.empty(), false, false));
+				successful = result.abortReason().successful();
+				currentStep += result.step();
+				sizePeak = Math.max(sizePeak, result.sizePeak());
+				term = result.term();
+			}
+			if (currentStep <= 0)
+				return entry;
+
+			TermMetadata termMetadata;
+			ByteArrayOutputStream termOutput;
+			try (DataOutputStream dataOutput = new DataOutputStream(termOutput = new ByteArrayOutputStream())) {
+				termMetadata = serializeTerm(term, dataOutput);
+			} catch (IOException e) {
+				return entry;
+			}
+			byte[] serializedTerm = termOutput.toByteArray();
+			TermRef termRef = new TermRef(serializedTerm, termMetadata.termStatistics.termSize,
+				termMetadata.termStatistics.termDepth, termMetadata.termStatistics.termState,
+				termMetadata.termStatistics.termHash);
+
+			Entry reducedEntry = secondaryTermPool.acquireEntry(termRef, time);
+
+			entry.setNextEntry(reducedEntry, currentStep, sizePeak);
+			return reducedEntry;
+		}
+
+		final class TermPool {
+			final TermPool precedingPool;
+			int hardTermSizeLimit;
+			int softTermSizeLimit;
+			int entryExpireTime;
+			int entryPromoteTime;
+			final ObjectLinkedOpenHashSet<Entry> entries;
+			int termSize;
+
+			TermPool(TermPool precedingPool, int hardTermSizeLimit, int softTermSizeLimit, int entryExpireTime,
+				int entryPromoteTime) {
+				this.precedingPool = precedingPool;
+				this.hardTermSizeLimit = hardTermSizeLimit;
+				this.softTermSizeLimit = softTermSizeLimit;
+				this.entryExpireTime = entryExpireTime;
+				this.entryPromoteTime = entryPromoteTime;
+				this.entries = new ObjectLinkedOpenHashSet<>();
+				this.termSize = 0;
+			}
+
+			void purgePool(boolean force, int time) {
+				if (force || hardTermSizeLimit >= 0 && termSize > hardTermSizeLimit) {
+					ObjectListIterator<Entry> iterator = entries.iterator();
+					if (softTermSizeLimit >= 0) {
+						while (iterator.hasNext() && termSize > softTermSizeLimit) {
+							Entry entry = iterator.next();
+							termSize -= entry.termSize;
+							entry.removeEntry();
+							iterator.remove();
+						}
+					}
+					if (entryExpireTime >= 0) {
+						while (iterator.hasNext()) {
+							Entry entry = iterator.next();
+							if (time - entry.accessTime < entryExpireTime)
+								break;
+							termSize -= entry.termSize;
+							entry.removeEntry();
+							iterator.remove();
+						}
+					}
+				}
+			}
+
+			Entry lookupEntry(TermRef termRef, int time) {
+				Entry entry = entries.get(termRef);
+				if (entry != null) {
+					entry.accessTime = time;
+					if (precedingPool != null && entryPromoteTime >= 0 && time - entry.cachedTime >= entryPromoteTime) {
+						termSize -= entry.termSize;
+						entries.remove(entry);
+						precedingPool.termSize += entry.termSize;
+						precedingPool.entries.add(entry);
+					} else
+						entries.addAndMoveToLast(entry);
+				} else if (precedingPool != null)
+					entry = precedingPool.lookupEntry(termRef, time);
+				return entry;
+			}
+
+			Entry acquireEntry(TermRef termRef, int time) {
+				Entry entry = lookupEntry(termRef, time);
+				if (entry == null) {
+					entry = new Entry(termRef, time);
+					termSize += entry.termSize;
+					entries.add(entry);
+				}
+				return entry;
+			}
+		}
+
+		final class Entry extends TermRef {
+			final int cachedTime;
+			int accessTime;
+			Entry prevEntry;
+			Entry nextEntry;
+			int nextEntryStep;
+			int nextEntrySizePeak;
+
+			Entry(TermRef termRef, int time) {
+				this(termRef.serializedTerm, termRef.termSize, termRef.termDepth, termRef.termState, termRef.termHash,
+					time);
+			}
+
+			Entry(byte[] serializedTerm, int termSize, int termDepth, TermState termState, int termHash, int time) {
+				super(serializedTerm, termSize, termDepth, termState, termHash);
+
+				this.cachedTime = time;
+				this.accessTime = time;
+				this.prevEntry = null;
+				this.nextEntry = null;
+				this.nextEntryStep = -1;
+				this.nextEntrySizePeak = -1;
+			}
+
+			void setNextEntry(Entry nextEntry, int nextEntryStep, int nextEntrySizePeak) {
+				this.removeNextEntry();
+				nextEntry.removePrevEntry();
+
+				this.nextEntry = nextEntry;
+				this.nextEntryStep = nextEntryStep;
+				this.nextEntrySizePeak = nextEntrySizePeak;
+				nextEntry.prevEntry = this;
+			}
+
+			void removeNextEntry() {
+				if (this.nextEntry != null) {
+					this.nextEntry.prevEntry = null;
+					this.nextEntry = null;
+					this.nextEntryStep = -1;
+					this.nextEntrySizePeak = -1;
+				}
+			}
+
+			void removePrevEntry() {
+				if (this.prevEntry != null) {
+					this.prevEntry.nextEntry = null;
+					this.prevEntry.nextEntryStep = -1;
+					this.prevEntry.nextEntrySizePeak = -1;
+					this.prevEntry = null;
+				}
+			}
+
+			void removeEntry() {
+				if (this.prevEntry != null) {
+					if (this.nextEntry != null) {
+						this.prevEntry.nextEntry = this.nextEntry;
+						this.prevEntry.nextEntryStep = this.prevEntry.nextEntryStep + this.nextEntryStep;
+						this.prevEntry.nextEntrySizePeak = Math.max(this.prevEntry.nextEntrySizePeak,
+							this.nextEntrySizePeak);
+						this.nextEntry.prevEntry = this.prevEntry;
+					} else {
+						this.prevEntry.nextEntry = null;
+						this.prevEntry.nextEntryStep = -1;
+						this.prevEntry.nextEntrySizePeak = -1;
+					}
+				} else if (this.nextEntry != null) {
+					this.nextEntry.prevEntry = null;
+				}
+				this.prevEntry = null;
+				this.nextEntry = null;
+				this.nextEntryStep = -1;
+				this.nextEntrySizePeak = -1;
+			}
 		}
 	}
 
