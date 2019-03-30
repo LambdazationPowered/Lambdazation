@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.common.core.LambdazationCommonProxy;
+import org.lambdazation.common.core.LambdazationConfigs;
 import org.lambdazation.common.core.LambdazationEntityTypes;
 import org.lambdazation.common.core.LambdazationTermFactory;
 import org.lambdazation.common.core.LambdazationTileEntityTypes;
@@ -27,6 +28,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 public final class Lambdazation {
 	public final Logger logger;
 	public final LambdazationCommonProxy lambdazationCommonProxy;
+	public final LambdazationConfigs lambdazationConfigs;
 	public final LambdazationItemGroup lambdazationItemGroup;
 	public final LambdazationBlocks lambdazationBlocks;
 	public final LambdazationItems lambdazationItems;
@@ -38,6 +40,7 @@ public final class Lambdazation {
 	public Lambdazation() {
 		logger = LogManager.getLogger();
 		lambdazationCommonProxy = DistExecutor.runForDist(() -> () -> new LambdazationClientProxy(this), () -> () -> new LambdazationServerProxy(this));
+		lambdazationConfigs = new LambdazationConfigs(this);
 		lambdazationItemGroup = new LambdazationItemGroup(this);
 		lambdazationBlocks = new LambdazationBlocks(this);
 		lambdazationItems = new LambdazationItems(this);
@@ -58,5 +61,6 @@ public final class Lambdazation {
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(EntityType.class, EventPriority.LOWEST, lambdazationEntityTypes::finalizeEntityTypes);
 
 		lambdazationCommonProxy.init();
+		lambdazationConfigs.init();
 	}
 }
