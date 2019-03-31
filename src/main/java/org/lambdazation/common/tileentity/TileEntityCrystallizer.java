@@ -42,6 +42,8 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 	public final NonNullList<ItemStack> inventoryContents;
 	public NonNullList<ItemStack> prevInventoryContents;
+	public boolean crystallizing;
+	public int totalTime;
 	public int crystallizeTime;
 
 	private final LazyOptional<? extends IItemHandler>[] itemHandlers = SidedInvWrapper.create(this, EnumFacing.DOWN,
@@ -54,6 +56,8 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 		this.inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
 		this.prevInventoryContents = null;
+		this.crystallizing = false;
+		this.totalTime = 256;
 		this.crystallizeTime = 0;
 	}
 
@@ -62,6 +66,7 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		super.read(compound);
 
 		ItemStackHelper.loadAllItems(compound, inventoryContents);
+		totalTime = compound.getInt("totalTime");
 		crystallizeTime = compound.getInt("crystallizeTime");
 	}
 
@@ -70,6 +75,7 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		super.write(compound);
 
 		ItemStackHelper.saveAllItems(compound, inventoryContents);
+		compound.setInt("totalTime", totalTime);
 		compound.setInt("crystallizeTime", crystallizeTime);
 
 		return compound;
@@ -202,8 +208,9 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 	public void tick() {
 		if (changed())
 			update();
-
-		if (crystallizeTime > 0 && advance())
+		if (canAdvance())
+			advance();
+		if (completed())
 			crystallized();
 	}
 
@@ -243,22 +250,34 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		if (!firstItemStack.isEmpty() && firstItemStack.getItem().equals(itemLambdaCrystal)
 			&& !secondItemStack.isEmpty() && secondItemStack.getItem().equals(itemLambdaCrystal)
 			&& resultItemStack.isEmpty()) {
-			if (!lambdazation.lambdazationItems.itemLambdaCrystal.isAlphaEquivalent(firstItemStack, secondItemStack))
+			if (lambdazation.lambdazationItems.itemLambdaCrystal.isAlphaEquivalent(firstItemStack, secondItemStack)) {
+				crystallizing = true;
+				if (crystallizeTime <= 0)
+					crystallizeTime = totalTime;
+			} else {
+				crystallizing = false;
 				crystallizeTime = 0;
-			else
-				crystallizeTime = 20 * 10;
-		} else
+			}
+		} else {
+			crystallizing = false;
 			crystallizeTime = 0;
+		}
 
 		markDirty();
 	}
 
-	private boolean advance() {
+	private boolean canAdvance() {
+		return crystallizing && crystallizeTime > 0;
+	}
+
+	private void advance() {
 		crystallizeTime--;
 
 		markDirty();
+	}
 
-		return crystallizeTime <= 0;
+	private boolean completed() {
+		return crystallizing && crystallizeTime <= 0;
 	}
 
 	private void crystallized() {
@@ -284,6 +303,8 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 		inventoryContents.set(SLOT_INPUT_0, firstItemStack.isEmpty() ? ItemStack.EMPTY : firstItemStack);
 		inventoryContents.set(SLOT_INPUT_1, secondItemStack.isEmpty() ? ItemStack.EMPTY : secondItemStack);
 		inventoryContents.set(SLOT_OUTPUT_2, resultItemStack);
+
+		crystallizing = false;
 
 		cache();
 		markDirty();
@@ -341,6 +362,17 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 	}
 
 	public enum InventoryFieldCrystallizer implements InventoryField<TileEntityCrystallizer> {
+		TOTAL_TIME {
+			@Override
+			public int getField(TileEntityCrystallizer inventory) {
+				return inventory.totalTime;
+			}
+
+			@Override
+			public void setField(TileEntityCrystallizer inventory, int value) {
+				inventory.totalTime = value;
+			}
+		},
 		CRYSTALLIZE_TIME {
 			@Override
 			public int getField(TileEntityCrystallizer inventory) {

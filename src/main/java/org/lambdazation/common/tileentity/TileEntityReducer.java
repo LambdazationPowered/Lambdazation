@@ -40,6 +40,7 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 
 	public final NonNullList<ItemStack> inventoryContents;
 	public NonNullList<ItemStack> prevInventoryContents;
+	public int aggregateStep;
 	public int reduceSpeed;
 	public int reduceTime;
 
@@ -53,6 +54,7 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 
 		this.inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
 		this.prevInventoryContents = null;
+		this.aggregateStep = 1024;
 		this.reduceSpeed = 1;
 		this.reduceTime = 0;
 	}
@@ -62,6 +64,7 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 		super.read(compound);
 
 		ItemStackHelper.loadAllItems(compound, inventoryContents);
+		aggregateStep = compound.getInt("aggregateStep");
 		reduceSpeed = compound.getInt("reduceSpeed");
 		reduceTime = compound.getInt("reduceTime");
 	}
@@ -71,6 +74,7 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 		super.write(compound);
 
 		ItemStackHelper.saveAllItems(compound, inventoryContents);
+		compound.setInt("aggregateStep", aggregateStep);
 		compound.setInt("reduceSpeed", reduceSpeed);
 		compound.setInt("reduceTime", reduceTime);
 
@@ -255,6 +259,17 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 	}
 
 	public enum InventoryFieldReducer implements InventoryField<TileEntityReducer> {
+		AGGREGATE_STEP {
+			@Override
+			public int getField(TileEntityReducer inventory) {
+				return inventory.aggregateStep;
+			}
+
+			@Override
+			public void setField(TileEntityReducer inventory, int value) {
+				inventory.aggregateStep = value;
+			}
+		},
 		REDUCE_SPEED {
 			@Override
 			public int getField(TileEntityReducer inventory) {

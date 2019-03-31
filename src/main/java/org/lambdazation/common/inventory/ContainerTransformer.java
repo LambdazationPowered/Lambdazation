@@ -34,7 +34,8 @@ public final class ContainerTransformer extends Container {
 		this.playerInventory = playerInventory;
 		this.transformerInventory = transformerInventory;
 
-		this.inventoryFieldCache = InventoryFieldCache.builder(this, listeners, InventoryRefTransformer.METADATA)
+		this.inventoryFieldCache = InventoryFieldCache
+			.builder(this, listeners, InventoryRefTransformer.METADATA)
 			.build();
 
 		addSlot(new SlotInput(transformerInventory, 0, 27, 47));
@@ -58,7 +59,8 @@ public final class ContainerTransformer extends Container {
 	public void addListener(IContainerListener listener) {
 		super.addListener(listener);
 
-		InventoryRefTransformer.METADATA.values().map(InventoryRef -> InventoryRef.getInventory(this))
+		InventoryRefTransformer.METADATA.values()
+			.map(inventoryRef -> inventoryRef.getInventory(this))
 			.forEach(inventory -> listener.sendAllWindowProperties(this, inventory));
 	}
 

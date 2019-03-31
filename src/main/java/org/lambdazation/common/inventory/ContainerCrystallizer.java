@@ -34,7 +34,8 @@ public final class ContainerCrystallizer extends Container {
 		this.playerInventory = playerInventory;
 		this.crystallizerInventory = crystallizerInventory;
 
-		this.inventoryFieldCache = InventoryFieldCache.builder(this, listeners, InventoryRefCrystallizer.METADATA)
+		this.inventoryFieldCache = InventoryFieldCache
+			.builder(this, listeners, InventoryRefCrystallizer.METADATA)
 			.build();
 
 		addSlot(new SlotInput(crystallizerInventory, 0, 27, 47));
@@ -58,7 +59,8 @@ public final class ContainerCrystallizer extends Container {
 	public void addListener(IContainerListener listener) {
 		super.addListener(listener);
 
-		InventoryRefCrystallizer.METADATA.values().map(InventoryRef -> InventoryRef.getInventory(this))
+		InventoryRefCrystallizer.METADATA.values()
+			.map(inventoryRef -> inventoryRef.getInventory(this))
 			.forEach(inventory -> listener.sendAllWindowProperties(this, inventory));
 	}
 

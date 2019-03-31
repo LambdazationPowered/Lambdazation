@@ -45,10 +45,10 @@ public final class TileEntityCharger extends TileEntityLockable implements ISide
 	public final Lambdazation lambdazation;
 
 	public final NonNullList<ItemStack> inventoryContents;
-	public int chargeSpeed;
-	public int burnSpeed;
 	public int capacity;
 	public int energy;
+	public int chargeSpeed;
+	public int burnSpeed;
 	public int burnTime;
 
 	private final LazyOptional<? extends IItemHandler>[] itemHandlers = SidedInvWrapper.create(this, EnumFacing.DOWN,
@@ -61,10 +61,10 @@ public final class TileEntityCharger extends TileEntityLockable implements ISide
 		this.lambdazation = lambdazation;
 
 		this.inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
-		this.chargeSpeed = 1;
-		this.burnSpeed = 1;
 		this.capacity = 8192;
 		this.energy = 0;
+		this.chargeSpeed = 1;
+		this.burnSpeed = 1;
 		this.burnTime = 0;
 	}
 
@@ -73,10 +73,10 @@ public final class TileEntityCharger extends TileEntityLockable implements ISide
 		super.read(compound);
 
 		ItemStackHelper.loadAllItems(compound, inventoryContents);
-		chargeSpeed = compound.getInt("chargeSpeed");
-		burnSpeed = compound.getInt("burnSpeed");
 		capacity = compound.getInt("capacity");
 		energy = compound.getInt("energy");
+		chargeSpeed = compound.getInt("chargeSpeed");
+		burnSpeed = compound.getInt("burnSpeed");
 		burnTime = compound.getInt("burnTime");
 	}
 
@@ -85,10 +85,10 @@ public final class TileEntityCharger extends TileEntityLockable implements ISide
 		super.write(compound);
 
 		ItemStackHelper.saveAllItems(compound, inventoryContents);
-		compound.setInt("chargeSpeed", chargeSpeed);
-		compound.setInt("burnSpeed", burnSpeed);
 		compound.setInt("capacity", capacity);
 		compound.setInt("energy", energy);
+		compound.setInt("chargeSpeed", chargeSpeed);
+		compound.setInt("burnSpeed", burnSpeed);
 		compound.setInt("burnTime", burnTime);
 
 		return compound;
@@ -455,6 +455,28 @@ public final class TileEntityCharger extends TileEntityLockable implements ISide
 			@Override
 			public void setField(TileEntityCharger inventory, int value) {
 				inventory.energy = value;
+			}
+		},
+		CHARGE_SPEED {
+			@Override
+			public int getField(TileEntityCharger inventory) {
+				return inventory.chargeSpeed;
+			}
+
+			@Override
+			public void setField(TileEntityCharger inventory, int value) {
+				inventory.chargeSpeed = value;
+			}
+		},
+		BURN_SPEED {
+			@Override
+			public int getField(TileEntityCharger inventory) {
+				return inventory.burnSpeed;
+			}
+
+			@Override
+			public void setField(TileEntityCharger inventory, int value) {
+				inventory.burnSpeed = value;
 			}
 		},
 		BURN_TIME {

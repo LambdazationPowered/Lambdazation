@@ -45,9 +45,15 @@ public final class GuiCharger extends GuiContainer {
 		drawString(fontRenderer, "Energy: " + containerCharger
 			.lookupInventoryField(InventoryRefCharger.CHARGER, InventoryFieldCharger.ENERGY),
 			4 + 0, 4 + 8, 0xFFFFFF);
+		drawString(fontRenderer, "Charge speed: " + containerCharger
+			.lookupInventoryField(InventoryRefCharger.CHARGER, InventoryFieldCharger.CHARGE_SPEED),
+			4 + 0, 4 + 16, 0xFFFFFF);
+		drawString(fontRenderer, "Burn speed: " + containerCharger
+			.lookupInventoryField(InventoryRefCharger.CHARGER, InventoryFieldCharger.BURN_SPEED),
+			4 + 0, 4 + 24, 0xFFFFFF);
 		drawString(fontRenderer, "Burn time: " + containerCharger
 			.lookupInventoryField(InventoryRefCharger.CHARGER, InventoryFieldCharger.BURN_TIME),
-			4 + 0, 4 + 16, 0xFFFFFF);
+			4 + 0, 4 + 32, 0xFFFFFF);
 	}
 
 	@Override

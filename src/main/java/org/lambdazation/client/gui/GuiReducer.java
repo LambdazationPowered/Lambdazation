@@ -39,9 +39,15 @@ public final class GuiReducer extends GuiContainer {
 
 	@Override
 	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
+		drawString(fontRenderer, "Aggregate step: " + containerReducer
+			.lookupInventoryField(InventoryRefReducer.REDUCER, InventoryFieldReducer.AGGREGATE_STEP),
+			4 + 0, 4 + 0, 0xFFFFFF);
+		drawString(fontRenderer, "Reduce speed: " + containerReducer
+			.lookupInventoryField(InventoryRefReducer.REDUCER, InventoryFieldReducer.REDUCE_SPEED),
+			4 + 0, 4 + 8, 0xFFFFFF);
 		drawString(fontRenderer, "Reduce time: " + containerReducer
 			.lookupInventoryField(InventoryRefReducer.REDUCER, InventoryFieldReducer.REDUCE_TIME),
-			4 + 0, 4 + 0, 0xFFFFFF);
+			4 + 0, 4 + 16, 0xFFFFFF);
 	}
 
 	@Override

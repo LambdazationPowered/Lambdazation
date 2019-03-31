@@ -44,6 +44,8 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 
 	public final NonNullList<ItemStack> inventoryContents;
 	public NonNullList<ItemStack> prevInventoryContents;
+	public boolean transforming;
+	public int totalTime;
 	public int transformTime;
 
 	private final LazyOptional<? extends IItemHandler>[] itemHandlers = SidedInvWrapper.create(this, EnumFacing.DOWN,
@@ -56,6 +58,8 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 
 		this.inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
 		this.prevInventoryContents = null;
+		this.transforming = false;
+		this.totalTime = 256;
 		this.transformTime = 0;
 	}
 
@@ -64,6 +68,7 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 		super.read(compound);
 
 		ItemStackHelper.loadAllItems(compound, inventoryContents);
+		totalTime = compound.getInt("totalTime");
 		transformTime = compound.getInt("transformTime");
 	}
 
@@ -72,6 +77,7 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 		super.write(compound);
 
 		ItemStackHelper.saveAllItems(compound, inventoryContents);
+		compound.setInt("totalTime", totalTime);
 		compound.setInt("transformTime", transformTime);
 
 		return compound;
@@ -204,8 +210,9 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 	public void tick() {
 		if (changed())
 			update();
-
-		if (transformTime > 0 && advance())
+		if (canAdvance())
+			advance();
+		if (completed())
 			transformed();
 	}
 
@@ -250,22 +257,34 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 			int argumentEnergy = itemLambdaCrystal.getEnergy(argumentItemStack).orElse(0);
 			int argumentTermSize = itemLambdaCrystal.getTermSize(argumentItemStack).orElse(0);
 
-			if (argumentCapacity < functionTermSize + argumentTermSize + 1 || argumentEnergy < functionTermSize)
+			if (argumentCapacity >= functionTermSize + argumentTermSize + 1 && argumentEnergy >= functionTermSize) {
+				transforming = true;
+				if (transformTime <= 0)
+					transformTime = totalTime;
+			} else {
+				transforming = false;
 				transformTime = 0;
-			else
-				transformTime = 20 * 10;
-		} else
+			}
+		} else {
+			transforming = false;
 			transformTime = 0;
+		}
 
 		markDirty();
 	}
 
-	private boolean advance() {
+	private boolean canAdvance() {
+		return transforming && transformTime > 0;
+	}
+
+	private void advance() {
 		transformTime--;
 
 		markDirty();
+	}
 
-		return transformTime <= 0;
+	private boolean completed() {
+		return transforming && transformTime <= 0;
 	}
 
 	private void transformed() {
@@ -299,6 +318,8 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 
 		inventoryContents.set(SLOT_INPUT_1, argumentItemStack.isEmpty() ? ItemStack.EMPTY : argumentItemStack);
 		inventoryContents.set(SLOT_OUTPUT_2, resultItemStack);
+
+		transforming = false;
 
 		cache();
 		markDirty();
@@ -356,6 +377,17 @@ public final class TileEntityTransformer extends TileEntityLockable implements I
 	}
 
 	public enum InventoryFieldTransformer implements InventoryField<TileEntityTransformer> {
+		TOTAL_TIME {
+			@Override
+			public int getField(TileEntityTransformer inventory) {
+				return inventory.totalTime;
+			}
+
+			@Override
+			public void setField(TileEntityTransformer inventory, int value) {
+				inventory.totalTime = value;
+			}
+		},
 		TRANSFORM_TIME {
 			@Override
 			public int getField(TileEntityTransformer inventory) {

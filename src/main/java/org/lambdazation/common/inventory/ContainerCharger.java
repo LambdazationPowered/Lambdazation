@@ -50,7 +50,8 @@ public final class ContainerCharger extends Container {
 			addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
 	}
 
-	public <T extends IInventory> int lookupInventoryField(InventoryRefCharger<T> inventoryRef, InventoryField<T> inventoryField) {
+	public <T extends IInventory> int lookupInventoryField(InventoryRefCharger<T> inventoryRef,
+		InventoryField<T> inventoryField) {
 		return inventoryFieldCache.lookup(inventoryRef, inventoryField);
 	}
 
@@ -59,7 +60,7 @@ public final class ContainerCharger extends Container {
 		super.addListener(listener);
 
 		InventoryRefCharger.METADATA.values()
-			.map(InventoryRef -> InventoryRef.getInventory(this))
+			.map(inventoryRef -> inventoryRef.getInventory(this))
 			.forEach(inventory -> listener.sendAllWindowProperties(this, inventory));
 	}
 
@@ -146,8 +147,8 @@ public final class ContainerCharger extends Container {
 		}
 	}
 
-	public static abstract class InventoryRefCharger<T extends IInventory> extends GeneralizedEnum<InventoryRefCharger<?>>
-		implements InventoryRef<ContainerCharger, T> {
+	public static abstract class InventoryRefCharger<T extends IInventory>
+		extends GeneralizedEnum<InventoryRefCharger<?>> implements InventoryRef<ContainerCharger, T> {
 		public static final InventoryRefCharger<InventoryPlayer> PLAYER;
 		public static final InventoryRefCharger<TileEntityCharger> CHARGER;
 

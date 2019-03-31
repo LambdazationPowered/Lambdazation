@@ -34,7 +34,8 @@ public final class ContainerReducer extends Container {
 		this.playerInventory = playerInventory;
 		this.reducerInventory = reducerInventory;
 
-		this.inventoryFieldCache = InventoryFieldCache.builder(this, listeners, InventoryRefReducer.METADATA)
+		this.inventoryFieldCache = InventoryFieldCache
+			.builder(this, listeners, InventoryRefReducer.METADATA)
 			.build();
 
 		addSlot(new SlotInput(reducerInventory, 0, 27, 47));
@@ -57,7 +58,8 @@ public final class ContainerReducer extends Container {
 	public void addListener(IContainerListener listener) {
 		super.addListener(listener);
 
-		InventoryRefReducer.METADATA.values().map(InventoryRef -> InventoryRef.getInventory(this))
+		InventoryRefReducer.METADATA.values()
+			.map(inventoryRef -> inventoryRef.getInventory(this))
 			.forEach(inventory -> listener.sendAllWindowProperties(this, inventory));
 	}
 
