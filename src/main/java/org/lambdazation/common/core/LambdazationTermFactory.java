@@ -13,6 +13,9 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.item.ItemLambdaCrystal;
@@ -43,6 +46,7 @@ public final class LambdazationTermFactory {
 	public final Lambdazation lambdazation;
 
 	public final TermCache termCache;
+	public final ExecutorService executorService;
 	public final PredefTerm predefTermId;
 	public final PredefTerm predefTermFix;
 
@@ -50,6 +54,9 @@ public final class LambdazationTermFactory {
 		this.lambdazation = lambdazation;
 
 		this.termCache = new TermCache();
+		// TODO Make executor service configurable.
+		this.executorService = Executors
+			.newSingleThreadExecutor();
 		this.predefTermId = PredefTerm
 			.builder()
 			.name("id")
@@ -211,6 +218,10 @@ public final class LambdazationTermFactory {
 					: Optional.of(parserResult._2));
 
 		return resultTerm;
+	}
+
+	public Future<TermRef> reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) {
+		return executorService.submit(() -> termCache.reduceTerm(termRef, maxStep, maxSize, time));
 	}
 
 	public static final class PredefTerm {
@@ -465,12 +476,14 @@ public final class LambdazationTermFactory {
 			secondaryTermPool = new TermPool(primaryTermPool, 0xFFFF, 0x7FFF, 20 * 10, 20 * 60);
 		}
 
-		public void purgeCache(boolean force, int time) {
+		// TODO Temporary measures for thread safety. Need fine-grained lock for more parallelism.
+		public synchronized void purgeCache(boolean force, int time) {
 			primaryTermPool.purgePool(force, time);
 			secondaryTermPool.purgePool(force, time);
 		}
 
-		public TermRef reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) {
+		// TODO Temporary measures for thread safety. Need fine-grained lock for more parallelism.
+		public synchronized TermRef reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) {
 			Entry entry = secondaryTermPool.acquireEntry(termRef, time);
 			int currentStep = 0;
 			while (currentStep < maxStep && entry.termSize <= maxSize) {
