@@ -13,9 +13,12 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.item.ItemLambdaCrystal;
@@ -46,7 +49,7 @@ public final class LambdazationTermFactory {
 	public final Lambdazation lambdazation;
 
 	public final TermCache termCache;
-	public final ExecutorService executorService;
+	public final TermAsyncFactory termAsyncFactory;
 	public final PredefTerm predefTermId;
 	public final PredefTerm predefTermFix;
 
@@ -54,9 +57,7 @@ public final class LambdazationTermFactory {
 		this.lambdazation = lambdazation;
 
 		this.termCache = new TermCache();
-		// TODO Make executor service configurable.
-		this.executorService = Executors
-			.newSingleThreadExecutor();
+		this.termAsyncFactory = new TermAsyncFactory();
 		this.predefTermId = PredefTerm
 			.builder()
 			.name("id")
@@ -218,10 +219,6 @@ public final class LambdazationTermFactory {
 					: Optional.of(parserResult._2));
 
 		return resultTerm;
-	}
-
-	public Future<TermRef> reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) {
-		return executorService.submit(() -> termCache.reduceTerm(termRef, maxStep, maxSize, time));
 	}
 
 	public static final class PredefTerm {
@@ -483,7 +480,7 @@ public final class LambdazationTermFactory {
 		}
 
 		// TODO Temporary measures for thread safety. Need fine-grained lock for more parallelism.
-		public synchronized TermRef reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) {
+		public synchronized TermRef reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) throws InterruptedException {
 			Entry entry = secondaryTermPool.acquireEntry(termRef, time);
 			int currentStep = 0;
 			while (currentStep < maxStep && entry.termSize <= maxSize) {
@@ -501,7 +498,7 @@ public final class LambdazationTermFactory {
 			return reduceEntry(entry, maxStep - currentStep, maxSize, time);
 		}
 
-		TermRef reduceEntry(Entry entry, int maxStep, int maxSize, int time) {
+		TermRef reduceEntry(Entry entry, int maxStep, int maxSize, int time) throws InterruptedException {
 			Term term;
 			try (DataInputStream dataInput = new DataInputStream(new ByteArrayInputStream(entry.serializedTerm))) {
 				term = deserializeTerm(TermNamer.EMPTY_NAMER, dataInput);
@@ -513,7 +510,7 @@ public final class LambdazationTermFactory {
 			int currentStep = 0;
 			int sizePeak = 0;
 			if (successful && currentStep <= maxStep && term.size() <= maxSize) {
-				Result result = BetaReducer.betaReduction(term, new Strategy(scala.Option.apply(maxStep - currentStep),
+				Result result = BetaReducer.interruptibleBetaReduction(term, new Strategy(scala.Option.apply(maxStep - currentStep),
 					scala.Option.apply(maxSize), scala.Option.empty(), false, false));
 				successful = result.abortReason().successful();
 				currentStep += result.step();
@@ -521,7 +518,7 @@ public final class LambdazationTermFactory {
 				term = result.term();
 			}
 			if (successful && currentStep <= maxStep && term.size() <= maxSize) {
-				Result result = EtaConverter.etaConversion(term, new Strategy(scala.Option.apply(maxStep - currentStep),
+				Result result = EtaConverter.interruptibleEtaConversion(term, new Strategy(scala.Option.apply(maxStep - currentStep),
 					scala.Option.apply(maxSize), scala.Option.empty(), false, false));
 				successful = result.abortReason().successful();
 				currentStep += result.step();
@@ -693,6 +690,60 @@ public final class LambdazationTermFactory {
 				this.nextEntryStep = -1;
 				this.nextEntrySizePeak = -1;
 			}
+		}
+	}
+
+	public interface TermRefFuture {
+		void cancel();
+	
+		Optional<TermRef> get();
+	}
+
+	public final class TermAsyncFactory {
+		final ExecutorService executorService;
+		AtomicInteger concurrentTasks;
+	
+		TermAsyncFactory() {
+			// TODO Make executor service configurable.
+			this.executorService = Executors.newSingleThreadExecutor();
+			this.concurrentTasks = new AtomicInteger();
+		}
+
+		public TermRefFuture reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) {
+			Future<TermRef> future = executorService.submit(() -> {
+				concurrentTasks.incrementAndGet();
+				try {
+					// TODO Prevent concurrent reduction for same term.
+					return termCache.reduceTerm(termRef, maxStep, maxSize, time);
+				} catch (InterruptedException e) {
+					return termRef;
+				} finally {
+					concurrentTasks.decrementAndGet();
+				}
+			});
+			TermRefFuture result = new TermRefFuture() {
+				@Override
+				public void cancel() {
+					// TODO Make cancellation threshold configurable.
+					int cancellationThreshold = 2;
+					if (concurrentTasks.get() >= cancellationThreshold)
+						future.cancel(true);
+				}
+		
+				@Override
+				public Optional<TermRef> get() {
+					try {
+						return Optional.of(future.get());
+					} catch (CancellationException e) {
+						return Optional.empty();
+					} catch (InterruptedException e) {
+						return Optional.empty();
+					} catch (ExecutionException e) {
+						return Optional.empty();
+					}
+				}
+			};
+			return result;
 		}
 	}
 

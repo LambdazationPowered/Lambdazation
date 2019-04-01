@@ -23,6 +23,7 @@ import java.util.Arrays;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.block.BlockReducer;
+import org.lambdazation.common.core.LambdazationTermFactory.TermRefFuture;
 import org.lambdazation.common.inventory.ContainerReducer;
 import org.lambdazation.common.inventory.field.InventoryField;
 import org.lambdazation.common.state.properties.SlotState;
@@ -40,6 +41,7 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 
 	public final NonNullList<ItemStack> inventoryContents;
 	public NonNullList<ItemStack> prevInventoryContents;
+	public TermRefFuture resultTermRef;
 	public int aggregateStep;
 	public int reduceSpeed;
 	public int reduceTime;
