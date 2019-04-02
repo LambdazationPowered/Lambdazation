@@ -11,7 +11,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -19,6 +21,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.item.ItemLambdaCrystal;
@@ -50,23 +54,149 @@ public final class LambdazationTermFactory {
 
 	public final TermCache termCache;
 	public final TermAsyncFactory termAsyncFactory;
-	public final PredefTerm predefTermId;
-	public final PredefTerm predefTermFix;
+	public final PredefTermLibrary predefTermLibrary;
 
 	public LambdazationTermFactory(Lambdazation lambdazation) {
 		this.lambdazation = lambdazation;
 
 		this.termCache = new TermCache();
 		this.termAsyncFactory = new TermAsyncFactory();
-		this.predefTermId = PredefTerm
+		this.predefTermLibrary = PredefTermLibrary
 			.builder()
-			.name("id")
-			.term(parseTerm("λx.x", true).get())
-			.build();
-		this.predefTermFix = PredefTerm
-			.builder()
-			.name("fix")
-			.term(parseTerm("λf.(λx.f (x x)) (λx.f (x x))", true).get())
+			// function
+			.with(builder -> builder
+				.name("omega")
+				.term(parseTerm("(λx.x x) (λx.x x)", true).get()))
+			.with(builder -> builder
+				.name("id")
+				.term(parseTerm("λx.x", true).get()))
+			.with(builder -> builder
+				.name("const")
+				.term(parseTerm("λx.λy.x", true).get()))
+			.with(builder -> builder
+				.name("subst")
+				.term(parseTerm("λf.λg.λx.f x (g x)", true).get()))
+			.with(builder -> builder
+				.name("compose")
+				.term(parseTerm("λf.λg.λx.f (g x)", true).get()))
+			.with(builder -> builder
+				.name("flip")
+				.term(parseTerm("λf.λx.λy.f y x", true).get()))
+			.with(builder -> builder
+				.name("apply")
+				.term(parseTerm("λf.λx.f x", true).get()))
+			.with(builder -> builder
+				.name("reverseApply")
+				.term(parseTerm("λx.λf.f x", true).get()))
+			.with(builder -> builder
+				.name("prepose")
+				.term(parseTerm("λn.λf.λg.n (λh.λi.λx.h (λu.i u x)) (λu.f (u g)) (λu.u)", true).get()))
+			.with(builder -> builder
+				.name("fix")
+				.term(parseTerm("λf.(λx.f (x x)) (λx.f (x x))", true).get()))
+			// nat
+			.with(builder -> builder
+				.name("zero")
+				.term(parseTerm("λf.λx.x", true).get()))
+			.with(builder -> builder
+				.name("succ")
+				.term(parseTerm("λn.λf.λx.f (n f x)", true).get()))
+			.with(builder -> builder
+				.name("plus")
+				.term(parseTerm("λm.λn.λf.λx.m f (n f x)", true).get()))
+			.with(builder -> builder
+				.name("mult")
+				.term(parseTerm("λm.λn.λf.m (n f)", true).get()))
+			.with(builder -> builder
+				.name("pow")
+				.term(parseTerm("λm.λn.n m", true).get()))
+			.with(builder -> builder
+				.name("pred")
+				.term(parseTerm("λn.λf.λx.n (λg.λh.h (g f)) (λu.x) (λu.u)", true).get()))
+			// bool
+			.with(builder -> builder
+				.name("bool")
+				.term(parseTerm("λt.λf.λb.b t f", true).get()))
+			.with(builder -> builder
+				.name("false")
+				.term(parseTerm("λt.λf.f", true).get()))
+			.with(builder -> builder
+				.name("true")
+				.term(parseTerm("λt.λf.t", true).get()))
+			.with(builder -> builder
+				.name("and")
+				.term(parseTerm("λp.λq.p q p", true).get()))
+			.with(builder -> builder
+				.name("or")
+				.term(parseTerm("λp.λq.p p q", true).get()))
+			.with(builder -> builder
+				.name("not")
+				.term(parseTerm("λb.λt.λf.b f t", true).get()))
+			.with(builder -> builder
+				.name("if")
+				.term(parseTerm("λb.λt.λf.b t f", true).get()))
+			// maybe
+			.with(builder -> builder
+				.name("maybe")
+				.term(parseTerm("λn.λj.λm.m n j", true).get()))
+			.with(builder -> builder
+				.name("nothing")
+				.term(parseTerm("λn.λj.n", true).get()))
+			.with(builder -> builder
+				.name("just")
+				.term(parseTerm("λx.λn.λj.j x", true).get()))
+			.with(builder -> builder
+				.name("isNothing")
+				.term(parseTerm("(λfalse.((λtrue.(λm.m true (λx. false))) (λt.λf.t))) (λt.λf.f)", true).get()))
+			.with(builder -> builder
+				.name("isJust")
+				.term(parseTerm("(λfalse.((λtrue.(λm.m false (λx. true))) (λt.λf.t))) (λt.λf.f)", true).get()))
+			.with(builder -> builder
+				.name("fromMaybe")
+				.term(parseTerm("λx.λm.m x (λu.u)", true).get()))
+			// list
+			.with(builder -> builder
+				.name("list")
+				.term(parseTerm("λn.λc.λl.l n c", true).get()))
+			.with(builder -> builder
+				.name("nil")
+				.term(parseTerm("λn.λc.n", true).get()))
+			.with(builder -> builder
+				.name("cons")
+				.term(parseTerm("λh.λt.λn.λc.c h t", true).get()))
+			.with(builder -> builder
+				.name("append")
+				.term(parseTerm("(λfix.((λcons.(fix (λappend.(λl.λm.l m (λh.λt.cons h (append t m)))))) (λh.λt.λn.λc.c h t))) (λf.(λx.f (x x)) (λx.f (x x)))", true).get()))
+			.with(builder -> builder
+				.name("head")
+				.term(parseTerm("(λnothing.((λjust.(λl.l nothing (λh.λt.just h))) (λx.λn.λj.j x))) (λn.λj.n)", true).get()))
+			.with(builder -> builder
+				.name("last")
+				.term(parseTerm("(λ2.((λprepose.((λfix.((λnothing.((λjust.(λl.l nothing (prepose 2 just (fix (λf.λh.λt.t h f))))) (λx.λn.λj.j x))) (λn.λj.n))) (λf.(λx.f (x x)) (λx.f (x x))))) (λn.λf.λg.n (λh.λi.λx.h (λu.i u x)) (λu.f (u g)) (λu.u)))) (λf.λx.f (f x))", true).get()))
+			.with(builder -> builder
+				.name("tail")
+				.term(parseTerm("(λnothing.((λjust.(λl.l nothing (λh.λt.just t))) (λx.λn.λj.j x))) (λn.λj.n)", true).get()))
+			.with(builder -> builder
+				.name("init")
+				.term(parseTerm("(λ2.((λprepose.((λfix.((λnothing.((λjust.((λnil.((λcons.(λl.l nothing (prepose 2 just (fix (λf.λh.λt.t nil (prepose 2 (cons h) f)))))) (λh.λt.λn.λc.c h t))) (λn.λc.n))) (λx.λn.λj.j x))) (λn.λj.n))) (λf.(λx.f (x x)) (λx.f (x x))))) (λn.λf.λg.n (λh.λi.λx.h (λu.i u x)) (λu.f (u g)) (λu.u)))) (λf.λx.f (f x))", true).get()))
+			.with(builder -> builder
+				.name("null")
+				.term(parseTerm("(λfalse.((λtrue.(λl.l true (λh.λt.false))) (λt.λf.t))) (λt.λf.f)", true).get()))
+			.with(builder -> builder
+				.name("length")
+				.term(parseTerm("(λfix.((λzero.((λsucc.(fix (λlength.(λl.l zero (λh.λt.succ (length t)))))) (λn.λf.λx.f (n f x)))) (λf.λx.x))) (λf.(λx.f (x x)) (λx.f (x x)))", true).get()))
+			.with(builder -> builder
+				.name("map")
+				.term(parseTerm("(λfix.((λnil.((λcons.(fix (λmap.(λf.λl.l nil (λh.λt.cons (f h) (map f t)))))) (λh.λt.λn.λc.c h t))) (λn.λc.n))) (λf.(λx.f (x x)) (λx.f (x x)))", true).get()))
+			.with(builder -> builder
+				.name("reverse")
+				.term(parseTerm("(λfix.((λnil.((λcons.(λl.(fix (λf.λm.λn.m n (λh.λt.f t (cons h n)))) l nil)) (λh.λt.λn.λc.c h t))) (λn.λc.n))) (λf.(λx.f (x x)) (λx.f (x x)))", true).get()))
+			.with(builder -> builder
+				.name("foldr")
+				.term(parseTerm("(λfix.(fix (λfoldr.(λf.λx.λl.l x (λh.λt.f h (foldr f x t)))))) (λf.(λx.f (x x)) (λx.f (x x)))", true).get()))
+			.with(builder -> builder
+				.name("foldl")
+				.term(parseTerm("(λfix.(fix (λfoldl.(λf.λx.λl.l x (λh.λt.foldl f (f x h) t))))) (λf.(λx.f (x x)) (λx.f (x x)))", true).get()))
 			.build();
 	}
 
@@ -219,68 +349,6 @@ public final class LambdazationTermFactory {
 					: Optional.of(parserResult._2));
 
 		return resultTerm;
-	}
-
-	public static final class PredefTerm {
-		public final String name;
-		public final Term term;
-
-		public PredefTerm(String name, Term term) {
-			this.name = name;
-			this.term = term;
-		}
-
-		public Term applyTerm(Term argumentTerm) {
-			return new App(term, argumentTerm);
-		}
-
-		public Term acceptTerm(Term functionTerm) {
-			return new App(functionTerm, term);
-		}
-
-		public ItemLambdaCrystal.Builder withCrystal(ItemLambdaCrystal.Builder builder) {
-			return builder.term(term);
-		}
-
-		public static Builder builder() {
-			return new Builder();
-		}
-
-		public static final class Builder implements GeneralizedBuilder<Builder, PredefTerm> {
-			private String name;
-			private Term term;
-
-			Builder() {
-
-			}
-
-			public Builder name(String name) {
-				this.name = name;
-				return this;
-			}
-
-			public Builder term(Term term) {
-				this.term = term;
-				return this;
-			}
-
-			private void validateState() {
-				if (name == null || term == null)
-					throw new IllegalStateException("Property uninitialized");
-			}
-
-			@Override
-			public Builder concrete() {
-				return this;
-			}
-
-			@Override
-			public PredefTerm build() {
-				validateState();
-
-				return new PredefTerm(name, term);
-			}
-		}
 	}
 
 	public enum TermState {
@@ -892,6 +960,118 @@ public final class LambdazationTermFactory {
 				if (!isCompleted())
 					throw new IllegalStateException();
 				return new App(appTerm, appArgument);
+			}
+		}
+	}
+
+	public static final class PredefTerm {
+		public final String name;
+		public final Term term;
+
+		public PredefTerm(String name, Term term) {
+			this.name = name;
+			this.term = term;
+		}
+
+		public Term applyTerm(Term argumentTerm) {
+			return new App(term, argumentTerm);
+		}
+
+		public Term acceptTerm(Term functionTerm) {
+			return new App(functionTerm, term);
+		}
+
+		public ItemLambdaCrystal.Builder withCrystal(ItemLambdaCrystal.Builder builder) {
+			return builder.term(term);
+		}
+
+		public static Builder builder() {
+			return new Builder();
+		}
+
+		public static final class Builder implements GeneralizedBuilder<Builder, PredefTerm> {
+			private String name;
+			private Term term;
+
+			Builder() {
+
+			}
+
+			public Builder name(String name) {
+				this.name = name;
+				return this;
+			}
+
+			public Builder term(Term term) {
+				this.term = term;
+				return this;
+			}
+
+			private void validateState() {
+				if (name == null || term == null)
+					throw new IllegalStateException("Property uninitialized");
+			}
+
+			@Override
+			public Builder concrete() {
+				return this;
+			}
+
+			@Override
+			public PredefTerm build() {
+				validateState();
+
+				return new PredefTerm(name, term);
+			}
+		}
+	}
+
+	public static final class PredefTermLibrary {
+		private final Map<String, PredefTerm> predefTerms;
+
+		PredefTermLibrary(Map<String, PredefTerm> predefTerms) {
+			this.predefTerms = predefTerms;
+		}
+
+		public Optional<PredefTerm> get(String name) {
+			return Optional.ofNullable(predefTerms.get(name));
+		}
+
+		public Stream<PredefTerm> stream() {
+			return predefTerms.values().stream();
+		}
+
+		public static Builder builder() {
+			return new Builder();
+		}
+
+		public static final class Builder implements GeneralizedBuilder<Builder, PredefTermLibrary> {
+			private final Map<String, PredefTerm> predefTerms;
+
+			public Builder() {
+				this.predefTerms = new LinkedHashMap<>();
+			}
+
+			public Builder with(PredefTerm predefTerm) {
+				if (predefTerms.containsKey(predefTerm.name))
+					throw new IllegalStateException("Duplicate predef term name");
+				predefTerms.put(predefTerm.name, predefTerm);
+				return this;
+			}
+
+			public Builder with(Function<PredefTerm.Builder, PredefTerm.Builder> f) {
+				with(f.apply(PredefTerm.builder()).build());
+				return this;
+			}
+
+			@Override
+			public Builder concrete() {
+				return this;
+			}
+
+			@Override
+			public PredefTermLibrary build() {
+				return new PredefTermLibrary(predefTerms);
 			}
 		}
 	}

@@ -3,6 +3,7 @@ package org.lambdazation.common.item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 
@@ -37,15 +38,18 @@ public final class ItemLambdaCrystal extends Item {
 	@Override
 	public void fillItemGroup(ItemGroup group, NonNullList<ItemStack> items) {
 		if (isInGroup(group)) {
-			// TODO Magic value
+			// TODO Make default capacity and energy configurable.
 			int capacity = 1024;
 			int energy = 1024;
 
-			items.add(builder()
-				.capacity(capacity)
-				.energy(energy)
-				.accept(lambdazation.lambdazationTermFactory.predefTermId::withCrystal)
-				.build());
+			lambdazation.lambdazationTermFactory.predefTermLibrary.stream().forEach(predefTerm -> {
+				items.add(builder()
+					.capacity(capacity)
+					.energy(energy)
+					.accept(predefTerm::withCrystal)
+					.build()
+					.setDisplayName(new TextComponentString("Predef Term: " + predefTerm.name)));
+			});
 		}
 	}
 
