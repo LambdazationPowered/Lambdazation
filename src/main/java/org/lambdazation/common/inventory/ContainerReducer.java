@@ -90,11 +90,11 @@ public final class ContainerReducer extends Container {
 			ItemStack currentStack = slot.getStack();
 			affectedStack = currentStack.copy();
 
-			if (index >= 0 && index < 3) {
-				if (!this.mergeItemStack(currentStack, 3, 39, false))
+			if (index >= 0 && index < 2) {
+				if (!this.mergeItemStack(currentStack, 2, 38, false))
 					return ItemStack.EMPTY;
-			} else if (index >= 3 && index < 39) {
-				if (!this.mergeItemStack(currentStack, 0, 3, false))
+			} else if (index >= 2 && index < 38) {
+				if (!this.mergeItemStack(currentStack, 0, 2, false))
 					return ItemStack.EMPTY;
 			} else
 				return ItemStack.EMPTY;

@@ -464,6 +464,16 @@ public final class LambdazationTermFactory {
 		}
 	}
 
+	public final class TermReductionResult {
+		public final int step;
+		public final TermRef termRef;
+
+		public TermReductionResult(int step, TermRef termRef) {
+			this.step = step;
+			this.termRef = termRef;
+		}
+	}
+
 	public final class TermCache {
 		final TermPool primaryTermPool;
 		final TermPool secondaryTermPool;
@@ -480,7 +490,8 @@ public final class LambdazationTermFactory {
 		}
 
 		// TODO Temporary measures for thread safety. Need fine-grained lock for more parallelism.
-		public synchronized TermRef reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) throws InterruptedException {
+		public synchronized TermReductionResult reduceTerm(TermRef termRef, int maxStep, int maxSize, int time)
+			throws InterruptedException {
 			Entry entry = secondaryTermPool.acquireEntry(termRef, time);
 			int currentStep = 0;
 			while (currentStep < maxStep && entry.termSize <= maxSize) {
@@ -494,46 +505,49 @@ public final class LambdazationTermFactory {
 				entry = entry.nextEntry;
 			}
 			if (currentStep >= maxStep || entry.termState.equals(TermState.BETA_ETA_NORMAL_FORM))
-				return entry;
-			return reduceEntry(entry, maxStep - currentStep, maxSize, time);
+				return new TermReductionResult(currentStep, entry);
+			TermReductionResult result = reduceEntry(entry, maxStep, maxSize, time);
+			return new TermReductionResult(currentStep + result.step, result.termRef);
 		}
 
-		TermRef reduceEntry(Entry entry, int maxStep, int maxSize, int time) throws InterruptedException {
+		TermReductionResult reduceEntry(Entry entry, int maxStep, int maxSize, int time) throws InterruptedException {
 			Term term;
 			try (DataInputStream dataInput = new DataInputStream(new ByteArrayInputStream(entry.serializedTerm))) {
 				term = deserializeTerm(TermNamer.EMPTY_NAMER, dataInput);
 			} catch (IOException e) {
-				return entry;
+				return new TermReductionResult(0, entry);
 			}
 
 			boolean successful = true;
-			int currentStep = 0;
 			int sizePeak = 0;
+			int currentStep = 0;
 			if (successful && currentStep <= maxStep && term.size() <= maxSize) {
-				Result result = BetaReducer.interruptibleBetaReduction(term, new Strategy(scala.Option.apply(maxStep - currentStep),
-					scala.Option.apply(maxSize), scala.Option.empty(), false, false));
+				Result result = BetaReducer.interruptibleBetaReduction(term,
+					new Strategy(scala.Option.apply(maxStep - currentStep), scala.Option.apply(maxSize),
+						scala.Option.empty(), false, false));
 				successful = result.abortReason().successful();
 				currentStep += result.step();
 				sizePeak = Math.max(sizePeak, result.sizePeak());
 				term = result.term();
 			}
 			if (successful && currentStep <= maxStep && term.size() <= maxSize) {
-				Result result = EtaConverter.interruptibleEtaConversion(term, new Strategy(scala.Option.apply(maxStep - currentStep),
-					scala.Option.apply(maxSize), scala.Option.empty(), false, false));
+				Result result = EtaConverter.interruptibleEtaConversion(term,
+					new Strategy(scala.Option.apply(maxStep - currentStep), scala.Option.apply(maxSize),
+						scala.Option.empty(), false, false));
 				successful = result.abortReason().successful();
 				currentStep += result.step();
 				sizePeak = Math.max(sizePeak, result.sizePeak());
 				term = result.term();
 			}
 			if (currentStep <= 0)
-				return entry;
+				return new TermReductionResult(0, entry);
 
 			TermMetadata termMetadata;
 			ByteArrayOutputStream termOutput;
 			try (DataOutputStream dataOutput = new DataOutputStream(termOutput = new ByteArrayOutputStream())) {
 				termMetadata = serializeTerm(term, dataOutput);
 			} catch (IOException e) {
-				return entry;
+				return new TermReductionResult(0, entry);
 			}
 			byte[] serializedTerm = termOutput.toByteArray();
 			TermRef termRef = new TermRef(serializedTerm, termMetadata.termStatistics.termSize,
@@ -543,7 +557,7 @@ public final class LambdazationTermFactory {
 			Entry reducedEntry = secondaryTermPool.acquireEntry(termRef, time);
 
 			entry.setNextEntry(reducedEntry, currentStep, sizePeak);
-			return reducedEntry;
+			return new TermReductionResult(currentStep, reducedEntry);
 		}
 
 		final class TermPool {
@@ -693,45 +707,45 @@ public final class LambdazationTermFactory {
 		}
 	}
 
-	public interface TermRefFuture {
-		void cancel();
-	
-		Optional<TermRef> get();
+	public interface TermAsyncResult<T> {
+		void discard();
+
+		Optional<T> get();
 	}
 
 	public final class TermAsyncFactory {
 		final ExecutorService executorService;
 		AtomicInteger concurrentTasks;
-	
+
 		TermAsyncFactory() {
 			// TODO Make executor service configurable.
 			this.executorService = Executors.newSingleThreadExecutor();
 			this.concurrentTasks = new AtomicInteger();
 		}
 
-		public TermRefFuture reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) {
-			Future<TermRef> future = executorService.submit(() -> {
+		public TermAsyncResult<TermReductionResult> reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) {
+			Future<TermReductionResult> future = executorService.submit(() -> {
 				concurrentTasks.incrementAndGet();
 				try {
 					// TODO Prevent concurrent reduction for same term.
 					return termCache.reduceTerm(termRef, maxStep, maxSize, time);
 				} catch (InterruptedException e) {
-					return termRef;
+					return new TermReductionResult(0, termRef);
 				} finally {
 					concurrentTasks.decrementAndGet();
 				}
 			});
-			TermRefFuture result = new TermRefFuture() {
+			return new TermAsyncResult<TermReductionResult>() {
 				@Override
-				public void cancel() {
+				public void discard() {
 					// TODO Make cancellation threshold configurable.
 					int cancellationThreshold = 2;
 					if (concurrentTasks.get() >= cancellationThreshold)
 						future.cancel(true);
 				}
-		
+
 				@Override
-				public Optional<TermRef> get() {
+				public Optional<TermReductionResult> get() {
 					try {
 						return Optional.of(future.get());
 					} catch (CancellationException e) {
@@ -743,7 +757,6 @@ public final class LambdazationTermFactory {
 					}
 				}
 			};
-			return result;
 		}
 	}
 

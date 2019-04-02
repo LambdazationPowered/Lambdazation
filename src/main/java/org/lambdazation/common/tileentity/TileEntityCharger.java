@@ -257,14 +257,14 @@ public final class TileEntityCharger extends TileEntityLockable implements ISide
 	}
 
 	private boolean canGenerate() {
-		return energy < capacity && burnTime > 0;
+		return burnTime > 0;
 	}
 
 	private void generateEnergy() {
-		int delta = Math.min(Math.min(burnSpeed, burnTime), capacity - energy);
+		int delta = Math.min(burnSpeed, burnTime);
 
 		burnTime -= delta;
-		energy += delta;
+		energy += Math.min(capacity - energy, delta);
 
 		markDirty();
 	}

@@ -23,14 +23,18 @@ import java.util.Arrays;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.block.BlockReducer;
-import org.lambdazation.common.core.LambdazationTermFactory.TermRefFuture;
+import org.lambdazation.common.core.LambdazationTermFactory.TermRef;
+import org.lambdazation.common.core.LambdazationTermFactory.TermState;
+import org.lambdazation.common.core.LambdazationTermFactory.TermAsyncResult;
+import org.lambdazation.common.core.LambdazationTermFactory.TermReductionResult;
 import org.lambdazation.common.inventory.ContainerReducer;
 import org.lambdazation.common.inventory.field.InventoryField;
+import org.lambdazation.common.item.ItemLambdaCrystal;
 import org.lambdazation.common.state.properties.SlotState;
 
 public final class TileEntityReducer extends TileEntityLockable implements ISidedInventory, ITickable {
 	public static final int SLOT_INPUT_0 = 0;
-	public static final int SLOT_OUTPUT_1 = 2;
+	public static final int SLOT_OUTPUT_1 = 1;
 
 	public static final int[] SLOTS_NONE = new int[] {};
 	public static final int[] SLOTS_INPUT = new int[] { SLOT_INPUT_0 };
@@ -41,7 +45,7 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 
 	public final NonNullList<ItemStack> inventoryContents;
 	public NonNullList<ItemStack> prevInventoryContents;
-	public TermRefFuture resultTermRef;
+	public TermAsyncResult<TermReductionResult> termReductionResult;
 	public int aggregateStep;
 	public int reduceSpeed;
 	public int reduceTime;
@@ -56,7 +60,8 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 
 		this.inventoryContents = NonNullList.withSize(3, ItemStack.EMPTY);
 		this.prevInventoryContents = null;
-		this.aggregateStep = 1024;
+		this.termReductionResult = null;
+		this.aggregateStep = 256;
 		this.reduceSpeed = 1;
 		this.reduceTime = 0;
 	}
@@ -86,6 +91,7 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 	@Override
 	public void remove() {
 		super.remove();
+		discard();
 		Arrays.stream(itemHandlers).forEach(LazyOptional::invalidate);
 	}
 
@@ -206,7 +212,118 @@ public final class TileEntityReducer extends TileEntityLockable implements ISide
 
 	@Override
 	public void tick() {
-		// TODO NYI
+		if (changed())
+			update();
+		if (canAdvance())
+			advance();
+		if (completed())
+			reduced();
+	}
+
+	private void discard() {
+		if (termReductionResult != null) {
+			termReductionResult.discard();
+			termReductionResult = null;
+		}
+	}
+
+	private void cache() {
+		prevInventoryContents = NonNullList.from(ItemStack.EMPTY,
+			inventoryContents.stream().map(ItemStack::copy).toArray(ItemStack[]::new));
+	}
+
+	private boolean changed() {
+		if (prevInventoryContents == null)
+			return true;
+		if (inventoryContents.size() != prevInventoryContents.size())
+			return true;
+
+		for (int i = 0; i < inventoryContents.size(); i++) {
+			ItemStack currentItemStack = inventoryContents.get(i);
+			ItemStack prevItemStack = prevInventoryContents.get(i);
+			if (!ItemStack.areItemStacksEqual(currentItemStack, prevItemStack))
+				return true;
+		}
+
+		return false;
+	}
+
+	private void update() {
+		if (world.isRemote)
+			return;
+
+		cache();
+
+		ItemLambdaCrystal itemLambdaCrystal = lambdazation.lambdazationItems.itemLambdaCrystal;
+
+		ItemStack inputItemStack = inventoryContents.get(SLOT_INPUT_0);
+		ItemStack outputItemStack = inventoryContents.get(SLOT_OUTPUT_1);
+
+		if (!inputItemStack.isEmpty() && inputItemStack.getItem().equals(itemLambdaCrystal)
+			&& outputItemStack.isEmpty()) {
+			TermRef termRef = itemLambdaCrystal.getTermRef(inputItemStack).orElse(null);
+			int energy = itemLambdaCrystal.getEnergy(inputItemStack).orElse(0);
+			int capacity = itemLambdaCrystal.getCapacity(inputItemStack).orElse(0);
+			if (termRef != null && energy > 0) {
+				int maxStep = Math.min(aggregateStep, energy);
+				int maxSize = capacity;
+
+				discard();
+				termReductionResult = lambdazation.lambdazationTermFactory.termAsyncFactory.reduceTerm(termRef, maxStep,
+					maxSize, world.getServer().getTickCounter());
+				if (reduceTime <= 0)
+					reduceTime = aggregateStep;
+			} else {
+				discard();
+				reduceTime = 0;
+			}
+		} else {
+			discard();
+			reduceTime = 0;
+		}
+	}
+
+	private boolean canAdvance() {
+		return termReductionResult != null && reduceTime > 0;
+	}
+
+	private void advance() {
+		reduceTime -= Math.min(reduceTime, reduceSpeed);
+
+		markDirty();
+	}
+
+	private boolean completed() {
+		return termReductionResult != null && reduceTime <= 0;
+	}
+
+	private void reduced() {
+		if (world.isRemote)
+			return;
+
+		ItemLambdaCrystal itemLambdaCrystal = lambdazation.lambdazationItems.itemLambdaCrystal;
+
+		ItemStack inputItemStack = inventoryContents.get(SLOT_INPUT_0);
+
+		TermReductionResult result = termReductionResult.get().orElse(null);
+		int energy = itemLambdaCrystal.getEnergy(inputItemStack).orElse(0);
+
+		ItemStack resultItemStack = inputItemStack.copy();
+		if (result != null) {
+			itemLambdaCrystal.setEnergy(resultItemStack, energy - result.step);
+			itemLambdaCrystal.setTermRef(resultItemStack, result.termRef);
+		}
+
+		if (result != null && result.termRef.termState.equals(TermState.BETA_ETA_NORMAL_FORM)) {
+			inventoryContents.set(SLOT_INPUT_0, ItemStack.EMPTY);
+			inventoryContents.set(SLOT_OUTPUT_1, resultItemStack);
+		} else {
+			inventoryContents.set(SLOT_INPUT_0, resultItemStack);
+		}
+
+		discard();
+
+		markDirty();
 	}
 
 	@Override

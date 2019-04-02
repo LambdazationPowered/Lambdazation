@@ -306,7 +306,6 @@ public final class TileEntityCrystallizer extends TileEntityLockable implements 
 
 		crystallizing = false;
 
-		cache();
 		markDirty();
 	}
 
