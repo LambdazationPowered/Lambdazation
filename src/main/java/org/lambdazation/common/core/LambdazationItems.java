@@ -19,6 +19,7 @@ public final class LambdazationItems {
 	public final ItemCalibrator itemCalibrator;
 
 	public final ItemBlock itemBlockLambdaOre;
+	public final ItemBlock itemBlockLambdaBlock;
 	public final ItemBlock itemBlockCrystallizer;
 	public final ItemBlock itemBlockTransformer;
 	public final ItemBlock itemBlockCharger;
@@ -45,6 +46,10 @@ public final class LambdazationItems {
 			.group(lambdazation.lambdazationItemGroup)
 			.rarity(EnumRarity.EPIC));
 		itemBlockLambdaOre.setRegistryName(new ResourceLocation("lambdazation:lambda_ore"));
+		itemBlockLambdaBlock = new ItemBlock(lambdazation.lambdazationBlocks.blockLambdaBlock, new Item.Properties()
+			.group(lambdazation.lambdazationItemGroup)
+			.rarity(EnumRarity.EPIC));
+		itemBlockLambdaBlock.setRegistryName(new ResourceLocation("lambdazation:lambda_block"));
 		itemBlockCrystallizer = new ItemBlock(lambdazation.lambdazationBlocks.blockCrystallizer, new Item.Properties()
 			.group(lambdazation.lambdazationItemGroup)
 			.rarity(EnumRarity.COMMON));
@@ -68,6 +73,7 @@ public final class LambdazationItems {
 		e.getRegistry().register(itemLens);
 		e.getRegistry().register(itemCalibrator);
 		e.getRegistry().register(itemBlockLambdaOre);
+		e.getRegistry().register(itemBlockLambdaBlock);
 		e.getRegistry().register(itemBlockCrystallizer);
 		e.getRegistry().register(itemBlockTransformer);
 		e.getRegistry().register(itemBlockCharger);
