@@ -19,6 +19,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.world.biome.Biome;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
@@ -59,6 +60,7 @@ public final class Lambdazation {
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(TileEntityType.class, EventPriority.LOWEST, lambdazationTileEntityTypes::finalizeTileEntityTypes);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(EntityType.class, lambdazationEntityTypes::registerEntityTypes);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(EntityType.class, EventPriority.LOWEST, lambdazationEntityTypes::finalizeEntityTypes);
+		MinecraftForge.EVENT_BUS.addListener(lambdazationTermFactory::onWorldTick);
 
 		lambdazationCommonProxy.init();
 		lambdazationConfigs.init();

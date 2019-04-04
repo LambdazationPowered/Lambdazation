@@ -21,9 +21,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.item.ItemLambdaCrystal;
 import org.lambdazation.common.util.GeneralizedBuilder;
@@ -48,6 +52,10 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
+import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 
 public final class LambdazationTermFactory {
 	public final Lambdazation lambdazation;
@@ -64,9 +72,6 @@ public final class LambdazationTermFactory {
 		this.predefTermLibrary = PredefTermLibrary
 			.builder()
 			// function
-			.with(builder -> builder
-				.name("omega")
-				.term(parseTerm("(λx.x x) (λx.x x)", true).get()))
 			.with(builder -> builder
 				.name("id")
 				.term(parseTerm("λx.x", true).get()))
@@ -94,6 +99,9 @@ public final class LambdazationTermFactory {
 			.with(builder -> builder
 				.name("fix")
 				.term(parseTerm("λf.(λx.f (x x)) (λx.f (x x))", true).get()))
+			.with(builder -> builder
+				.name("omega")
+				.term(parseTerm("(λx.x x) (λx.x x)", true).get()))
 			// nat
 			.with(builder -> builder
 				.name("zero")
@@ -198,6 +206,14 @@ public final class LambdazationTermFactory {
 				.name("foldl")
 				.term(parseTerm("(λfix.(fix (λfoldl.(λf.λx.λl.l x (λh.λt.foldl f (f x h) t))))) (λf.(λx.f (x x)) (λx.f (x x)))", true).get()))
 			.build();
+	}
+
+	public void onWorldTick(ServerTickEvent e) {
+		int time = LogicalSidedProvider.INSTANCE.<MinecraftServer> get(LogicalSide.SERVER).getTickCounter();
+		// TODO Make purge pool interval configurable.
+		int purgePoolInterval = 20 * 60;
+		if (time % purgePoolInterval == 0)
+			termAsyncFactory.purgePool(false, time);
 	}
 
 	public TermMetadata serializeTerm(Term term, DataOutput output) throws IOException {
@@ -543,89 +559,117 @@ public final class LambdazationTermFactory {
 	}
 
 	public final class TermCache {
+		final Lock cacheLock;
 		final TermPool primaryTermPool;
 		final TermPool secondaryTermPool;
 
 		TermCache() {
+			cacheLock = new ReentrantLock();
 			primaryTermPool = new TermPool(null, 0xFFFFFF, 0x7FFFFF, 20 * 60 * 10, -1);
 			secondaryTermPool = new TermPool(primaryTermPool, 0xFFFF, 0x7FFF, 20 * 10, 20 * 60);
 		}
 
-		// TODO Temporary measures for thread safety. Need fine-grained lock for more parallelism.
-		public synchronized void purgeCache(boolean force, int time) {
-			primaryTermPool.purgePool(force, time);
-			secondaryTermPool.purgePool(force, time);
+		public void purgeCache(boolean force, int time) {
+			cacheLock.lock();
+			try {
+				primaryTermPool.purgePool(force, time);
+				secondaryTermPool.purgePool(force, time);
+			} finally {
+				cacheLock.unlock();
+			}
 		}
 
-		// TODO Temporary measures for thread safety. Need fine-grained lock for more parallelism.
-		public synchronized TermReductionResult reduceTerm(TermRef termRef, int maxStep, int maxSize, int time)
+		public TermReductionResult reduceTerm(TermRef termRef, int maxStep, int maxSize, int time)
 			throws InterruptedException {
-			Entry entry = secondaryTermPool.acquireEntry(termRef, time);
-			int currentStep = 0;
-			while (currentStep < maxStep && entry.termSize <= maxSize) {
-				if (entry.nextEntry == null)
-					break;
-				if (currentStep + entry.nextEntryStep > maxStep)
-					break;
-				if (entry.nextEntrySizePeak > maxSize)
-					break;
-				currentStep += entry.nextEntryStep;
-				entry = entry.nextEntry;
-			}
-			if (currentStep >= maxStep || entry.termState.equals(TermState.BETA_ETA_NORMAL_FORM))
-				return new TermReductionResult(currentStep, entry);
-			TermReductionResult result = reduceEntry(entry, maxStep, maxSize, time);
-			return new TermReductionResult(currentStep + result.step, result.termRef);
-		}
+			MutableInt currentStep = new MutableInt();
+			Entry entry;
 
-		TermReductionResult reduceEntry(Entry entry, int maxStep, int maxSize, int time) throws InterruptedException {
-			Term term;
-			try (DataInputStream dataInput = new DataInputStream(new ByteArrayInputStream(entry.serializedTerm))) {
-				term = deserializeTerm(TermNamer.EMPTY_NAMER, dataInput);
-			} catch (IOException e) {
-				return new TermReductionResult(0, entry);
+			cacheLock.lock();
+			try {
+				entry = secondaryTermPool.reduceEntry(termRef, maxStep, maxSize, time, currentStep);
+				entry.lock();
+			} finally {
+				cacheLock.unlock();
 			}
 
-			boolean successful = true;
+			TermRef reducedTermRef = null;
+			int reducedStep = 0;
 			int sizePeak = 0;
-			int currentStep = 0;
-			if (successful && currentStep <= maxStep && term.size() <= maxSize) {
-				Result result = BetaReducer.interruptibleBetaReduction(term,
-					new Strategy(scala.Option.apply(maxStep - currentStep), scala.Option.apply(maxSize),
-						scala.Option.empty(), false, false));
-				successful = result.abortReason().successful();
-				currentStep += result.step();
-				sizePeak = Math.max(sizePeak, result.sizePeak());
-				term = result.term();
-			}
-			if (successful && currentStep <= maxStep && term.size() <= maxSize) {
-				Result result = EtaConverter.interruptibleEtaConversion(term,
-					new Strategy(scala.Option.apply(maxStep - currentStep), scala.Option.apply(maxSize),
-						scala.Option.empty(), false, false));
-				successful = result.abortReason().successful();
-				currentStep += result.step();
-				sizePeak = Math.max(sizePeak, result.sizePeak());
-				term = result.term();
-			}
-			if (currentStep <= 0)
-				return new TermReductionResult(0, entry);
 
-			TermMetadata termMetadata;
-			ByteArrayOutputStream termOutput;
-			try (DataOutputStream dataOutput = new DataOutputStream(termOutput = new ByteArrayOutputStream())) {
-				termMetadata = serializeTerm(term, dataOutput);
-			} catch (IOException e) {
-				return new TermReductionResult(0, entry);
+			reduceEntry: try {
+				if (currentStep.getValue() >= maxStep || entry.termSize >= maxSize
+					|| entry.termState.equals(TermState.BETA_ETA_NORMAL_FORM))
+					break reduceEntry;
+
+				Term term;
+				try (DataInputStream dataInput = new DataInputStream(new ByteArrayInputStream(entry.serializedTerm))) {
+					term = deserializeTerm(TermNamer.EMPTY_NAMER, dataInput);
+				} catch (IOException e) {
+					break reduceEntry;
+				}
+
+				boolean successful = true;
+				int actualMaxStep = maxStep - currentStep.getValue();
+				if (successful && reducedStep <= actualMaxStep && term.size() <= maxSize) {
+					Result result = BetaReducer.interruptibleBetaReduction(term,
+						new Strategy(scala.Option.apply(actualMaxStep - reducedStep), scala.Option.apply(maxSize),
+							scala.Option.empty(), false, false));
+					successful = result.abortReason().successful();
+					reducedStep += result.step();
+					sizePeak = Math.max(sizePeak, result.sizePeak());
+					term = result.term();
+				}
+				if (successful && reducedStep <= actualMaxStep && term.size() <= maxSize) {
+					Result result = EtaConverter.interruptibleEtaConversion(term,
+						new Strategy(scala.Option.apply(actualMaxStep - reducedStep), scala.Option.apply(maxSize),
+							scala.Option.empty(), false, false));
+					successful = result.abortReason().successful();
+					reducedStep += result.step();
+					sizePeak = Math.max(sizePeak, result.sizePeak());
+					term = result.term();
+				}
+				currentStep.add(reducedStep);
+
+				if (reducedStep <= 0)
+					break reduceEntry;
+
+				TermMetadata termMetadata;
+				ByteArrayOutputStream termOutput;
+				try (DataOutputStream dataOutput = new DataOutputStream(termOutput = new ByteArrayOutputStream())) {
+					termMetadata = serializeTerm(term, dataOutput);
+				} catch (IOException e) {
+					break reduceEntry;
+				}
+				byte[] serializedTerm = termOutput.toByteArray();
+				reducedTermRef = new TermRef(serializedTerm, termMetadata.termStatistics.termSize,
+					termMetadata.termStatistics.termDepth, termMetadata.termStatistics.termState,
+					termMetadata.termStatistics.termHash);
+			} catch (Throwable e) {
+				cacheLock.lock();
+				try {
+					entry.unlock();
+				} finally {
+					cacheLock.unlock();
+				}
+				throw e;
 			}
-			byte[] serializedTerm = termOutput.toByteArray();
-			TermRef termRef = new TermRef(serializedTerm, termMetadata.termStatistics.termSize,
-				termMetadata.termStatistics.termDepth, termMetadata.termStatistics.termState,
-				termMetadata.termStatistics.termHash);
 
-			Entry reducedEntry = secondaryTermPool.acquireEntry(termRef, time);
-
-			entry.setNextEntry(reducedEntry, currentStep, sizePeak);
-			return new TermReductionResult(currentStep, reducedEntry);
+			cacheLock.lock();
+			try {
+				Entry reducedEntry;
+				if (reducedTermRef == null) {
+					reducedEntry = entry;
+					if (reducedEntry.accessTime != time)
+						secondaryTermPool.updateEntry(reducedEntry, time);
+				} else {
+					reducedEntry = secondaryTermPool.acquireEntry(reducedTermRef, time);
+					entry.setNextEntry(reducedEntry, reducedStep, sizePeak);
+				}
+				entry.unlock();
+				return new TermReductionResult(currentStep.getValue(), reducedEntry);
+			} finally {
+				cacheLock.unlock();
+			}
 		}
 
 		final class TermPool {
@@ -654,9 +698,11 @@ public final class LambdazationTermFactory {
 					if (softTermSizeLimit >= 0) {
 						while (iterator.hasNext() && termSize > softTermSizeLimit) {
 							Entry entry = iterator.next();
-							termSize -= entry.termSize;
-							entry.removeEntry();
-							iterator.remove();
+							if (!entry.locked) {
+								termSize -= entry.termSize;
+								entry.removeEntry();
+								iterator.remove();
+							}
 						}
 					}
 					if (entryExpireTime >= 0) {
@@ -664,28 +710,14 @@ public final class LambdazationTermFactory {
 							Entry entry = iterator.next();
 							if (time - entry.accessTime < entryExpireTime)
 								break;
-							termSize -= entry.termSize;
-							entry.removeEntry();
-							iterator.remove();
+							if (!entry.locked) {
+								termSize -= entry.termSize;
+								entry.removeEntry();
+								iterator.remove();
+							}
 						}
 					}
 				}
-			}
-
-			Entry lookupEntry(TermRef termRef, int time) {
-				Entry entry = entries.get(termRef);
-				if (entry != null) {
-					entry.accessTime = time;
-					if (precedingPool != null && entryPromoteTime >= 0 && time - entry.cachedTime >= entryPromoteTime) {
-						termSize -= entry.termSize;
-						entries.remove(entry);
-						precedingPool.termSize += entry.termSize;
-						precedingPool.entries.add(entry);
-					} else
-						entries.addAndMoveToLast(entry);
-				} else if (precedingPool != null)
-					entry = precedingPool.lookupEntry(termRef, time);
-				return entry;
 			}
 
 			Entry acquireEntry(TermRef termRef, int time) {
@@ -694,6 +726,49 @@ public final class LambdazationTermFactory {
 					entry = new Entry(termRef, time);
 					termSize += entry.termSize;
 					entries.add(entry);
+				}
+				return entry;
+			}
+
+			Entry lookupEntry(TermRef termRef, int time) {
+				Entry entry = entries.get(termRef);
+				if (entry != null)
+					relocateEntry(entry, time);
+				else if (precedingPool != null)
+					entry = precedingPool.lookupEntry(termRef, time);
+				return entry;
+			}
+
+			void relocateEntry(Entry entry, int time) {
+				entry.accessTime = time;
+				if (precedingPool != null && entryPromoteTime >= 0 && time - entry.cachedTime >= entryPromoteTime) {
+					if (!entries.remove(entry))
+						throw new IllegalStateException();
+					termSize -= entry.termSize;
+					precedingPool.termSize += entry.termSize;
+					precedingPool.entries.add(entry);
+				} else if (entries.addAndMoveToLast(entry))
+					throw new IllegalStateException();
+			}
+
+			void updateEntry(Entry entry, int time) {
+				if (entries.contains(entry))
+					relocateEntry(entry, time);
+				else if (precedingPool != null)
+					precedingPool.updateEntry(entry, time);
+			}
+
+			Entry reduceEntry(TermRef termRef, int maxStep, int maxSize, int time, MutableInt currentStep) {
+				Entry entry = acquireEntry(termRef, time);
+				while (currentStep.getValue() < maxStep && entry.termSize <= maxSize) {
+					if (entry.nextEntry == null)
+						break;
+					if (currentStep.getValue() + entry.nextEntryStep > maxStep)
+						break;
+					if (entry.nextEntrySizePeak > maxSize)
+						break;
+					currentStep.add(entry.nextEntryStep);
+					entry = entry.nextEntry;
 				}
 				return entry;
 			}
@@ -706,6 +781,8 @@ public final class LambdazationTermFactory {
 			Entry nextEntry;
 			int nextEntryStep;
 			int nextEntrySizePeak;
+			Condition lockedCondition;
+			boolean locked;
 
 			Entry(TermRef termRef, int time) {
 				this(termRef.serializedTerm, termRef.termSize, termRef.termDepth, termRef.termState, termRef.termHash,
@@ -721,6 +798,19 @@ public final class LambdazationTermFactory {
 				this.nextEntry = null;
 				this.nextEntryStep = -1;
 				this.nextEntrySizePeak = -1;
+				this.lockedCondition = cacheLock.newCondition();
+				this.locked = false;
+			}
+
+			void lock() throws InterruptedException {
+				while (locked)
+					lockedCondition.await();
+				locked = true;
+			}
+
+			void unlock() {
+				locked = false;
+				lockedCondition.signal();
 			}
 
 			void setNextEntry(Entry nextEntry, int nextEntryStep, int nextEntrySizePeak) {
@@ -731,24 +821,6 @@ public final class LambdazationTermFactory {
 				this.nextEntryStep = nextEntryStep;
 				this.nextEntrySizePeak = nextEntrySizePeak;
 				nextEntry.prevEntry = this;
-			}
-
-			void removeNextEntry() {
-				if (this.nextEntry != null) {
-					this.nextEntry.prevEntry = null;
-					this.nextEntry = null;
-					this.nextEntryStep = -1;
-					this.nextEntrySizePeak = -1;
-				}
-			}
-
-			void removePrevEntry() {
-				if (this.prevEntry != null) {
-					this.prevEntry.nextEntry = null;
-					this.prevEntry.nextEntryStep = -1;
-					this.prevEntry.nextEntrySizePeak = -1;
-					this.prevEntry = null;
-				}
 			}
 
 			void removeEntry() {
@@ -772,6 +844,24 @@ public final class LambdazationTermFactory {
 				this.nextEntryStep = -1;
 				this.nextEntrySizePeak = -1;
 			}
+
+			void removeNextEntry() {
+				if (this.nextEntry != null) {
+					this.nextEntry.prevEntry = null;
+					this.nextEntry = null;
+					this.nextEntryStep = -1;
+					this.nextEntrySizePeak = -1;
+				}
+			}
+
+			void removePrevEntry() {
+				if (this.prevEntry != null) {
+					this.prevEntry.nextEntry = null;
+					this.prevEntry.nextEntryStep = -1;
+					this.prevEntry.nextEntrySizePeak = -1;
+					this.prevEntry = null;
+				}
+			}
 		}
 	}
 
@@ -787,15 +877,18 @@ public final class LambdazationTermFactory {
 
 		TermAsyncFactory() {
 			// TODO Make executor service configurable.
-			this.executorService = Executors.newSingleThreadExecutor();
+			this.executorService = Executors.newCachedThreadPool();
 			this.concurrentTasks = new AtomicInteger();
+		}
+
+		public void purgePool(boolean force, int time) {
+			executorService.submit(() -> termCache.purgeCache(false, time));
 		}
 
 		public TermAsyncResult<TermReductionResult> reduceTerm(TermRef termRef, int maxStep, int maxSize, int time) {
 			Future<TermReductionResult> future = executorService.submit(() -> {
 				concurrentTasks.incrementAndGet();
 				try {
-					// TODO Prevent concurrent reduction for same term.
 					return termCache.reduceTerm(termRef, maxStep, maxSize, time);
 				} catch (InterruptedException e) {
 					return new TermReductionResult(0, termRef);
