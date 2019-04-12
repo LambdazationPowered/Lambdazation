@@ -8,10 +8,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public final class BoxedEnum<T extends Enum<T>> implements EnumValue<BoxedEnum<T>>, Comparable<BoxedEnum<T>> {
-	protected final T enumValue;
+public final class BoxedEnum<E extends Enum<E>> implements EnumValue<BoxedEnum<E>>, Comparable<BoxedEnum<E>> {
+	protected final E enumValue;
 
-	public BoxedEnum(T enumValue) {
+	public BoxedEnum(E enumValue) {
 		this.enumValue = enumValue;
 	}
 
@@ -31,20 +31,20 @@ public final class BoxedEnum<T extends Enum<T>> implements EnumValue<BoxedEnum<T
 	}
 
 	@Override
-	public int compareTo(BoxedEnum<T> o) {
+	public int compareTo(BoxedEnum<E> o) {
 		return enumValue.compareTo(o.enumValue);
 	}
 
-	public static final class BoxedEnumClass<T extends Enum<T>> implements EnumObject<BoxedEnum<T>> {
-		private final List<BoxedEnum<T>> values;
-		private final Map<String, BoxedEnum<T>> mapping;
+	public static final class BoxedEnumClass<E extends Enum<E>> implements EnumObject<BoxedEnum<E>> {
+		private final List<BoxedEnum<E>> values;
+		private final Map<String, BoxedEnum<E>> mapping;
 		
-		public BoxedEnumClass(Class<T> enumClass) {
+		public BoxedEnumClass(Class<E> enumClass) {
 			values = new ArrayList<>();
 			mapping = new HashMap<>();
 
 			Arrays.stream(enumClass.getEnumConstants()).forEach(enumValue -> {
-				BoxedEnum<T> value = new BoxedEnum<>(enumValue);
+				BoxedEnum<E> value = new BoxedEnum<>(enumValue);
 				values.add(value);
 				mapping.put(enumValue.name(), value);
 			});
@@ -56,19 +56,19 @@ public final class BoxedEnum<T extends Enum<T>> implements EnumValue<BoxedEnum<T
 		}
 
 		@Override
-		public Optional<BoxedEnum<T>> valueAt(int ordinal) {
+		public Optional<BoxedEnum<E>> valueAt(int ordinal) {
 			return Optional.ofNullable(values.get(ordinal));
 		}
 
 		@Override
-		public Stream<BoxedEnum<T>> values() {
+		public Stream<BoxedEnum<E>> values() {
 			return values.stream();
 		}
 
 		@Override
-		public Optional<BoxedEnum<T>> valueOf(String name) {
+		public Optional<BoxedEnum<E>> valueOf(String name) {
 			return Optional.ofNullable(mapping.get(name));
 		}
-		
 	}
 }
+

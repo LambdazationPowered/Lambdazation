@@ -12,6 +12,7 @@ import org.lambdazation.common.core.LambdazationBiomes;
 import org.lambdazation.common.core.LambdazationBlocks;
 import org.lambdazation.common.core.LambdazationItemGroup;
 import org.lambdazation.common.core.LambdazationItems;
+import org.lambdazation.common.core.LambdazationNetwork;
 import org.lambdazation.server.core.LambdazationServerProxy;
 
 import net.minecraft.block.Block;
@@ -36,6 +37,7 @@ public final class Lambdazation {
 	public final LambdazationBiomes lamblambdazationBiomes;
 	public final LambdazationTileEntityTypes lambdazationTileEntityTypes;
 	public final LambdazationEntityTypes lambdazationEntityTypes;
+	public final LambdazationNetwork lambdazationNetwork;
 	public final LambdazationTermFactory lambdazationTermFactory;
 
 	public Lambdazation() {
@@ -48,6 +50,7 @@ public final class Lambdazation {
 		lamblambdazationBiomes = new LambdazationBiomes(this);
 		lambdazationTileEntityTypes = new LambdazationTileEntityTypes(this);
 		lambdazationEntityTypes = new LambdazationEntityTypes(this);
+		lambdazationNetwork = new LambdazationNetwork(this);
 		lambdazationTermFactory = new LambdazationTermFactory(this);
 
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(Block.class, lambdazationBlocks::registerBlocks);
@@ -60,6 +63,7 @@ public final class Lambdazation {
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(TileEntityType.class, EventPriority.LOWEST, lambdazationTileEntityTypes::finalizeTileEntityTypes);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(EntityType.class, lambdazationEntityTypes::registerEntityTypes);
 		FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(EntityType.class, EventPriority.LOWEST, lambdazationEntityTypes::finalizeEntityTypes);
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(lambdazationNetwork::registerNetwork);
 		MinecraftForge.EVENT_BUS.addListener(lambdazationTermFactory::onWorldTick);
 
 		lambdazationCommonProxy.init();
