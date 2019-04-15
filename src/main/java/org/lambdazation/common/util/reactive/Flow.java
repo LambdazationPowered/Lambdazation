@@ -24,25 +24,31 @@ public abstract class Flow<A> {
 	}
 
 	static class Fmap<A, B> extends Flow<B> {
+		final Flow<A> parent;
 		final Function<A, B> f;
 
-		Fmap(Function<A, B> f) {
+		Fmap(Flow<A> parent, Function<A, B> f) {
+			this.parent = parent;
 			this.f = f;
 		}
 	}
 
 	static class Apply<A, B> extends Flow<B> {
+		final Flow<A> parent;
 		final Flow<Function<A, B>> flow;
 
-		Apply(Flow<Function<A, B>> flow) {
+		Apply(Flow<A> parent, Flow<Function<A, B>> flow) {
+			this.parent = parent;
 			this.flow = flow;
 		}
 	}
 
 	static class Compose<A, B> extends Flow<B> {
+		final Flow<A> parent;
 		final Function<A, Flow<B>> f;
 
-		Compose(Function<A, Flow<B>> f) {
+		Compose(Flow<A> parent, Function<A, Flow<B>> f) {
+			this.parent = parent;
 			this.f = f;
 		}
 	}
@@ -100,15 +106,15 @@ public abstract class Flow<A> {
 	}
 
 	public <B> Flow<B> fmap(Function<A, B> f) {
-		return new Fmap<>(f);
+		return new Fmap<>(this, f);
 	}
 
 	public <B> Flow<B> apply(Flow<Function<A, B>> flow) {
-		return new Apply<>(flow);
+		return new Apply<>(this, flow);
 	}
 
 	public <B> Flow<B> compose(Function<A, Flow<B>> f) {
-		return new Compose<>(f);
+		return new Compose<>(this, f);
 	}
 
 	public static <A> Flow<A> pure(A a) {
@@ -116,6 +122,7 @@ public abstract class Flow<A> {
 	}
 
 	public static <A> Flow<A> mfix(Function<A, Flow<A>> f) {
+		// FIXME May not work in strict evaluation
 		return new Mfix<>(f);
 	}
 

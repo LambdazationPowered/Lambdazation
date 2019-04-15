@@ -22,17 +22,21 @@ public abstract class Event<A> {
 	}
 
 	static class Fmap<A, B> extends Event<B> {
+		final Event<A> parent;
 		final Function<A, B> f;
 
-		Fmap(Function<A, B> f) {
+		Fmap(Event<A> parent, Function<A, B> f) {
+			this.parent = parent;
 			this.f = f;
 		}
 	}
 
 	static class Filter<A> extends Event<A> {
+		final Event<A> parent;
 		final Predicate<A> p;
 
-		Filter(Predicate<A> p) {
+		Filter(Event<A> parent, Predicate<A> p) {
+			this.parent = parent;
 			this.p = p;
 		}
 	}
@@ -56,11 +60,11 @@ public abstract class Event<A> {
 	}
 
 	public <B> Event<B> fmap(Function<A, B> f) {
-		return new Fmap<>(f);
+		return new Fmap<>(this, f);
 	}
 
 	public Event<A> filter(Predicate<A> p) {
-		return new Filter<>(p);
+		return new Filter<>(this, p);
 	}
 
 	public static <A> Event<A> mempty() {
