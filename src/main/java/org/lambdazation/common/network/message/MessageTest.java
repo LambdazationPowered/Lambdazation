@@ -21,8 +21,8 @@ import org.lambdazation.common.network.message.field.FieldShort;
 import org.lambdazation.common.network.message.field.FieldString;
 import org.lambdazation.common.network.message.field.FieldTextComponent;
 import org.lambdazation.common.network.message.field.FieldUniqueId;
-import org.lambdazation.common.util.EnumBoolean;
 import org.lambdazation.common.util.GeneralizedEnum;
+import org.lambdazation.common.util.data.Unit;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -38,7 +38,7 @@ public final class MessageTest implements Message<MessageTest> {
 	public final char p4;
 	public final NBTTagCompound p5;
 	public final double p6;
-	public final EnumBoolean p7;
+	public final Unit p7;
 	public final float p8;
 	public final int p9;
 	public final ItemStack p10;
@@ -103,7 +103,7 @@ public final class MessageTest implements Message<MessageTest> {
 		public static final FieldTest<Character> P4;
 		public static final FieldTest<NBTTagCompound> P5;
 		public static final FieldTest<Double> P6;
-		public static final FieldTest<EnumBoolean> P7;
+		public static final FieldTest<Unit> P7;
 		public static final FieldTest<Float> P8;
 		public static final FieldTest<Integer> P9;
 		public static final FieldTest<ItemStack> P10;
@@ -210,19 +210,19 @@ public final class MessageTest implements Message<MessageTest> {
 			}
 			P6 = builder.withValue("P6", FieldP6::new);
 
-			class FieldP7 extends FieldTest<EnumBoolean> implements FieldEnum<MessageTest, FieldTest<?>, EnumBoolean> {
+			class FieldP7 extends FieldTest<Unit> implements FieldEnum<MessageTest, FieldTest<?>, Unit> {
 				FieldP7(String name, int ordinal) {
 					super(name, ordinal);
 				}
 
 				@Override
-				public EnumBoolean get(MessageTest msg) {
+				public Unit get(MessageTest msg) {
 					return msg.p7;
 				}
 
 				@Override
-				public Class<EnumBoolean> enumClass() {
-					return EnumBoolean.class;
+				public Class<Unit> enumClass() {
+					return Unit.class;
 				}
 
 			}

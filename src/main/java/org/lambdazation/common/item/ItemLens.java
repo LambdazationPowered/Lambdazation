@@ -6,7 +6,7 @@ import org.lambdazation.Lambdazation;
 import org.lambdazation.common.inventory.ContainerLens;
 import org.lambdazation.common.network.message.MessagePing;
 import org.lambdazation.common.network.message.MessageTest;
-import org.lambdazation.common.util.EnumBoolean;
+import org.lambdazation.common.util.data.Unit;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -59,7 +59,7 @@ public final class ItemLens extends Item implements IInteractionObject {
 			.with(MessageTest.FieldTest.P0, BlockPos.ORIGIN)
 			.with(MessageTest.FieldTest.P3, new byte[0])
 			.with(MessageTest.FieldTest.P5, new NBTTagCompound())
-			.with(MessageTest.FieldTest.P7, EnumBoolean.FALSE)
+			.with(MessageTest.FieldTest.P7, Unit.UNIT)
 			.with(MessageTest.FieldTest.P10, new ItemStack(Blocks.STONE))
 			.with(MessageTest.FieldTest.P12, new ResourceLocation("lambdazation", "network"))
 			.with(MessageTest.FieldTest.P14, "lambdazation")
