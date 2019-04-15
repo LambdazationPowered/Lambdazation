@@ -25,6 +25,10 @@ public final class Top {
 		return new Top(value);
 	}
 
+	public static Function<Top, Object> projectionTop() {
+		return top -> top.value;
+	}
+
 	public static <A> Function<Top, Function<Function<Object, A>, A>> matchTop() {
 		return top -> f -> top.match(f);
 	}

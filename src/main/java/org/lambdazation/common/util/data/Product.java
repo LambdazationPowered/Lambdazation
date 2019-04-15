@@ -35,6 +35,14 @@ public final class Product<A, B> {
 		return new Product<>(left, right);
 	}
 
+	public static <A, B> Function<Product<A, B>, A> projectionLeft() {
+		return product -> product.left;
+	}
+
+	public static <A, B> Function<Product<A, B>, B> projectionRight() {
+		return product -> product.right;
+	}
+
 	public static <A, B, C> Function<Product<A, B>, Function<Function<A, Function<B, C>>, C>> matchProduct() {
 		return product -> f -> product.match(f);
 	}

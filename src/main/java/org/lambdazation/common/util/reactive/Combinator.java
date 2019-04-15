@@ -14,6 +14,6 @@ public interface Combinator {
 				.compose(e0 -> Flow
 					.store(a, e0)
 					.fmap(Product.ofProduct(e0)))))
-			.fmap(Product::left);
+			.fmap(Product.projectionLeft());
 	}
 }

@@ -38,7 +38,7 @@ public final class BoxedEnum<E extends Enum<E>> implements EnumValue<BoxedEnum<E
 	public static final class BoxedEnumClass<E extends Enum<E>> implements EnumObject<BoxedEnum<E>> {
 		private final List<BoxedEnum<E>> values;
 		private final Map<String, BoxedEnum<E>> mapping;
-		
+
 		public BoxedEnumClass(Class<E> enumClass) {
 			values = new ArrayList<>();
 			mapping = new HashMap<>();
@@ -71,4 +71,3 @@ public final class BoxedEnum<E extends Enum<E>> implements EnumValue<BoxedEnum<E
 		}
 	}
 }
-

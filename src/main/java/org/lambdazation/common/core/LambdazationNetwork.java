@@ -10,7 +10,7 @@ import net.minecraftforge.fml.network.simple.SimpleChannel;
 
 public final class LambdazationNetwork {
 	public final Lambdazation lambdazation;
-	
+
 	public final SimpleChannel simpleChannel;
 	public final NetworkHandler networkHandler;
 
