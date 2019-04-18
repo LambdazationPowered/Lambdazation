@@ -2,7 +2,9 @@ package org.lambdazation.common.util.reactive;
 
 import java.util.function.Function;
 
+import org.lambdazation.common.util.data.Product;
 import org.lambdazation.common.util.data.Unit;
+import org.lambdazation.common.util.eval.Lazy;
 
 /**
  * Flow is intended for modeling reactive flow in monadic ways.
@@ -61,10 +63,18 @@ public abstract class Flow<A> {
 		}
 	}
 
-	static class Mfix<A> extends Flow<A> {
-		final Function<A, Flow<A>> f;
+	static class Efix<A, B> extends Flow<B> {
+		final Function<Event<A>, Flow<Product<Event<A>, B>>> f;
 
-		Mfix(Function<A, Flow<A>> f) {
+		Efix(Function<Event<A>, Flow<Product<Event<A>, B>>> f) {
+			this.f = f;
+		}
+	}
+
+	static class Bfix<A, B> extends Flow<B> {
+		final Function<Behavior<A>, Flow<Product<Behavior<A>, B>>> f;
+
+		Bfix(Function<Behavior<A>, Flow<Product<Behavior<A>, B>>> f) {
 			this.f = f;
 		}
 	}
@@ -105,6 +115,22 @@ public abstract class Flow<A> {
 		}
 	}
 
+	static class LazyEvent<A> extends Event<A> {
+		final Lazy<Event<A>> lazy;
+
+		public LazyEvent(Lazy<Event<A>> lazy) {
+			this.lazy = lazy;
+		}
+	}
+
+	static class LazyBehavior<A> extends Behavior<A> {
+		final Lazy<Behavior<A>> lazy;
+
+		public LazyBehavior(Lazy<Behavior<A>> lazy) {
+			this.lazy = lazy;
+		}
+	}
+
 	public <B> Flow<B> fmap(Function<A, B> f) {
 		return new Fmap<>(this, f);
 	}
@@ -121,9 +147,12 @@ public abstract class Flow<A> {
 		return new Pure<>(a);
 	}
 
-	public static <A> Flow<A> mfix(Function<A, Flow<A>> f) {
-		// FIXME May not work in strict evaluation
-		return new Mfix<>(f);
+	public static <A, B> Flow<B> efix(Function<Event<A>, Flow<Product<Event<A>, B>>> f) {
+		return new Efix<>(f);
+	}
+
+	public static <A, B> Flow<B> bfix(Function<Behavior<A>, Flow<Product<Behavior<A>, B>>> f) {
+		return new Bfix<>(f);
 	}
 
 	public static <A> Flow<Behavior<A>> store(A a, Event<A> event) {
