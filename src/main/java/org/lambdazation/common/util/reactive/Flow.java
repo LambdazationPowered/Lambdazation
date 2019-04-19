@@ -4,7 +4,6 @@ import java.util.function.Function;
 
 import org.lambdazation.common.util.data.Product;
 import org.lambdazation.common.util.data.Unit;
-import org.lambdazation.common.util.eval.Lazy;
 
 /**
  * Flow is intended for modeling reactive flow in monadic ways.
@@ -14,7 +13,6 @@ import org.lambdazation.common.util.eval.Lazy;
  * <li>Functor Flow</li>
  * <li>Applicative Flow</li>
  * <li>Monad Flow</li>
- * <li>MonadFix Flow</li>
  * </ul>
  *
  * @param <A>
@@ -33,6 +31,11 @@ public abstract class Flow<A> {
 			this.parent = parent;
 			this.f = f;
 		}
+
+		@Override
+		B accept(Vistor v) {
+			return v.visit(this);
+		}
 	}
 
 	static class Apply<A, B> extends Flow<B> {
@@ -42,6 +45,11 @@ public abstract class Flow<A> {
 		Apply(Flow<A> parent, Flow<Function<A, B>> flow) {
 			this.parent = parent;
 			this.flow = flow;
+		}
+
+		@Override
+		B accept(Vistor v) {
+			return v.visit(this);
 		}
 	}
 
@@ -53,6 +61,11 @@ public abstract class Flow<A> {
 			this.parent = parent;
 			this.f = f;
 		}
+
+		@Override
+		B accept(Vistor v) {
+			return v.visit(this);
+		}
 	}
 
 	static class Pure<A> extends Flow<A> {
@@ -60,6 +73,11 @@ public abstract class Flow<A> {
 
 		Pure(A a) {
 			this.a = a;
+		}
+
+		@Override
+		A accept(Vistor v) {
+			return v.visit(this);
 		}
 	}
 
@@ -69,6 +87,11 @@ public abstract class Flow<A> {
 		Efix(Function<Event<A>, Flow<Product<Event<A>, B>>> f) {
 			this.f = f;
 		}
+
+		@Override
+		B accept(Vistor v) {
+			return v.visit(this);
+		}
 	}
 
 	static class Bfix<A, B> extends Flow<B> {
@@ -76,6 +99,11 @@ public abstract class Flow<A> {
 
 		Bfix(Function<Behavior<A>, Flow<Product<Behavior<A>, B>>> f) {
 			this.f = f;
+		}
+
+		@Override
+		B accept(Vistor v) {
+			return v.visit(this);
 		}
 	}
 
@@ -87,6 +115,11 @@ public abstract class Flow<A> {
 			this.a = a;
 			this.event = event;
 		}
+
+		@Override
+		Behavior<A> accept(Vistor v) {
+			return v.visit(this);
+		}
 	}
 
 	static class Retrieve<A, B> extends Flow<Event<B>> {
@@ -97,6 +130,11 @@ public abstract class Flow<A> {
 			this.behavior = behavior;
 			this.event = event;
 		}
+
+		@Override
+		Event<B> accept(Vistor v) {
+			return v.visit(this);
+		}
 	}
 
 	static class Input<A> extends Flow<Event<A>> {
@@ -104,6 +142,11 @@ public abstract class Flow<A> {
 
 		Input(Source<A> source) {
 			this.source = source;
+		}
+
+		@Override
+		Event<A> accept(Vistor v) {
+			return v.visit(this);
 		}
 	}
 
@@ -113,23 +156,40 @@ public abstract class Flow<A> {
 		Output(Event<Runnable> event) {
 			this.event = event;
 		}
-	}
 
-	static class LazyEvent<A> extends Event<A> {
-		final Lazy<Event<A>> lazy;
-
-		public LazyEvent(Lazy<Event<A>> lazy) {
-			this.lazy = lazy;
+		@Override
+		Unit accept(Vistor v) {
+			return v.visit(this);
 		}
 	}
 
-	static class LazyBehavior<A> extends Behavior<A> {
-		final Lazy<Behavior<A>> lazy;
+	interface Vistor {
+		<A, B> B visit(Fmap<A, B> flow);
 
-		public LazyBehavior(Lazy<Behavior<A>> lazy) {
-			this.lazy = lazy;
+		<A, B> B visit(Apply<A, B> flow);
+
+		<A, B> B visit(Compose<A, B> flow);
+
+		<A> A visit(Pure<A> flow);
+
+		<A, B> B visit(Efix<A, B> flow);
+
+		<A, B> B visit(Bfix<A, B> flow);
+
+		<A> Behavior<A> visit(Store<A> flow);
+
+		<A, B> Event<B> visit(Retrieve<A, B> flow);
+
+		<A> Event<A> visit(Input<A> flow);
+
+		Unit visit(Output flow);
+
+		default <A> A accept(Flow<A> flow) {
+			return flow.accept(this);
 		}
 	}
+
+	abstract A accept(Vistor v);
 
 	public <B> Flow<B> fmap(Function<A, B> f) {
 		return new Fmap<>(this, f);

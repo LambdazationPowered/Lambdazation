@@ -2,6 +2,8 @@ package org.lambdazation.common.util.reactive;
 
 import java.util.function.Function;
 
+import org.lambdazation.common.util.eval.Lazy;
+
 /**
  * Stream of values that can vary over continuous time.
  * <p>
@@ -27,6 +29,11 @@ public abstract class Behavior<A> {
 			this.parent = parent;
 			this.f = f;
 		}
+
+		@Override
+		B accept(Vistor v) {
+			return v.visit(this);
+		}
 	}
 
 	static class Apply<A, B> extends Behavior<B> {
@@ -37,6 +44,11 @@ public abstract class Behavior<A> {
 			this.parent = parent;
 			this.behavior = behavior;
 		}
+
+		@Override
+		B accept(Vistor v) {
+			return v.visit(this);
+		}
 	}
 
 	static class Pure<A> extends Behavior<A> {
@@ -45,7 +57,58 @@ public abstract class Behavior<A> {
 		Pure(A a) {
 			this.a = a;
 		}
+
+		@Override
+		A accept(Vistor v) {
+			return v.visit(this);
+		}
 	}
+
+	static class FlowBfix<A> extends Behavior<A> {
+		final Lazy<Behavior<A>> lazy;
+
+		public FlowBfix(Lazy<Behavior<A>> lazy) {
+			this.lazy = lazy;
+		}
+
+		@Override
+		A accept(Vistor v) {
+			return v.visit(this);
+		}
+	}
+
+	static class FlowStore<A> extends Behavior<A> {
+		final A a;
+		final Event<A> event;
+
+		FlowStore(A a, Event<A> event) {
+			this.a = a;
+			this.event = event;
+		}
+
+		@Override
+		A accept(Vistor v) {
+			return v.visit(this);
+		}
+	}
+
+	interface Vistor {
+		<A, B> B visit(Fmap<A, B> behavior);
+
+		<A, B> B visit(Apply<A, B> behavior);
+
+		<A> A visit(Pure<A> behavior);
+
+		<A> A visit(FlowBfix<A> behavior);
+
+		<A> A visit(FlowStore<A> behavior);
+
+		default <A> A accept(Behavior<A> behavior) {
+			return behavior.accept(this);
+		}
+	}
+
+	abstract A accept(Vistor v);
 
 	public <B> Behavior<B> fmap(Function<A, B> f) {
 		return new Fmap<>(this, f);
