@@ -17,6 +17,10 @@ public final class Top {
 		return f.apply(value);
 	}
 
+	public <A> Top mapValue(Function<Object, A> f) {
+		return new Top(f.apply(value));
+	}
+
 	public static <A> Function<A, Top> ofTop() {
 		return value -> new Top(value);
 	}
@@ -27,6 +31,18 @@ public final class Top {
 
 	public static Function<Top, Object> projectionTop() {
 		return top -> top.value;
+	}
+
+	public static <A> Function<Top, Function<Function<Object, A>, Top>> mapValue() {
+		return top -> f -> top.mapValue(f);
+	}
+
+	public static <A> Function<Function<Object, A>, Top> mapValue(Top top) {
+		return f -> top.mapValue(f);
+	}
+
+	public static <A> Top mapValue(Top top, Function<Object, A> f) {
+		return top.mapValue(f);
 	}
 
 	public static <A> Function<Top, Function<Function<Object, A>, A>> matchTop() {

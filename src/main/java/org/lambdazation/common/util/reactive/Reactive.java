@@ -1,6 +1,7 @@
 package org.lambdazation.common.util.reactive;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.lambdazation.common.util.data.Product;
+import org.lambdazation.common.util.data.Sum;
 import org.lambdazation.common.util.data.Unit;
 import org.lambdazation.common.util.eval.Thunk;
 
@@ -126,12 +128,6 @@ public final class Reactive {
 			}
 		}.accept(flow);
 
-		AtomicInteger activePort = new AtomicInteger(0);
-
-		boolean responsive = false;
-		BooleanSupplier processing = () -> activePort.get() > 0;
-		List<Port<?>> ports = new ArrayList<>();
-
 		Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries = new HashMap<>();
 		Map<Behavior.FlowStore<?>, ?> storeBehaviorValues = new HashMap<>();
 
@@ -226,23 +222,196 @@ public final class Reactive {
 			}
 		}::accept);
 
-		// TODO NYI
+		AtomicInteger activePort = new AtomicInteger(0);
 
-		// [X] Step 1: Run entire flow graph to find all output event and build all events and behaviors.
-		// [X] Step 2: Find all associated input event for each event, output event and store behavior.
-		// [ ] Step 3: When any input event fired. Lookup values for any associated output event and store behavior.
-		// [ ] Step 4: Update store behavior value.
-		// [ ] Step 5: Fire output event action.
+		boolean responsive = false;
+		BooleanSupplier processing = () -> activePort.get() > 0;
+		List<Port<?>> ports = new ArrayList<>();
 
-		// Note: When input event fired. Two cache will be built to store temporary values for any associated event and behavior.
-		// Note: Always fire output event action after all store behavior values are updated. So recursion can work properly.
-		// Note: Same action in an output event can be fired more than once if output event is referenced multiple times.
-		// Note: Even action can be fired more than once. The action if self will only be calculated once.
-		// Note: If value of any event, behaivor are directly or indirectly depend on value of it self. Try calculate value on it will diverge.
-		// Note: Input event will only attach to it source if any output event directly or indirectly depend on it.
-		// Note: The whole reactive flow will expected to be pure. Including action values. So we can do memorization optimization if necessary.
+		inputEventRelationEntries.forEach((inputEvent, relationEntry) -> {
+			Port<?> port = new Port<>(inputEvent.source, currentPort -> value -> {
+				if (!currentPort.responsive)
+					return;
+				activePort.incrementAndGet();
+				try {
+					Evaluator evaluator = new Evaluator(inputEventRelationEntries, storeBehaviorValues, Collections.singletonMap(inputEvent, value));
+					evaluator.eval();
+				} finally {
+					activePort.decrementAndGet();
+				}
+			});
+			ports.add(port);
+		});
 
 		return new Reactive(responsive, processing, ports);
+	}
+
+	static final class Evaluator {
+		final Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries;
+		final Map<Behavior.FlowStore<?>, ?> storeBehaviorValues;
+		final Map<Event.FlowInput<?>, ?> firedInputEventValues;
+		final Map<Event<?>, Sum<Unit, ?>> eventValues;
+		final Map<Behavior<?>, ?> behaviorValues;
+		final Event.EvalVistor eventVistor;
+		final Behavior.EvalVistor behaviorVistor;
+
+		Evaluator(Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries, Map<Behavior.FlowStore<?>, ?> storeBehaviorValues,
+			Map<Event.FlowInput<?>, ?> firedInputEventValues) {
+			this.inputEventRelationEntries = inputEventRelationEntries;
+			this.storeBehaviorValues = storeBehaviorValues;
+			this.firedInputEventValues = firedInputEventValues;
+			this.eventValues = new HashMap<>();
+			this.behaviorValues = new HashMap<>();
+			this.eventVistor = new Event.EvalVistor() {
+				@Override
+				public <A, B> Sum<Unit, B> visit(Event.Fmap<A, B> event) {
+					Sum<Unit, A> eventParentValue = eval(event.parent);
+
+					Sum<Unit, B> value = eventParentValue.mapRight(event.f);
+					eventValues.put(event, value);
+					return value;
+				}
+
+				@Override
+				public <A> Sum<Unit, A> visit(Event.Filter<A> event) {
+					Sum<Unit, A> eventParentValue = eval(event.parent);
+
+					Sum<Unit, A> value = Sum.filterRight(eventParentValue, event.p);
+					eventValues.put(event, value);
+					return value;
+				}
+
+				@Override
+				public <A> Sum<Unit, A> visit(Event.Mempty<A> event) {
+					Sum<Unit, A> value = Sum.ofSumLeft(Unit.UNIT);
+					eventValues.put(event, value);
+					return value;
+				}
+
+				@Override
+				public <A> Sum<Unit, A> visit(Event.Mappend<A> event) {
+					Sum<Unit, A> eventEvent1Value = eval(event.event1);
+					Sum<Unit, A> eventEvent2Value = eval(event.event2);
+
+					Sum<Unit, A> value = Sum.mappendRight(event.f, eventEvent1Value, eventEvent2Value);
+					eventValues.put(event, value);
+					return value;
+				}
+
+				@Override
+				public <A> Sum<Unit, A> visit(Event.FlowEfix<A> event) {
+					return accept(event.get());
+				}
+
+				@Override
+				public <A, B> Sum<Unit, B> visit(Event.FlowRetrieve<A, B> event) {
+					Function<A, B> eventBehaviorValue = eval(event.behavior);
+					Sum<Unit, A> eventEventValue = eval(event.event);
+
+					Sum<Unit, B> value = eventEventValue.mapRight(eventBehaviorValue);
+					eventValues.put(event, value);
+					return value;
+				}
+
+				@Override
+				public <A> Sum<Unit, A> visit(Event.FlowInput<A> event) {
+					Sum<Unit, A> value = Sum.ofSumRight(Evaluator.this.<A> firedInputEventValues().get(event));
+					eventValues.put(event, value);
+					return value;
+				}
+			};
+			behaviorVistor = new Behavior.EvalVistor() {
+				@Override
+				public <A, B> B visit(Behavior.Fmap<A, B> behavior) {
+					A behaviorParentValue = eval(behavior.parent);
+
+					B value = behavior.f.apply(behaviorParentValue);
+					Evaluator.this.<B> behaviorValues().put(behavior, value);
+					return value;
+				}
+
+				@Override
+				public <A, B> B visit(Behavior.Apply<A, B> behavior) {
+					A behaviorParentValue = eval(behavior.parent);
+					Function<A, B> behavioBehaviorValue = eval(behavior.behavior);
+
+					B value = behavioBehaviorValue.apply(behaviorParentValue);
+					Evaluator.this.<B> behaviorValues().put(behavior, value);
+					return value;
+				}
+
+				@Override
+				public <A> A visit(Behavior.Pure<A> behavior) {
+					A value = behavior.a;
+					Evaluator.this.<A> behaviorValues().put(behavior, value);
+					return value;
+				}
+
+				@Override
+				public <A> A visit(Behavior.FlowBfix<A> behavior) {
+					return accept(behavior.get());
+				}
+
+				@Override
+				public <A> A visit(Behavior.FlowStore<A> behavior) {
+					A value = Evaluator.this.<A> storeBehaviorValues().get(behavior);
+					Evaluator.this.<A> behaviorValues().put(behavior, value);
+					return value;
+				}
+			};
+		}
+
+		@SuppressWarnings("unchecked")
+		<A> Map<Behavior.FlowStore<?>, A> storeBehaviorValues() {
+			return (Map<Behavior.FlowStore<?>, A>) (Map<?, ?>) storeBehaviorValues;
+		}
+
+		@SuppressWarnings("unchecked")
+		<A> Map<Event.FlowInput<A>, A> firedInputEventValues() {
+			return (Map<Event.FlowInput<A>, A>) (Map<?, ?>) firedInputEventValues;
+		}
+
+		@SuppressWarnings("unchecked")
+		<A> Map<Event<A>, Sum<Unit, A>> eventValues() {
+			return (Map<Event<A>, Sum<Unit, A>>) (Map<?, ?>) eventValues;
+		}
+
+		@SuppressWarnings("unchecked")
+		<A> Map<Behavior<A>, A> behaviorValues() {
+			return (Map<Behavior<A>, A>) (Map<?, ?>) behaviorValues;
+		}
+
+		void eval() {
+			List<Runnable> actions = new ArrayList<>();
+			for (Event.FlowInput<?> inputEvent : firedInputEventValues.keySet()) {
+				RelationEntry relationEntry = inputEventRelationEntries.get(inputEvent);
+				for (Event<Runnable> outputEvent : relationEntry.targetOutputEvents) {
+					Sum<Unit, Runnable> eventValue = eval(outputEvent);
+					eventValue.ifRight(value -> actions.add(value));
+				}
+				for (Behavior.FlowStore<?> storeBehavior : relationEntry.targetStoreBehaviors) {
+					eval(storeBehavior);
+					Sum<Unit, ?> eventValue = eval(storeBehavior.event);
+					eventValue.ifRight(value -> storeBehaviorValues().put(storeBehavior, value));
+				}
+			}
+			for (Runnable action : actions)
+				action.run();
+		}
+
+		<A> Sum<Unit, A> eval(Event<A> event) {
+			if (eventValues.containsKey(event))
+				return this.<A> eventValues().get(event);
+			Sum<Unit, A> value = eventVistor.accept(event);
+			return value;
+		}
+
+		<A> A eval(Behavior<A> behavior) {
+			if (behaviorValues.containsKey(behavior))
+				return this.<A> behaviorValues().get(behavior);
+			A value = behaviorVistor.accept(behavior);
+			return value;
+		}
 	}
 
 	static final class TraverseLog {

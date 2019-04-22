@@ -19,10 +19,6 @@ public final class Product<A, B> {
 		return right;
 	}
 
-	public Product<B, A> commute() {
-		return new Product<>(right, left);
-	}
-
 	public Product<B, Unit> leftShift() {
 		return new Product<>(right, Unit.UNIT);
 	}
@@ -31,8 +27,28 @@ public final class Product<A, B> {
 		return new Product<>(Unit.UNIT, left);
 	}
 
+	public Product<B, A> commute() {
+		return new Product<>(right, left);
+	}
+
 	public <C> C match(Function<A, Function<B, C>> f) {
 		return f.apply(left).apply(right);
+	}
+
+	public <C> Product<C, B> mapLeft(Function<A, C> f) {
+		return new Product<>(f.apply(left), right);
+	}
+
+	public <C> Product<A, C> mapRight(Function<B, C> f) {
+		return new Product<>(left, f.apply(right));
+	}
+
+	public <C> Product<C, B> flatMapLeft(Function<A, Product<C, B>> f) {
+		return f.apply(left);
+	}
+
+	public <C> Product<A, C> flatMapRight(Function<B, Product<A, C>> f) {
+		return f.apply(right);
 	}
 
 	public static <A, B> Function<A, Function<B, Product<A, B>>> ofProduct() {
@@ -113,6 +129,54 @@ public final class Product<A, B> {
 
 	public static <A, B, C> C matchProduct(Product<A, B> product, Function<A, Function<B, C>> f) {
 		return product.match(f);
+	}
+
+	public static <A, B, C> Function<Product<A, B>, Function<Function<A, C>, Product<C, B>>> mapLeft() {
+		return product -> f -> product.mapLeft(f);
+	}
+
+	public static <A, B, C> Function<Function<A, C>, Product<C, B>> mapLeft(Product<A, B> product) {
+		return f -> product.mapLeft(f);
+	}
+
+	public static <A, B, C> Product<C, B> mapLeft(Product<A, B> product, Function<A, C> f) {
+		return product.mapLeft(f);
+	}
+
+	public static <A, B, C> Function<Product<A, B>, Function<Function<B, C>, Product<A, C>>> mapRight() {
+		return product -> f -> product.mapRight(f);
+	}
+
+	public static <A, B, C> Function<Function<B, C>, Product<A, C>> mapRight(Product<A, B> product) {
+		return f -> product.mapRight(f);
+	}
+
+	public static <A, B, C> Product<A, C> mapRight(Product<A, B> product, Function<B, C> f) {
+		return product.mapRight(f);
+	}
+
+	public static <A, B, C> Function<Product<A, B>, Function<Function<A, Product<C, B>>, Product<C, B>>> flatMapLeft() {
+		return product -> f -> product.flatMapLeft(f);
+	}
+
+	public static <A, B, C> Function<Function<A, Product<C, B>>, Product<C, B>> flatMapLeft(Product<A, B> product) {
+		return f -> product.flatMapLeft(f);
+	}
+
+	public static <A, B, C> Product<C, B> flatMapLeft(Product<A, B> product, Function<A, Product<C, B>> f) {
+		return product.flatMapLeft(f);
+	}
+
+	public static <A, B, C> Function<Product<A, B>, Function<Function<B, Product<A, C>>, Product<A, C>>> flatMapRight() {
+		return product -> f -> product.flatMapRight(f);
+	}
+
+	public static <A, B, C> Function<Function<B, Product<A, C>>, Product<A, C>> flatMapRight(Product<A, B> product) {
+		return f -> product.flatMapRight(f);
+	}
+
+	public static <A, B, C> Product<A, C> flatMapRight(Product<A, B> product, Function<B, Product<A, C>> f) {
+		return product.flatMapRight(f);
 	}
 
 	public static <A, B, C> Function<Product<A, B>, C> unboxProduct(Function<A, Function<B, C>> f) {
