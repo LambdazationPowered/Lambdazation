@@ -33,7 +33,7 @@ public abstract class Flow<A> {
 		}
 
 		@Override
-		B accept(Vistor v) {
+		B accept(EvalVistor v) {
 			return v.visit(this);
 		}
 	}
@@ -48,7 +48,7 @@ public abstract class Flow<A> {
 		}
 
 		@Override
-		B accept(Vistor v) {
+		B accept(EvalVistor v) {
 			return v.visit(this);
 		}
 	}
@@ -63,7 +63,7 @@ public abstract class Flow<A> {
 		}
 
 		@Override
-		B accept(Vistor v) {
+		B accept(EvalVistor v) {
 			return v.visit(this);
 		}
 	}
@@ -76,7 +76,7 @@ public abstract class Flow<A> {
 		}
 
 		@Override
-		A accept(Vistor v) {
+		A accept(EvalVistor v) {
 			return v.visit(this);
 		}
 	}
@@ -89,7 +89,7 @@ public abstract class Flow<A> {
 		}
 
 		@Override
-		B accept(Vistor v) {
+		B accept(EvalVistor v) {
 			return v.visit(this);
 		}
 	}
@@ -102,7 +102,7 @@ public abstract class Flow<A> {
 		}
 
 		@Override
-		B accept(Vistor v) {
+		B accept(EvalVistor v) {
 			return v.visit(this);
 		}
 	}
@@ -117,7 +117,7 @@ public abstract class Flow<A> {
 		}
 
 		@Override
-		Behavior<A> accept(Vistor v) {
+		Behavior<A> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 	}
@@ -132,7 +132,7 @@ public abstract class Flow<A> {
 		}
 
 		@Override
-		Event<B> accept(Vistor v) {
+		Event<B> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 	}
@@ -145,7 +145,7 @@ public abstract class Flow<A> {
 		}
 
 		@Override
-		Event<A> accept(Vistor v) {
+		Event<A> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 	}
@@ -158,12 +158,12 @@ public abstract class Flow<A> {
 		}
 
 		@Override
-		Unit accept(Vistor v) {
+		Unit accept(EvalVistor v) {
 			return v.visit(this);
 		}
 	}
 
-	interface Vistor {
+	interface EvalVistor {
 		<A, B> B visit(Fmap<A, B> flow);
 
 		<A, B> B visit(Apply<A, B> flow);
@@ -189,7 +189,7 @@ public abstract class Flow<A> {
 		}
 	}
 
-	abstract A accept(Vistor v);
+	abstract A accept(EvalVistor v);
 
 	public <B> Flow<B> fmap(Function<A, B> f) {
 		return new Fmap<>(this, f);

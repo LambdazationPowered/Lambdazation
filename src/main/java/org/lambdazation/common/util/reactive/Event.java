@@ -4,6 +4,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.lambdazation.common.util.data.Sum;
+import org.lambdazation.common.util.data.Unit;
 import org.lambdazation.common.util.eval.Lazy;
 
 /**
@@ -33,8 +35,13 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		B accept(Vistor v) {
+		Sum<Unit, B> accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
 		}
 	}
 
@@ -48,8 +55,13 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		A accept(Vistor v) {
+		Sum<Unit, A> accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
 		}
 	}
 
@@ -59,8 +71,13 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		A accept(Vistor v) {
+		Sum<Unit, A> accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
 		}
 	}
 
@@ -76,8 +93,13 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		A accept(Vistor v) {
+		Sum<Unit, A> accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
 		}
 	}
 
@@ -89,8 +111,18 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		A accept(Vistor v) {
+		Sum<Unit, A> accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
+		}
+
+		@Override
+		Event<A> get() {
+			return lazy.get().get();
 		}
 	}
 
@@ -104,8 +136,13 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		B accept(Vistor v) {
+		Sum<Unit, B> accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
 		}
 	}
 
@@ -117,32 +154,63 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		A accept(Vistor v) {
+		Sum<Unit, A> accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
 		}
 	}
 
-	interface Vistor {
-		<A, B> B visit(Fmap<A, B> event);
+	interface EvalVistor {
+		<A, B> Sum<Unit, B> visit(Fmap<A, B> event);
 
-		<A> A visit(Filter<A> event);
+		<A> Sum<Unit, A> visit(Filter<A> event);
 
-		<A> A visit(Mempty<A> event);
+		<A> Sum<Unit, A> visit(Mempty<A> event);
 
-		<A> A visit(Mappend<A> event);
+		<A> Sum<Unit, A> visit(Mappend<A> event);
 
-		<A> A visit(FlowEfix<A> event);
+		<A> Sum<Unit, A> visit(FlowEfix<A> event);
 
-		<A, B> B visit(FlowRetrieve<A, B> event);
+		<A, B> Sum<Unit, B> visit(FlowRetrieve<A, B> event);
 
-		<A> A visit(FlowInput<A> event);
+		<A> Sum<Unit, A> visit(FlowInput<A> event);
 
-		default <A> A accept(Event<A> event) {
+		default <A> Sum<Unit, A> accept(Event<A> event) {
 			return event.accept(this);
 		}
 	}
 
-	abstract A accept(Vistor v);
+	interface TraverseVistor<T> {
+		<A, B> void visit(Fmap<A, B> event, T t);
+
+		<A> void visit(Filter<A> event, T t);
+
+		<A> void visit(Mempty<A> event, T t);
+
+		<A> void visit(Mappend<A> event, T t);
+
+		<A> void visit(FlowEfix<A> event, T t);
+
+		<A, B> void visit(FlowRetrieve<A, B> event, T t);
+
+		<A> void visit(FlowInput<A> event, T t);
+
+		default <A> void accept(Event<A> event, T t) {
+			event.accept(this, t);
+		}
+	}
+
+	abstract Sum<Unit, A> accept(EvalVistor v);
+
+	abstract <T> void accept(TraverseVistor<T> v, T t);
+
+	Event<A> get() {
+		return this;
+	}
 
 	public <B> Event<B> fmap(Function<A, B> f) {
 		return new Fmap<>(this, f);

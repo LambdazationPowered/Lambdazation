@@ -31,8 +31,13 @@ public abstract class Behavior<A> {
 		}
 
 		@Override
-		B accept(Vistor v) {
+		B accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
 		}
 	}
 
@@ -46,8 +51,13 @@ public abstract class Behavior<A> {
 		}
 
 		@Override
-		B accept(Vistor v) {
+		B accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
 		}
 	}
 
@@ -59,8 +69,13 @@ public abstract class Behavior<A> {
 		}
 
 		@Override
-		A accept(Vistor v) {
+		A accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
 		}
 	}
 
@@ -72,8 +87,18 @@ public abstract class Behavior<A> {
 		}
 
 		@Override
-		A accept(Vistor v) {
+		A accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
+		}
+
+		@Override
+		Behavior<A> get() {
+			return lazy.get().get();
 		}
 	}
 
@@ -87,12 +112,17 @@ public abstract class Behavior<A> {
 		}
 
 		@Override
-		A accept(Vistor v) {
+		A accept(EvalVistor v) {
 			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
 		}
 	}
 
-	interface Vistor {
+	interface EvalVistor {
 		<A, B> B visit(Fmap<A, B> behavior);
 
 		<A, B> B visit(Apply<A, B> behavior);
@@ -108,7 +138,29 @@ public abstract class Behavior<A> {
 		}
 	}
 
-	abstract A accept(Vistor v);
+	interface TraverseVistor<T> {
+		<A, B> void visit(Fmap<A, B> behavior, T t);
+
+		<A, B> void visit(Apply<A, B> behavior, T t);
+
+		<A> void visit(Pure<A> behavior, T t);
+
+		<A> void visit(FlowBfix<A> behavior, T t);
+
+		<A> void visit(FlowStore<A> behavior, T t);
+
+		default <A> void accept(Behavior<A> behavior, T t) {
+			behavior.accept(this, t);
+		}
+	}
+
+	abstract A accept(EvalVistor v);
+
+	abstract <T> void accept(TraverseVistor<T> v, T t);
+
+	Behavior<A> get() {
+		return this;
+	}
 
 	public <B> Behavior<B> fmap(Function<A, B> f) {
 		return new Fmap<>(this, f);
