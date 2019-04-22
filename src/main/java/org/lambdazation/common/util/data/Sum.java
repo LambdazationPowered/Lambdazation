@@ -296,6 +296,16 @@ public abstract class Sum<A, B> {
 		return sum1.match(unit -> sum2, right1 -> sum2.match(unit -> sum1, right2 -> ofSumRight(f.apply(right1, right2))));
 	}
 
+	public static <A, B, C> Sum<C, Unit> combineLeft(Function<A, Sum<C, Unit>> f, Function<B, Sum<C, Unit>> g, BiFunction<A, B, Sum<C, Unit>> h,
+		Sum<A, Unit> sum1, Sum<B, Unit> sum2) {
+		return sum1.match(a -> sum2.match(b -> h.apply(a, b), unit2 -> f.apply(a)), unit1 -> sum2.match(b -> g.apply(b), unit2 -> ofSumRight(Unit.UNIT)));
+	}
+
+	public static <A, B, C> Sum<Unit, C> combineRight(Function<A, Sum<Unit, C>> f, Function<B, Sum<Unit, C>> g, BiFunction<A, B, Sum<Unit, C>> h,
+		Sum<Unit, A> sum1, Sum<Unit, B> sum2) {
+		return sum1.match(unit1 -> sum2.match(unit2 -> ofSumLeft(Unit.UNIT), b -> g.apply(b)), a -> sum2.match(unit2 -> f.apply(a), b -> h.apply(a, b)));
+	}
+
 	public static <A, B, C> Function<Sum<A, B>, C> unboxSum(Function<A, C> f, Function<B, C> g) {
 		return sum -> sum.match(f, g);
 	}

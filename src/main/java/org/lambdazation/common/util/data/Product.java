@@ -67,6 +67,10 @@ public final class Product<A, B> {
 		return left -> new Product<>(left, right);
 	}
 
+	public static <A> Function<A, Product<A, A>> ofProductBoth() {
+		return both -> new Product<>(both, both);
+	}
+
 	public static <A> Product<A, A> ofProductBoth(A both) {
 		return new Product<>(both, both);
 	}
