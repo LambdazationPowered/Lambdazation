@@ -34,9 +34,8 @@ public final class TestSwing {
 			button1Clicked -> Flow
 			.input(button2ClickedSource).compose(
 			button2Clicked -> Flow
-			.output(button1Clicked.fmap(unit1 -> () -> output.setText("Action1"))).compose(
-			unit2 -> Flow
-			.output(button2Clicked.fmap(unit3 -> () -> output.setText("Action2"))))));
+			.output(button1Clicked.replace(() -> output.setText("Action1"))).then(Flow
+			.output(button2Clicked.replace(() -> output.setText("Action2"))))));
 		// @formatter:on
 
 		SwingUtilities.invokeLater(() -> {

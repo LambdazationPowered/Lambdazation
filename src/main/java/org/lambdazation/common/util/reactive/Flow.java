@@ -2,6 +2,7 @@ package org.lambdazation.common.util.reactive;
 
 import java.util.function.Function;
 
+import org.lambdazation.common.util.Functional;
 import org.lambdazation.common.util.data.Product;
 import org.lambdazation.common.util.data.Unit;
 
@@ -195,6 +196,10 @@ public abstract class Flow<A> {
 		return new Fmap<>(this, f);
 	}
 
+	public <B> Flow<B> replace(B b) {
+		return fmap(Functional.constant(b));
+	}
+
 	public <B> Flow<B> apply(Flow<Function<A, B>> flow) {
 		return new Apply<>(this, flow);
 	}
@@ -203,8 +208,16 @@ public abstract class Flow<A> {
 		return new Compose<>(this, f);
 	}
 
+	public <B> Flow<B> then(Flow<B> flow) {
+		return compose(Functional.constant(flow));
+	}
+
 	public static <A> Flow<A> pure(A a) {
 		return new Pure<>(a);
+	}
+
+	public static <A> Flow<A> join(Flow<Flow<A>> flow) {
+		return flow.compose(Functional.id());
 	}
 
 	public static <A, B> Flow<B> efix(Function<Event<A>, Flow<Product<Event<A>, B>>> f) {

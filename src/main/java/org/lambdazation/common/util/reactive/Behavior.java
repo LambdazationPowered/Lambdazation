@@ -2,6 +2,7 @@ package org.lambdazation.common.util.reactive;
 
 import java.util.function.Function;
 
+import org.lambdazation.common.util.Functional;
 import org.lambdazation.common.util.eval.Lazy;
 
 /**
@@ -166,8 +167,16 @@ public abstract class Behavior<A> {
 		return new Fmap<>(this, f);
 	}
 
+	public <B> Behavior<B> replace(B b) {
+		return fmap(Functional.constant(b));
+	}
+
 	public <B> Behavior<B> apply(Behavior<Function<A, B>> behavior) {
 		return new Apply<>(this, behavior);
+	}
+
+	public <B> Behavior<B> then(Behavior<B> flow) {
+		return apply(flow.fmap(Functional.constant()));
 	}
 
 	public static <A> Behavior<A> pure(A a) {

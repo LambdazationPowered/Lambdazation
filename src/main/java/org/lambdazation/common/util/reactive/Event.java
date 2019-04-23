@@ -4,6 +4,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.lambdazation.common.util.Functional;
 import org.lambdazation.common.util.data.Sum;
 import org.lambdazation.common.util.data.Unit;
 import org.lambdazation.common.util.eval.Lazy;
@@ -244,6 +245,10 @@ public abstract class Event<A> {
 
 	public <B> Event<B> fmap(Function<A, B> f) {
 		return new Fmap<>(this, f);
+	}
+
+	public <B> Event<B> replace(B b) {
+		return fmap(Functional.constant(b));
 	}
 
 	public Event<A> filter(Predicate<A> p) {
