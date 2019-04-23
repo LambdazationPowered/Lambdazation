@@ -304,7 +304,7 @@ public final class Reactive {
 					Sum<Unit, A> eventParentValue = eval(event.parent);
 
 					Sum<Unit, B> value = eventParentValue.mapRight(event.f);
-					eventValues.put(event, value);
+					Evaluator.this.<B> eventValues().put(event, value);
 					return value;
 				}
 
@@ -313,7 +313,7 @@ public final class Reactive {
 					Sum<Unit, A> eventParentValue = eval(event.parent);
 
 					Sum<Unit, A> value = Sum.filterRight(eventParentValue, event.p);
-					eventValues.put(event, value);
+					Evaluator.this.<A> eventValues().put(event, value);
 					return value;
 				}
 
@@ -323,14 +323,14 @@ public final class Reactive {
 					Sum<Unit, B> eventEvent2Value = eval(event.event2);
 
 					Sum<Unit, C> value = Sum.combineRight(event.f, event.g, event.h, eventEvent1Value, eventEvent2Value);
-					eventValues.put(event, value);
+					Evaluator.this.<C> eventValues().put(event, value);
 					return value;
 				}
 
 				@Override
 				public <A> Sum<Unit, A> visit(Event.Mempty<A> event) {
 					Sum<Unit, A> value = Sum.ofSumLeft(Unit.UNIT);
-					eventValues.put(event, value);
+					Evaluator.this.<A> eventValues().put(event, value);
 					return value;
 				}
 
@@ -340,7 +340,7 @@ public final class Reactive {
 					Sum<Unit, A> eventEvent2Value = eval(event.event2);
 
 					Sum<Unit, A> value = Sum.mappendRight(event.f, eventEvent1Value, eventEvent2Value);
-					eventValues.put(event, value);
+					Evaluator.this.<A> eventValues().put(event, value);
 					return value;
 				}
 
@@ -355,14 +355,16 @@ public final class Reactive {
 					Sum<Unit, A> eventEventValue = eval(event.event);
 
 					Sum<Unit, B> value = eventEventValue.mapRight(eventBehaviorValue);
-					eventValues.put(event, value);
+					Evaluator.this.<B> eventValues().put(event, value);
 					return value;
 				}
 
 				@Override
 				public <A> Sum<Unit, A> visit(Event.FlowInput<A> event) {
-					Sum<Unit, A> value = Sum.ofSumRight(Evaluator.this.<A> firedInputEventValues().get(event));
-					eventValues.put(event, value);
+					Sum<Unit, A> value = Evaluator.this.<A> firedInputEventValues().containsKey(event)
+						? Sum.ofSumRight(Evaluator.this.<A> firedInputEventValues().get(event))
+						: Sum.ofSumLeft(Unit.UNIT);
+					Evaluator.this.<A> eventValues().put(event, value);
 					return value;
 				}
 			};
