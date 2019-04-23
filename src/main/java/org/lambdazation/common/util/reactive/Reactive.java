@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -60,6 +62,7 @@ public final class Reactive {
 			nodeAnalyzer.analyze();
 		});
 
+		Lock reactiveLock = new ReentrantLock();
 		AtomicInteger activePort = new AtomicInteger(0);
 
 		boolean responsive = false;
@@ -72,7 +75,8 @@ public final class Reactive {
 					return;
 				activePort.incrementAndGet();
 				try {
-					NodeEvaluator nodeEvaluator = new NodeEvaluator(inputEventRelationEntries, storeBehaviorValues, Collections.singletonMap(inputEvent, value));
+					NodeEvaluator nodeEvaluator = new NodeEvaluator(reactiveLock, inputEventRelationEntries, storeBehaviorValues,
+						Collections.singletonMap(inputEvent, value));
 					nodeEvaluator.eval();
 				} finally {
 					activePort.decrementAndGet();
@@ -284,14 +288,16 @@ public final class Reactive {
 	}
 
 	static final class NodeEvaluator implements Event.EvalVistor, Behavior.EvalVistor {
+		final Lock reactiveLock;
 		final Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries;
 		final Map<Behavior.FlowStore<?>, ?> storeBehaviorValues;
 		final Map<Event.FlowInput<?>, ?> firedInputEventValues;
 		final Map<Event<?>, Sum<Unit, ?>> eventValues;
 		final Map<Behavior<?>, ?> behaviorValues;
 
-		NodeEvaluator(Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries, Map<Behavior.FlowStore<?>, ?> storeBehaviorValues,
-			Map<Event.FlowInput<?>, ?> firedInputEventValues) {
+		NodeEvaluator(Lock reactiveLock, Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries,
+			Map<Behavior.FlowStore<?>, ?> storeBehaviorValues, Map<Event.FlowInput<?>, ?> firedInputEventValues) {
+			this.reactiveLock = reactiveLock;
 			this.inputEventRelationEntries = inputEventRelationEntries;
 			this.storeBehaviorValues = storeBehaviorValues;
 			this.firedInputEventValues = firedInputEventValues;
@@ -428,17 +434,22 @@ public final class Reactive {
 
 		void eval() {
 			List<Runnable> actions = new ArrayList<>();
-			for (Event.FlowInput<?> inputEvent : firedInputEventValues.keySet()) {
-				RelationEntry relationEntry = inputEventRelationEntries.get(inputEvent);
-				for (Event<Runnable> outputEvent : relationEntry.targetOutputEvents) {
-					Sum<Unit, Runnable> eventValue = eval(outputEvent);
-					eventValue.ifRight(value -> actions.add(value));
+			reactiveLock.lock();
+			try {
+				for (Event.FlowInput<?> inputEvent : firedInputEventValues.keySet()) {
+					RelationEntry relationEntry = inputEventRelationEntries.get(inputEvent);
+					for (Event<Runnable> outputEvent : relationEntry.targetOutputEvents) {
+						Sum<Unit, Runnable> eventValue = eval(outputEvent);
+						eventValue.ifRight(value -> actions.add(value));
+					}
+					for (Behavior.FlowStore<?> storeBehavior : relationEntry.targetStoreBehaviors) {
+						eval(storeBehavior);
+						Sum<Unit, ?> eventValue = eval(storeBehavior.event);
+						eventValue.ifRight(value -> storeBehaviorValues().put(storeBehavior, value));
+					}
 				}
-				for (Behavior.FlowStore<?> storeBehavior : relationEntry.targetStoreBehaviors) {
-					eval(storeBehavior);
-					Sum<Unit, ?> eventValue = eval(storeBehavior.event);
-					eventValue.ifRight(value -> storeBehaviorValues().put(storeBehavior, value));
-				}
+			} finally {
+				reactiveLock.unlock();
 			}
 			for (Runnable action : actions)
 				action.run();

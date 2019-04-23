@@ -14,7 +14,7 @@ public class Testcode {
 		Flow<Unit> flow = Flow
 			.input(clieckedSource).compose(
 			clickedEvent -> Combinator
-			.increment(0, clickedEvent.fmap(unit -> count -> count + 1)).compose(
+			.increment(0, clickedEvent.replace(count -> count + 1)).compose(
 			countedEvent -> Flow
 			.output(countedEvent.fmap(count -> () -> {}))));
 		// @formatter:on
