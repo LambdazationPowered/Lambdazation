@@ -16,6 +16,8 @@ import org.lambdazation.common.util.data.Product;
 import org.lambdazation.common.util.data.Sum;
 import org.lambdazation.common.util.data.Unit;
 import org.lambdazation.common.util.eval.Thunk;
+import org.lambdazation.common.util.reactive.Behavior.FlowStore;
+import org.lambdazation.common.util.reactive.Event.FlowInput;
 
 public final class Reactive {
 	private boolean responsive;
@@ -131,8 +133,49 @@ public final class Reactive {
 		Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries = new HashMap<>();
 		Map<Behavior.FlowStore<?>, ?> storeBehaviorValues = new HashMap<>();
 
-		outputEvents.forEach(new Object() {
-			final Event.TraverseVistor<TraverseLog> eventVistor = new Event.TraverseVistor<TraverseLog>() {
+		outputEvents.forEach(outputEvent -> {
+			Analyzer analyzer = new Analyzer(outputEvent, inputEventRelationEntries, storeBehaviorValues);
+			analyzer.analyze();
+		});
+
+		AtomicInteger activePort = new AtomicInteger(0);
+
+		boolean responsive = false;
+		BooleanSupplier processing = () -> activePort.get() > 0;
+		List<Port<?>> ports = new ArrayList<>();
+
+		inputEventRelationEntries.forEach((inputEvent, relationEntry) -> {
+			Port<?> port = new Port<>(inputEvent.source, currentPort -> value -> {
+				if (!currentPort.responsive)
+					return;
+				activePort.incrementAndGet();
+				try {
+					Evaluator evaluator = new Evaluator(inputEventRelationEntries, storeBehaviorValues, Collections.singletonMap(inputEvent, value));
+					evaluator.eval();
+				} finally {
+					activePort.decrementAndGet();
+				}
+			});
+			ports.add(port);
+		});
+
+		return new Reactive(responsive, processing, ports);
+	}
+
+	static final class Analyzer {
+		final Event<Runnable> outputEvent;
+		final Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries;
+		final Map<Behavior.FlowStore<?>, ?> storeBehaviorValues;
+		final Set<Event.FlowInput<?>> inputEvents;
+		final Event.TraverseVistor<TraverseLog> eventVistor;
+		final Behavior.TraverseVistor<TraverseLog> behaviorVistor;
+
+		Analyzer(Event<Runnable> outputEvent, Map<FlowInput<?>, RelationEntry> inputEventRelationEntries, Map<FlowStore<?>, ?> storeBehaviorValues) {
+			this.outputEvent = outputEvent;
+			this.inputEventRelationEntries = inputEventRelationEntries;
+			this.storeBehaviorValues = storeBehaviorValues;
+			this.inputEvents = new HashSet<>();
+			this.eventVistor = new Event.TraverseVistor<TraverseLog>() {
 				@Override
 				public <A, B> void visit(Event.Fmap<A, B> event, TraverseLog t) {
 					if (t.traverse(event, event.parent.get()))
@@ -146,12 +189,7 @@ public final class Reactive {
 				}
 
 				@Override
-				public <A> void visit(Event.Mempty<A> event, TraverseLog t) {
-
-				}
-
-				@Override
-				public <A> void visit(Event.Mappend<A> event, TraverseLog t) {
+				public <A, B, C> void visit(Event.Combine<A, B, C> event, TraverseLog t) {
 					if (t.traverse(event, event.event1.get()))
 						accept(event.event1, t.copy());
 					if (t.traverse(event, event.event2.get()))
@@ -159,7 +197,12 @@ public final class Reactive {
 				}
 
 				@Override
-				public <A, B, C> void visit(Event.Combine<A, B, C> event, TraverseLog t) {
+				public <A> void visit(Event.Mempty<A> event, TraverseLog t) {
+
+				}
+
+				@Override
+				public <A> void visit(Event.Mappend<A> event, TraverseLog t) {
 					if (t.traverse(event, event.event1.get()))
 						accept(event.event1, t.copy());
 					if (t.traverse(event, event.event2.get()))
@@ -188,7 +231,7 @@ public final class Reactive {
 					relationEntry.merge(t.move());
 				}
 			};
-			final Behavior.TraverseVistor<TraverseLog> behaviorVistor = new Behavior.TraverseVistor<TraverseLog>() {
+			this.behaviorVistor = new Behavior.TraverseVistor<TraverseLog>() {
 				@Override
 				public <A, B> void visit(Behavior.Fmap<A, B> behavior, TraverseLog t) {
 					if (t.traverse(behavior, behavior.parent.get()))
@@ -222,36 +265,12 @@ public final class Reactive {
 						eventVistor.accept(behavior.event, t.move());
 				}
 			};
-			final Set<Event.FlowInput<?>> inputEvents = new HashSet<>();
+		}
 
-			void accept(Event<Runnable> outputEvent) {
-				eventVistor.accept(outputEvent, new TraverseLog());
-				inputEvents.forEach(inputEvent -> inputEventRelationEntries.get(inputEvent).targetOutputEvents.add(outputEvent));
-			}
-		}::accept);
-
-		AtomicInteger activePort = new AtomicInteger(0);
-
-		boolean responsive = false;
-		BooleanSupplier processing = () -> activePort.get() > 0;
-		List<Port<?>> ports = new ArrayList<>();
-
-		inputEventRelationEntries.forEach((inputEvent, relationEntry) -> {
-			Port<?> port = new Port<>(inputEvent.source, currentPort -> value -> {
-				if (!currentPort.responsive)
-					return;
-				activePort.incrementAndGet();
-				try {
-					Evaluator evaluator = new Evaluator(inputEventRelationEntries, storeBehaviorValues, Collections.singletonMap(inputEvent, value));
-					evaluator.eval();
-				} finally {
-					activePort.decrementAndGet();
-				}
-			});
-			ports.add(port);
-		});
-
-		return new Reactive(responsive, processing, ports);
+		void analyze() {
+			eventVistor.accept(outputEvent, new TraverseLog());
+			inputEvents.forEach(inputEvent -> inputEventRelationEntries.get(inputEvent).targetOutputEvents.add(outputEvent));
+		}
 	}
 
 	static final class Evaluator {
@@ -290,6 +309,16 @@ public final class Reactive {
 				}
 
 				@Override
+				public <A, B, C> Sum<Unit, C> visit(Event.Combine<A, B, C> event) {
+					Sum<Unit, A> eventEvent1Value = eval(event.event1);
+					Sum<Unit, B> eventEvent2Value = eval(event.event2);
+
+					Sum<Unit, C> value = Sum.combineRight(event.f, event.g, event.h, eventEvent1Value, eventEvent2Value);
+					eventValues.put(event, value);
+					return value;
+				}
+
+				@Override
 				public <A> Sum<Unit, A> visit(Event.Mempty<A> event) {
 					Sum<Unit, A> value = Sum.ofSumLeft(Unit.UNIT);
 					eventValues.put(event, value);
@@ -302,16 +331,6 @@ public final class Reactive {
 					Sum<Unit, A> eventEvent2Value = eval(event.event2);
 
 					Sum<Unit, A> value = Sum.mappendRight(event.f, eventEvent1Value, eventEvent2Value);
-					eventValues.put(event, value);
-					return value;
-				}
-
-				@Override
-				public <A, B, C> Sum<Unit, C> visit(Event.Combine<A, B, C> event) {
-					Sum<Unit, A> eventEvent1Value = eval(event.event1);
-					Sum<Unit, B> eventEvent2Value = eval(event.event2);
-
-					Sum<Unit, C> value = Sum.combineRight(event.f, event.g, event.h, eventEvent1Value, eventEvent2Value);
 					eventValues.put(event, value);
 					return value;
 				}

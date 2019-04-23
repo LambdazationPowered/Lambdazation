@@ -25,4 +25,15 @@ public interface Source<A> {
 		Consumer<A> proxy = value -> callbacks.values().forEach(callback -> callback.accept(value));
 		return Product.ofProduct(proxy, source);
 	}
+
+	static <A> Source<A> newSource(Consumer<Consumer<A>> register) {
+		Map<Object, Consumer<A>> callbacks = new LinkedHashMap<>();
+		Source<A> source = callback -> {
+			Object key = new Object();
+			callbacks.put(key, callback);
+			return () -> callbacks.remove(key);
+		};
+		register.accept(value -> callbacks.values().forEach(callback -> callback.accept(value)));
+		return source;
+	}
 }

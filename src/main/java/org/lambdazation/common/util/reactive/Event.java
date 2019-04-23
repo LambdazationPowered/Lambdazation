@@ -65,6 +65,32 @@ public abstract class Event<A> {
 		}
 	}
 
+	static class Combine<A, B, C> extends Event<C> {
+		final Function<A, Sum<Unit, C>> f;
+		final Function<B, Sum<Unit, C>> g;
+		final BiFunction<A, B, Sum<Unit, C>> h;
+		final Event<A> event1;
+		final Event<B> event2;
+
+		public Combine(Function<A, Sum<Unit, C>> f, Function<B, Sum<Unit, C>> g, BiFunction<A, B, Sum<Unit, C>> h, Event<A> event1, Event<B> event2) {
+			this.f = f;
+			this.g = g;
+			this.h = h;
+			this.event1 = event1;
+			this.event2 = event2;
+		}
+
+		@Override
+		Sum<Unit, C> accept(EvalVistor v) {
+			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
+		}
+	}
+
 	static class Mempty<A> extends Event<A> {
 		Mempty() {
 
@@ -94,32 +120,6 @@ public abstract class Event<A> {
 
 		@Override
 		Sum<Unit, A> accept(EvalVistor v) {
-			return v.visit(this);
-		}
-
-		@Override
-		<T> void accept(TraverseVistor<T> v, T t) {
-			v.visit(this, t);
-		}
-	}
-
-	static class Combine<A, B, C> extends Event<C> {
-		final Function<A, Sum<Unit, C>> f;
-		final Function<B, Sum<Unit, C>> g;
-		final BiFunction<A, B, Sum<Unit, C>> h;
-		final Event<A> event1;
-		final Event<B> event2;
-
-		public Combine(Function<A, Sum<Unit, C>> f, Function<B, Sum<Unit, C>> g, BiFunction<A, B, Sum<Unit, C>> h, Event<A> event1, Event<B> event2) {
-			this.f = f;
-			this.g = g;
-			this.h = h;
-			this.event1 = event1;
-			this.event2 = event2;
-		}
-
-		@Override
-		Sum<Unit, C> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 
@@ -195,11 +195,11 @@ public abstract class Event<A> {
 
 		<A> Sum<Unit, A> visit(Filter<A> event);
 
+		<A, B, C> Sum<Unit, C> visit(Combine<A, B, C> event);
+
 		<A> Sum<Unit, A> visit(Mempty<A> event);
 
 		<A> Sum<Unit, A> visit(Mappend<A> event);
-
-		<A, B, C> Sum<Unit, C> visit(Combine<A, B, C> event);
 
 		<A> Sum<Unit, A> visit(FlowEfix<A> event);
 
@@ -217,11 +217,11 @@ public abstract class Event<A> {
 
 		<A> void visit(Filter<A> event, T t);
 
+		<A, B, C> void visit(Combine<A, B, C> event, T t);
+
 		<A> void visit(Mempty<A> event, T t);
 
 		<A> void visit(Mappend<A> event, T t);
-
-		<A, B, C> void visit(Combine<A, B, C> event, T t);
 
 		<A> void visit(FlowEfix<A> event, T t);
 
@@ -250,16 +250,16 @@ public abstract class Event<A> {
 		return new Filter<>(this, p);
 	}
 
+	public static <A, B, C> Event<C> combine(Function<A, Sum<Unit, C>> f, Function<B, Sum<Unit, C>> g, BiFunction<A, B, Sum<Unit, C>> h,
+		Event<A> event1, Event<B> event2) {
+		return new Combine<>(f, g, h, event1, event2);
+	}
+
 	public static <A> Event<A> mempty() {
 		return new Mempty<>();
 	}
 
 	public static <A> Event<A> mappend(BiFunction<A, A, A> f, Event<A> event1, Event<A> event2) {
 		return new Mappend<>(f, event1, event2);
-	}
-
-	public static <A, B, C> Event<C> combine(Function<A, Sum<Unit, C>> f, Function<B, Sum<Unit, C>> g, BiFunction<A, B, Sum<Unit, C>> h,
-		Event<A> event1, Event<B> event2) {
-		return new Combine<>(f, g, h, event1, event2);
 	}
 }
