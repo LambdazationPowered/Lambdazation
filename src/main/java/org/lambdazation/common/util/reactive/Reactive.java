@@ -51,84 +51,8 @@ public final class Reactive {
 	public static Reactive build(Flow<Unit> flow) {
 		List<Event<Runnable>> outputEvents = new ArrayList<>();
 
-		new Flow.EvalVistor() {
-			@Override
-			public <A, B> B visit(Flow.Fmap<A, B> flow) {
-				A a = accept(flow.parent);
-				B b = flow.f.apply(a);
-				return b;
-			}
-
-			@Override
-			public <A, B> B visit(Flow.Apply<A, B> flow) {
-				A a = accept(flow.parent);
-				Function<A, B> f = accept(flow.flow);
-				B b = f.apply(a);
-				return b;
-			}
-
-			@Override
-			public <A, B> B visit(Flow.Compose<A, B> flow) {
-				A a = accept(flow.parent);
-				Flow<B> flow0 = flow.f.apply(a);
-				B b = accept(flow0);
-				return b;
-			}
-
-			@Override
-			public <A> A visit(Flow.Pure<A> flow) {
-				A a = flow.a;
-				return a;
-			}
-
-			@Override
-			public <A, B> B visit(Flow.Efix<A, B> flow) {
-				B b = Thunk.<Product<Event<A>, B>> mfix(lazy -> {
-					Event<A> event = new Event.FlowEfix<>(lazy.fmap(Product.projectionLeft()));
-					Flow<Product<Event<A>, B>> flow0 = flow.f.apply(event);
-					Product<Event<A>, B> product = accept(flow0);
-					return Thunk.pure(product);
-				}).fmap(Product.projectionRight()).get();
-				return b;
-			}
-
-			@Override
-			public <A, B> B visit(Flow.Bfix<A, B> flow) {
-				B b = Thunk.<Product<Behavior<A>, B>> mfix(lazy -> {
-					Behavior<A> event = new Behavior.FlowBfix<>(lazy.fmap(Product.projectionLeft()));
-					Flow<Product<Behavior<A>, B>> flow0 = flow.f.apply(event);
-					Product<Behavior<A>, B> product = accept(flow0);
-					return Thunk.pure(product);
-				}).fmap(Product.projectionRight()).get();
-				return b;
-			}
-
-			@Override
-			public <A> Behavior<A> visit(Flow.Store<A> flow) {
-				Behavior<A> behavior = new Behavior.FlowStore<A>(flow.a, flow.event);
-				return behavior;
-			}
-
-			@Override
-			public <A, B> Event<B> visit(Flow.Retrieve<A, B> flow) {
-				Event<B> event = new Event.FlowRetrieve<>(flow.behavior, flow.event);
-				return event;
-			}
-
-			@Override
-			public Unit visit(Flow.Output flow) {
-				outputEvents.add(flow.event.get());
-
-				Unit unit = Unit.UNIT;
-				return unit;
-			}
-
-			@Override
-			public <A> Event<A> visit(Flow.Input<A> flow) {
-				Event<A> event = new Event.FlowInput<>(flow.source);
-				return event;
-			}
-		}.accept(flow);
+		FlowEvaluator flowEvaluator = new FlowEvaluator(outputEvents);
+		flowEvaluator.accept(flow);
 
 		Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries = new HashMap<>();
 		Map<Behavior.FlowStore<?>, ?> storeBehaviorValues = new HashMap<>();
@@ -160,6 +84,91 @@ public final class Reactive {
 		});
 
 		return new Reactive(responsive, processing, ports);
+	}
+
+	static final class FlowEvaluator implements Flow.EvalVistor {
+		final List<Event<Runnable>> outputEvents;
+
+		FlowEvaluator(List<Event<Runnable>> outputEvents) {
+			this.outputEvents = outputEvents;
+		}
+
+		@Override
+		public <A, B> B visit(Flow.Fmap<A, B> flow) {
+			A a = accept(flow.parent);
+			B b = flow.f.apply(a);
+			return b;
+		}
+
+		@Override
+		public <A, B> B visit(Flow.Apply<A, B> flow) {
+			A a = accept(flow.parent);
+			Function<A, B> f = accept(flow.flow);
+			B b = f.apply(a);
+			return b;
+		}
+
+		@Override
+		public <A, B> B visit(Flow.Compose<A, B> flow) {
+			A a = accept(flow.parent);
+			Flow<B> flow0 = flow.f.apply(a);
+			B b = accept(flow0);
+			return b;
+		}
+
+		@Override
+		public <A> A visit(Flow.Pure<A> flow) {
+			A a = flow.a;
+			return a;
+		}
+
+		@Override
+		public <A, B> B visit(Flow.Efix<A, B> flow) {
+			B b = Thunk.<Product<Event<A>, B>> mfix(lazy -> {
+				Event<A> event = new Event.FlowEfix<>(lazy.fmap(Product.projectionLeft()));
+				Flow<Product<Event<A>, B>> flow0 = flow.f.apply(event);
+				Product<Event<A>, B> product = accept(flow0);
+				return Thunk.pure(product);
+			}).fmap(Product.projectionRight()).get();
+			return b;
+		}
+
+		@Override
+		public <A, B> B visit(Flow.Bfix<A, B> flow) {
+			B b = Thunk.<Product<Behavior<A>, B>> mfix(lazy -> {
+				Behavior<A> event = new Behavior.FlowBfix<>(lazy.fmap(Product.projectionLeft()));
+				Flow<Product<Behavior<A>, B>> flow0 = flow.f.apply(event);
+				Product<Behavior<A>, B> product = accept(flow0);
+				return Thunk.pure(product);
+			}).fmap(Product.projectionRight()).get();
+			return b;
+		}
+
+		@Override
+		public <A> Behavior<A> visit(Flow.Store<A> flow) {
+			Behavior<A> behavior = new Behavior.FlowStore<A>(flow.a, flow.event);
+			return behavior;
+		}
+
+		@Override
+		public <A, B> Event<B> visit(Flow.Retrieve<A, B> flow) {
+			Event<B> event = new Event.FlowRetrieve<>(flow.behavior, flow.event);
+			return event;
+		}
+
+		@Override
+		public Unit visit(Flow.Output flow) {
+			outputEvents.add(flow.event.get());
+
+			Unit unit = Unit.UNIT;
+			return unit;
+		}
+
+		@Override
+		public <A> Event<A> visit(Flow.Input<A> flow) {
+			Event<A> event = new Event.FlowInput<>(flow.source);
+			return event;
+		}
 	}
 
 	static final class Analyzer {
