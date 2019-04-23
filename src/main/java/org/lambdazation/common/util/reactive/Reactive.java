@@ -42,7 +42,7 @@ public final class Reactive {
 	public void suspend() {
 		if (!responsive)
 			return;
-		responsive = true;
+		responsive = false;
 		ports.forEach(Port::detach);
 	}
 

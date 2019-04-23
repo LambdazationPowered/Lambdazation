@@ -1,11 +1,11 @@
 package org.lambdazation.common.util.reactive;
 
 import java.awt.FlowLayout;
+import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 
 import org.lambdazation.common.util.data.Unit;
 
@@ -25,8 +25,16 @@ public final class TestSwing {
 		JTextField output = new JTextField(60);
 		frame.add(output);
 
-		Source<Unit> button1ClickedSource = Source.newSource(proxy -> button1.addActionListener(event -> proxy.accept(Unit.UNIT)));
-		Source<Unit> button2ClickedSource = Source.newSource(proxy -> button2.addActionListener(event -> proxy.accept(Unit.UNIT)));
+		Source<Unit> button1ClickedSource = Source.newSource(callback -> {
+			ActionListener listener = event -> callback.accept(Unit.UNIT);
+			button1.addActionListener(listener);
+			return () -> button1.removeActionListener(listener);
+		});
+		Source<Unit> button2ClickedSource = Source.newSource(callback -> {
+			ActionListener listener = event -> callback.accept(Unit.UNIT);
+			button2.addActionListener(listener);
+			return () -> button2.removeActionListener(listener);
+		});
 
 		// @formatter:off
 		Flow<Unit> flow = Flow
@@ -40,11 +48,10 @@ public final class TestSwing {
 				.replace(() -> output.setText("Action2"))))));
 		// @formatter:on
 
-		SwingUtilities.invokeLater(() -> {
-			Reactive reactive = Reactive.build(flow);
-			reactive.resume();
+		Reactive reactive = Reactive.build(flow);
+		reactive.resume();
+		reactive.suspend();
 
-			frame.setVisible(true);
-		});
+		frame.setVisible(true);
 	}
 }
