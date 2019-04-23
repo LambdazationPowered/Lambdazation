@@ -49,17 +49,15 @@ public final class Reactive {
 	}
 
 	public static Reactive build(Flow<Unit> flow) {
-		List<Event<Runnable>> outputEvents = new ArrayList<>();
-
-		FlowEvaluator flowEvaluator = new FlowEvaluator(outputEvents);
-		flowEvaluator.accept(flow);
+		FlowEvaluator flowEvaluator = new FlowEvaluator(flow);
+		List<Event<Runnable>> outputEvents = flowEvaluator.eval();
 
 		Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries = new HashMap<>();
 		Map<Behavior.FlowStore<?>, ?> storeBehaviorValues = new HashMap<>();
 
 		outputEvents.forEach(outputEvent -> {
-			Analyzer analyzer = new Analyzer(outputEvent, inputEventRelationEntries, storeBehaviorValues);
-			analyzer.analyze();
+			NodeAnalyzer nodeAnalyzer = new NodeAnalyzer(outputEvent, inputEventRelationEntries, storeBehaviorValues);
+			nodeAnalyzer.analyze();
 		});
 
 		AtomicInteger activePort = new AtomicInteger(0);
@@ -74,8 +72,8 @@ public final class Reactive {
 					return;
 				activePort.incrementAndGet();
 				try {
-					Evaluator evaluator = new Evaluator(inputEventRelationEntries, storeBehaviorValues, Collections.singletonMap(inputEvent, value));
-					evaluator.eval();
+					NodeEvaluator nodeEvaluator = new NodeEvaluator(inputEventRelationEntries, storeBehaviorValues, Collections.singletonMap(inputEvent, value));
+					nodeEvaluator.eval();
 				} finally {
 					activePort.decrementAndGet();
 				}
@@ -87,10 +85,12 @@ public final class Reactive {
 	}
 
 	static final class FlowEvaluator implements Flow.EvalVistor {
+		final Flow<Unit> flow;
 		final List<Event<Runnable>> outputEvents;
 
-		FlowEvaluator(List<Event<Runnable>> outputEvents) {
-			this.outputEvents = outputEvents;
+		FlowEvaluator(Flow<Unit> flow) {
+			this.flow = flow;
+			this.outputEvents = new ArrayList<>();
 		}
 
 		@Override
@@ -169,244 +169,134 @@ public final class Reactive {
 			Event<A> event = new Event.FlowInput<>(flow.source);
 			return event;
 		}
+
+		List<Event<Runnable>> eval() {
+			accept(flow);
+			return outputEvents;
+		}
 	}
 
-	static final class Analyzer {
+	static final class NodeAnalyzer implements Event.TraverseVistor<TraverseLog>, Behavior.TraverseVistor<TraverseLog> {
 		final Event<Runnable> outputEvent;
 		final Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries;
 		final Map<Behavior.FlowStore<?>, ?> storeBehaviorValues;
 		final Set<Event.FlowInput<?>> inputEvents;
-		final Event.TraverseVistor<TraverseLog> eventVistor;
-		final Behavior.TraverseVistor<TraverseLog> behaviorVistor;
 
-		Analyzer(Event<Runnable> outputEvent, Map<FlowInput<?>, RelationEntry> inputEventRelationEntries, Map<FlowStore<?>, ?> storeBehaviorValues) {
+		NodeAnalyzer(Event<Runnable> outputEvent, Map<FlowInput<?>, RelationEntry> inputEventRelationEntries, Map<FlowStore<?>, ?> storeBehaviorValues) {
 			this.outputEvent = outputEvent;
 			this.inputEventRelationEntries = inputEventRelationEntries;
 			this.storeBehaviorValues = storeBehaviorValues;
 			this.inputEvents = new HashSet<>();
-			this.eventVistor = new Event.TraverseVistor<TraverseLog>() {
-				@Override
-				public <A, B> void visit(Event.Fmap<A, B> event, TraverseLog t) {
-					if (t.traverse(event, event.parent.get()))
-						accept(event.parent, t.move());
-				}
+		}
 
-				@Override
-				public <A> void visit(Event.Filter<A> event, TraverseLog t) {
-					if (t.traverse(event, event.parent.get()))
-						accept(event.parent, t.move());
-				}
+		@Override
+		public <A, B> void visit(Event.Fmap<A, B> event, TraverseLog t) {
+			if (t.traverse(event, event.parent.get()))
+				accept(event.parent, t.move());
+		}
 
-				@Override
-				public <A, B, C> void visit(Event.Combine<A, B, C> event, TraverseLog t) {
-					if (t.traverse(event, event.event1.get()))
-						accept(event.event1, t.copy());
-					if (t.traverse(event, event.event2.get()))
-						accept(event.event2, t.move());
-				}
+		@Override
+		public <A> void visit(Event.Filter<A> event, TraverseLog t) {
+			if (t.traverse(event, event.parent.get()))
+				accept(event.parent, t.move());
+		}
 
-				@Override
-				public <A> void visit(Event.Mempty<A> event, TraverseLog t) {
+		@Override
+		public <A, B, C> void visit(Event.Combine<A, B, C> event, TraverseLog t) {
+			if (t.traverse(event, event.event1.get()))
+				accept(event.event1, t.copy());
+			if (t.traverse(event, event.event2.get()))
+				accept(event.event2, t.move());
+		}
 
-				}
+		@Override
+		public <A> void visit(Event.Mempty<A> event, TraverseLog t) {
 
-				@Override
-				public <A> void visit(Event.Mappend<A> event, TraverseLog t) {
-					if (t.traverse(event, event.event1.get()))
-						accept(event.event1, t.copy());
-					if (t.traverse(event, event.event2.get()))
-						accept(event.event2, t.move());
-				}
+		}
 
-				@Override
-				public <A> void visit(Event.FlowEfix<A> event, TraverseLog t) {
-					accept(event.get(), t.move());
-				}
+		@Override
+		public <A> void visit(Event.Mappend<A> event, TraverseLog t) {
+			if (t.traverse(event, event.event1.get()))
+				accept(event.event1, t.copy());
+			if (t.traverse(event, event.event2.get()))
+				accept(event.event2, t.move());
+		}
 
-				@Override
-				public <A, B> void visit(Event.FlowRetrieve<A, B> event, TraverseLog t) {
-					if (t.traverse(event, event.behavior.get()))
-						behaviorVistor.accept(event.behavior, t.copy());
-					if (t.traverse(event, event.event.get()))
-						accept(event.event, t.move());
-				}
+		@Override
+		public <A> void visit(Event.FlowEfix<A> event, TraverseLog t) {
+			accept(event.get(), t.move());
+		}
 
-				@Override
-				public <A> void visit(Event.FlowInput<A> event, TraverseLog t) {
-					inputEvents.add(event);
-					RelationEntry relationEntry = inputEventRelationEntries.get(event);
-					if (relationEntry == null)
-						inputEventRelationEntries.put(event, relationEntry = new RelationEntry());
-					relationEntry.merge(t.move());
-				}
-			};
-			this.behaviorVistor = new Behavior.TraverseVistor<TraverseLog>() {
-				@Override
-				public <A, B> void visit(Behavior.Fmap<A, B> behavior, TraverseLog t) {
-					if (t.traverse(behavior, behavior.parent.get()))
-						accept(behavior.parent, t.move());
-				}
+		@Override
+		public <A, B> void visit(Event.FlowRetrieve<A, B> event, TraverseLog t) {
+			if (t.traverse(event, event.behavior.get()))
+				accept(event.behavior, t.copy());
+			if (t.traverse(event, event.event.get()))
+				accept(event.event, t.move());
+		}
 
-				@Override
-				public <A, B> void visit(Behavior.Apply<A, B> behavior, TraverseLog t) {
-					if (t.traverse(behavior, behavior.parent.get()))
-						accept(behavior.parent, t.copy());
-					if (t.traverse(behavior, behavior.behavior.get()))
-						accept(behavior.behavior, t.move());
-				}
+		@Override
+		public <A> void visit(Event.FlowInput<A> event, TraverseLog t) {
+			inputEvents.add(event);
+			RelationEntry relationEntry = inputEventRelationEntries.get(event);
+			if (relationEntry == null)
+				inputEventRelationEntries.put(event, relationEntry = new RelationEntry());
+			relationEntry.merge(t.move());
+		}
 
-				@Override
-				public <A> void visit(Behavior.Pure<A> behavior, TraverseLog t) {
+		@Override
+		public <A, B> void visit(Behavior.Fmap<A, B> behavior, TraverseLog t) {
+			if (t.traverse(behavior, behavior.parent.get()))
+				accept(behavior.parent, t.move());
+		}
 
-				}
+		@Override
+		public <A, B> void visit(Behavior.Apply<A, B> behavior, TraverseLog t) {
+			if (t.traverse(behavior, behavior.parent.get()))
+				accept(behavior.parent, t.copy());
+			if (t.traverse(behavior, behavior.behavior.get()))
+				accept(behavior.behavior, t.move());
+		}
 
-				@Override
-				public <A> void visit(Behavior.FlowBfix<A> behavior, TraverseLog t) {
-					accept(behavior.get(), t.move());
-				}
+		@Override
+		public <A> void visit(Behavior.Pure<A> behavior, TraverseLog t) {
 
-				@Override
-				public <A> void visit(Behavior.FlowStore<A> behavior, TraverseLog t) {
-					@SuppressWarnings("unchecked")
-					Map<Behavior.FlowStore<A>, A> values = (Map<Behavior.FlowStore<A>, A>) (Map<?, ?>) storeBehaviorValues;
-					values.put(behavior, behavior.a);
-					if (t.traverse(behavior, behavior.event.get()))
-						eventVistor.accept(behavior.event, t.move());
-				}
-			};
+		}
+
+		@Override
+		public <A> void visit(Behavior.FlowBfix<A> behavior, TraverseLog t) {
+			accept(behavior.get(), t.move());
+		}
+
+		@Override
+		public <A> void visit(Behavior.FlowStore<A> behavior, TraverseLog t) {
+			@SuppressWarnings("unchecked")
+			Map<Behavior.FlowStore<A>, A> values = (Map<Behavior.FlowStore<A>, A>) (Map<?, ?>) storeBehaviorValues;
+			values.put(behavior, behavior.a);
+			if (t.traverse(behavior, behavior.event.get()))
+				accept(behavior.event, t.move());
 		}
 
 		void analyze() {
-			eventVistor.accept(outputEvent, new TraverseLog());
+			accept(outputEvent, new TraverseLog());
 			inputEvents.forEach(inputEvent -> inputEventRelationEntries.get(inputEvent).targetOutputEvents.add(outputEvent));
 		}
 	}
 
-	static final class Evaluator {
+	static final class NodeEvaluator implements Event.EvalVistor, Behavior.EvalVistor {
 		final Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries;
 		final Map<Behavior.FlowStore<?>, ?> storeBehaviorValues;
 		final Map<Event.FlowInput<?>, ?> firedInputEventValues;
 		final Map<Event<?>, Sum<Unit, ?>> eventValues;
 		final Map<Behavior<?>, ?> behaviorValues;
-		final Event.EvalVistor eventVistor;
-		final Behavior.EvalVistor behaviorVistor;
 
-		Evaluator(Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries, Map<Behavior.FlowStore<?>, ?> storeBehaviorValues,
+		NodeEvaluator(Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries, Map<Behavior.FlowStore<?>, ?> storeBehaviorValues,
 			Map<Event.FlowInput<?>, ?> firedInputEventValues) {
 			this.inputEventRelationEntries = inputEventRelationEntries;
 			this.storeBehaviorValues = storeBehaviorValues;
 			this.firedInputEventValues = firedInputEventValues;
 			this.eventValues = new HashMap<>();
 			this.behaviorValues = new HashMap<>();
-			this.eventVistor = new Event.EvalVistor() {
-				@Override
-				public <A, B> Sum<Unit, B> visit(Event.Fmap<A, B> event) {
-					Sum<Unit, A> eventParentValue = eval(event.parent);
-
-					Sum<Unit, B> value = eventParentValue.mapRight(event.f);
-					Evaluator.this.<B> eventValues().put(event, value);
-					return value;
-				}
-
-				@Override
-				public <A> Sum<Unit, A> visit(Event.Filter<A> event) {
-					Sum<Unit, A> eventParentValue = eval(event.parent);
-
-					Sum<Unit, A> value = Sum.filterRight(eventParentValue, event.p);
-					Evaluator.this.<A> eventValues().put(event, value);
-					return value;
-				}
-
-				@Override
-				public <A, B, C> Sum<Unit, C> visit(Event.Combine<A, B, C> event) {
-					Sum<Unit, A> eventEvent1Value = eval(event.event1);
-					Sum<Unit, B> eventEvent2Value = eval(event.event2);
-
-					Sum<Unit, C> value = Sum.combineRight(event.f, event.g, event.h, eventEvent1Value, eventEvent2Value);
-					Evaluator.this.<C> eventValues().put(event, value);
-					return value;
-				}
-
-				@Override
-				public <A> Sum<Unit, A> visit(Event.Mempty<A> event) {
-					Sum<Unit, A> value = Sum.ofSumLeft(Unit.UNIT);
-					Evaluator.this.<A> eventValues().put(event, value);
-					return value;
-				}
-
-				@Override
-				public <A> Sum<Unit, A> visit(Event.Mappend<A> event) {
-					Sum<Unit, A> eventEvent1Value = eval(event.event1);
-					Sum<Unit, A> eventEvent2Value = eval(event.event2);
-
-					Sum<Unit, A> value = Sum.mappendRight(event.f, eventEvent1Value, eventEvent2Value);
-					Evaluator.this.<A> eventValues().put(event, value);
-					return value;
-				}
-
-				@Override
-				public <A> Sum<Unit, A> visit(Event.FlowEfix<A> event) {
-					return accept(event.get());
-				}
-
-				@Override
-				public <A, B> Sum<Unit, B> visit(Event.FlowRetrieve<A, B> event) {
-					Function<A, B> eventBehaviorValue = eval(event.behavior);
-					Sum<Unit, A> eventEventValue = eval(event.event);
-
-					Sum<Unit, B> value = eventEventValue.mapRight(eventBehaviorValue);
-					Evaluator.this.<B> eventValues().put(event, value);
-					return value;
-				}
-
-				@Override
-				public <A> Sum<Unit, A> visit(Event.FlowInput<A> event) {
-					Sum<Unit, A> value = Evaluator.this.<A> firedInputEventValues().containsKey(event)
-						? Sum.ofSumRight(Evaluator.this.<A> firedInputEventValues().get(event))
-						: Sum.ofSumLeft(Unit.UNIT);
-					Evaluator.this.<A> eventValues().put(event, value);
-					return value;
-				}
-			};
-			behaviorVistor = new Behavior.EvalVistor() {
-				@Override
-				public <A, B> B visit(Behavior.Fmap<A, B> behavior) {
-					A behaviorParentValue = eval(behavior.parent);
-
-					B value = behavior.f.apply(behaviorParentValue);
-					Evaluator.this.<B> behaviorValues().put(behavior, value);
-					return value;
-				}
-
-				@Override
-				public <A, B> B visit(Behavior.Apply<A, B> behavior) {
-					A behaviorParentValue = eval(behavior.parent);
-					Function<A, B> behavioBehaviorValue = eval(behavior.behavior);
-
-					B value = behavioBehaviorValue.apply(behaviorParentValue);
-					Evaluator.this.<B> behaviorValues().put(behavior, value);
-					return value;
-				}
-
-				@Override
-				public <A> A visit(Behavior.Pure<A> behavior) {
-					A value = behavior.a;
-					Evaluator.this.<A> behaviorValues().put(behavior, value);
-					return value;
-				}
-
-				@Override
-				public <A> A visit(Behavior.FlowBfix<A> behavior) {
-					return accept(behavior.get());
-				}
-
-				@Override
-				public <A> A visit(Behavior.FlowStore<A> behavior) {
-					A value = Evaluator.this.<A> storeBehaviorValues().get(behavior);
-					Evaluator.this.<A> behaviorValues().put(behavior, value);
-					return value;
-				}
-			};
 		}
 
 		@SuppressWarnings("unchecked")
@@ -427,6 +317,113 @@ public final class Reactive {
 		@SuppressWarnings("unchecked")
 		<A> Map<Behavior<A>, A> behaviorValues() {
 			return (Map<Behavior<A>, A>) (Map<?, ?>) behaviorValues;
+		}
+
+		@Override
+		public <A, B> Sum<Unit, B> visit(Event.Fmap<A, B> event) {
+			Sum<Unit, A> eventParentValue = eval(event.parent);
+
+			Sum<Unit, B> value = eventParentValue.mapRight(event.f);
+			this.<B> eventValues().put(event, value);
+			return value;
+		}
+
+		@Override
+		public <A> Sum<Unit, A> visit(Event.Filter<A> event) {
+			Sum<Unit, A> eventParentValue = eval(event.parent);
+
+			Sum<Unit, A> value = Sum.filterRight(eventParentValue, event.p);
+			this.<A> eventValues().put(event, value);
+			return value;
+		}
+
+		@Override
+		public <A, B, C> Sum<Unit, C> visit(Event.Combine<A, B, C> event) {
+			Sum<Unit, A> eventEvent1Value = eval(event.event1);
+			Sum<Unit, B> eventEvent2Value = eval(event.event2);
+
+			Sum<Unit, C> value = Sum.combineRight(event.f, event.g, event.h, eventEvent1Value, eventEvent2Value);
+			this.<C> eventValues().put(event, value);
+			return value;
+		}
+
+		@Override
+		public <A> Sum<Unit, A> visit(Event.Mempty<A> event) {
+			Sum<Unit, A> value = Sum.ofSumLeft(Unit.UNIT);
+			this.<A> eventValues().put(event, value);
+			return value;
+		}
+
+		@Override
+		public <A> Sum<Unit, A> visit(Event.Mappend<A> event) {
+			Sum<Unit, A> eventEvent1Value = eval(event.event1);
+			Sum<Unit, A> eventEvent2Value = eval(event.event2);
+
+			Sum<Unit, A> value = Sum.mappendRight(event.f, eventEvent1Value, eventEvent2Value);
+			this.<A> eventValues().put(event, value);
+			return value;
+		}
+
+		@Override
+		public <A> Sum<Unit, A> visit(Event.FlowEfix<A> event) {
+			return eval(event.get());
+		}
+
+		@Override
+		public <A, B> Sum<Unit, B> visit(Event.FlowRetrieve<A, B> event) {
+			Function<A, B> eventBehaviorValue = eval(event.behavior);
+			Sum<Unit, A> eventEventValue = eval(event.event);
+
+			Sum<Unit, B> value = eventEventValue.mapRight(eventBehaviorValue);
+			this.<B> eventValues().put(event, value);
+			return value;
+		}
+
+		@Override
+		public <A> Sum<Unit, A> visit(Event.FlowInput<A> event) {
+			Sum<Unit, A> value = this.<A> firedInputEventValues().containsKey(event)
+				? Sum.ofSumRight(this.<A> firedInputEventValues().get(event))
+				: Sum.ofSumLeft(Unit.UNIT);
+			this.<A> eventValues().put(event, value);
+			return value;
+		}
+
+		@Override
+		public <A, B> B visit(Behavior.Fmap<A, B> behavior) {
+			A behaviorParentValue = eval(behavior.parent);
+
+			B value = behavior.f.apply(behaviorParentValue);
+			this.<B> behaviorValues().put(behavior, value);
+			return value;
+		}
+
+		@Override
+		public <A, B> B visit(Behavior.Apply<A, B> behavior) {
+			A behaviorParentValue = eval(behavior.parent);
+			Function<A, B> behavioBehaviorValue = eval(behavior.behavior);
+
+			B value = behavioBehaviorValue.apply(behaviorParentValue);
+			this.<B> behaviorValues().put(behavior, value);
+			return value;
+		}
+
+		@Override
+		public <A> A visit(Behavior.Pure<A> behavior) {
+			A value = behavior.a;
+			this.<A> behaviorValues().put(behavior, value);
+			return value;
+		}
+
+		@Override
+		public <A> A visit(Behavior.FlowBfix<A> behavior) {
+			return eval(behavior.get());
+		}
+
+		@Override
+		public <A> A visit(Behavior.FlowStore<A> behavior) {
+			A value = this.<A> storeBehaviorValues().get(behavior);
+			this.<A> behaviorValues().put(behavior, value);
+			return value;
 		}
 
 		void eval() {
@@ -450,14 +447,14 @@ public final class Reactive {
 		<A> Sum<Unit, A> eval(Event<A> event) {
 			if (eventValues.containsKey(event))
 				return this.<A> eventValues().get(event);
-			Sum<Unit, A> value = eventVistor.accept(event);
+			Sum<Unit, A> value = accept(event);
 			return value;
 		}
 
 		<A> A eval(Behavior<A> behavior) {
 			if (behaviorValues.containsKey(behavior))
 				return this.<A> behaviorValues().get(behavior);
-			A value = behaviorVistor.accept(behavior);
+			A value = accept(behavior);
 			return value;
 		}
 	}
