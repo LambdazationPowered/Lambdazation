@@ -74,7 +74,7 @@ public final class Reactive {
 				activePort.incrementAndGet();
 				try {
 					NodeEvaluator nodeEvaluator = new NodeEvaluator(reactiveLock, inputEventRelationEntries, storeBehaviorValues,
-						Collections.singletonMap(inputEvent, value));
+						Collections.singletonMap(inputEvent, value), relationEntry.targetEvents);
 					nodeEvaluator.eval();
 				} finally {
 					activePort.decrementAndGet();
@@ -285,15 +285,17 @@ public final class Reactive {
 		final Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries;
 		final Map<Behavior.FlowStore<?>, ?> storeBehaviorValues;
 		final Map<Event.FlowInput<?>, ?> firedInputEventValues;
+		final Set<Event<?>> relatedEvents;
 		final Map<Event<?>, Maybe<?>> eventValues;
 		final Map<Behavior<?>, ?> behaviorValues;
 
 		NodeEvaluator(Lock reactiveLock, Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries,
-			Map<Behavior.FlowStore<?>, ?> storeBehaviorValues, Map<Event.FlowInput<?>, ?> firedInputEventValues) {
+			Map<Behavior.FlowStore<?>, ?> storeBehaviorValues, Map<Event.FlowInput<?>, ?> firedInputEventValues, Set<Event<?>> relatedEvents) {
 			this.reactiveLock = reactiveLock;
 			this.inputEventRelationEntries = inputEventRelationEntries;
 			this.storeBehaviorValues = storeBehaviorValues;
 			this.firedInputEventValues = firedInputEventValues;
+			this.relatedEvents = relatedEvents;
 			this.eventValues = new HashMap<>();
 			this.behaviorValues = new HashMap<>();
 		}
@@ -453,6 +455,11 @@ public final class Reactive {
 		<A> Maybe<A> eval(Event<A> event) {
 			if (eventValues.containsKey(event))
 				return this.<A> eventValues().get(event);
+			if (!relatedEvents.contains(event)) {
+				Maybe<A> value = Maybe.ofNothing();
+				eventValues.put(event, value);
+				return value;
+			}
 			Maybe<A> value = accept(event);
 			return value;
 		}
@@ -483,21 +490,25 @@ public final class Reactive {
 		}
 
 		boolean traverse(Event<?> from, Event<?> to) {
+			events.add(from);
 			events.add(to);
 			return paths.add(new Path(from, to));
 		}
 
 		boolean traverse(Event<?> from, Behavior<?> to) {
+			events.add(from);
 			behaviors.add(to);
 			return paths.add(new Path(from, to));
 		}
 
 		boolean traverse(Behavior<?> from, Behavior<?> to) {
+			behaviors.add(from);
 			behaviors.add(to);
 			return paths.add(new Path(from, to));
 		}
 
 		boolean traverse(Behavior<?> from, Event<?> to) {
+			behaviors.add(from);
 			events.add(to);
 			return paths.add(new Path(from, to));
 		}
