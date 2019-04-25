@@ -5,18 +5,18 @@ import java.util.function.Consumer;
 import org.lambdazation.common.util.data.Product;
 import org.lambdazation.common.util.data.Unit;
 
-public class Testcode {
+public class TestPerf {
 	public static void main(String[] args) {
 		Product<Consumer<Unit>, Source<Unit>> product = Source.newSource();
 		Source<Unit> clieckedSource = product.right;
 
 		// @formatter:off
-		Flow<Unit> flow = Flow
-			.input(clieckedSource).compose(
-			clickedEvent -> Combinator
-			.increment(0, clickedEvent.replace(count -> count + 1)).compose(
-			countedEvent -> Flow
-			.output(countedEvent.fmap(count -> () -> {}))));
+		Flow<Unit> flow =
+			Flow.input(clieckedSource).compose(
+			clickedEvent ->
+			Combinator.increment(0, clickedEvent.replace(count -> count + 1)).compose(
+			countedEvent ->
+			Flow.output(countedEvent.fmap(count -> () -> {}))));
 		// @formatter:on
 
 		Reactive reactive = Reactive.build(flow);

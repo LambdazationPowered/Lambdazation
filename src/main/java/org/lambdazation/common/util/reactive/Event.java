@@ -5,8 +5,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.lambdazation.common.util.Functional;
-import org.lambdazation.common.util.data.Sum;
-import org.lambdazation.common.util.data.Unit;
+import org.lambdazation.common.util.data.Maybe;
 import org.lambdazation.common.util.eval.Lazy;
 
 /**
@@ -36,7 +35,7 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		Sum<Unit, B> accept(EvalVistor v) {
+		Maybe<B> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 
@@ -56,7 +55,7 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		Sum<Unit, A> accept(EvalVistor v) {
+		Maybe<A> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 
@@ -67,13 +66,13 @@ public abstract class Event<A> {
 	}
 
 	static class Combine<A, B, C> extends Event<C> {
-		final Function<A, Sum<Unit, C>> f;
-		final Function<B, Sum<Unit, C>> g;
-		final BiFunction<A, B, Sum<Unit, C>> h;
+		final Function<A, Maybe<C>> f;
+		final Function<B, Maybe<C>> g;
+		final BiFunction<A, B, Maybe<C>> h;
 		final Event<A> event1;
 		final Event<B> event2;
 
-		public Combine(Function<A, Sum<Unit, C>> f, Function<B, Sum<Unit, C>> g, BiFunction<A, B, Sum<Unit, C>> h, Event<A> event1, Event<B> event2) {
+		public Combine(Function<A, Maybe<C>> f, Function<B, Maybe<C>> g, BiFunction<A, B, Maybe<C>> h, Event<A> event1, Event<B> event2) {
 			this.f = f;
 			this.g = g;
 			this.h = h;
@@ -82,7 +81,7 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		Sum<Unit, C> accept(EvalVistor v) {
+		Maybe<C> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 
@@ -98,7 +97,7 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		Sum<Unit, A> accept(EvalVistor v) {
+		Maybe<A> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 
@@ -120,7 +119,7 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		Sum<Unit, A> accept(EvalVistor v) {
+		Maybe<A> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 
@@ -138,7 +137,7 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		Sum<Unit, A> accept(EvalVistor v) {
+		Maybe<A> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 
@@ -163,7 +162,7 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		Sum<Unit, B> accept(EvalVistor v) {
+		Maybe<B> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 
@@ -181,7 +180,7 @@ public abstract class Event<A> {
 		}
 
 		@Override
-		Sum<Unit, A> accept(EvalVistor v) {
+		Maybe<A> accept(EvalVistor v) {
 			return v.visit(this);
 		}
 
@@ -192,23 +191,23 @@ public abstract class Event<A> {
 	}
 
 	interface EvalVistor {
-		<A, B> Sum<Unit, B> visit(Fmap<A, B> event);
+		<A, B> Maybe<B> visit(Fmap<A, B> event);
 
-		<A> Sum<Unit, A> visit(Filter<A> event);
+		<A> Maybe<A> visit(Filter<A> event);
 
-		<A, B, C> Sum<Unit, C> visit(Combine<A, B, C> event);
+		<A, B, C> Maybe<C> visit(Combine<A, B, C> event);
 
-		<A> Sum<Unit, A> visit(Mempty<A> event);
+		<A> Maybe<A> visit(Mempty<A> event);
 
-		<A> Sum<Unit, A> visit(Mappend<A> event);
+		<A> Maybe<A> visit(Mappend<A> event);
 
-		<A> Sum<Unit, A> visit(FlowEfix<A> event);
+		<A> Maybe<A> visit(FlowEfix<A> event);
 
-		<A, B> Sum<Unit, B> visit(FlowRetrieve<A, B> event);
+		<A, B> Maybe<B> visit(FlowRetrieve<A, B> event);
 
-		<A> Sum<Unit, A> visit(FlowInput<A> event);
+		<A> Maybe<A> visit(FlowInput<A> event);
 
-		default <A> Sum<Unit, A> accept(Event<A> event) {
+		default <A> Maybe<A> accept(Event<A> event) {
 			return event.accept(this);
 		}
 	}
@@ -235,7 +234,7 @@ public abstract class Event<A> {
 		}
 	}
 
-	abstract Sum<Unit, A> accept(EvalVistor v);
+	abstract Maybe<A> accept(EvalVistor v);
 
 	abstract <T> void accept(TraverseVistor<T> v, T t);
 
@@ -255,7 +254,7 @@ public abstract class Event<A> {
 		return new Filter<>(this, p);
 	}
 
-	public static <A, B, C> Event<C> combine(Function<A, Sum<Unit, C>> f, Function<B, Sum<Unit, C>> g, BiFunction<A, B, Sum<Unit, C>> h,
+	public static <A, B, C> Event<C> combine(Function<A, Maybe<C>> f, Function<B, Maybe<C>> g, BiFunction<A, B, Maybe<C>> h,
 		Event<A> event1, Event<B> event2) {
 		return new Combine<>(f, g, h, event1, event2);
 	}

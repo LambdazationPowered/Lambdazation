@@ -1,9 +1,7 @@
 package org.lambdazation.common.util.data;
 
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 public abstract class Sum<A, B> {
 	Sum() {}
@@ -278,32 +276,6 @@ public abstract class Sum<A, B> {
 
 	public static <A, B, C> Sum<A, C> flatMapRight(Sum<A, B> sum, Function<B, Sum<A, C>> f) {
 		return sum.flatMapRight(f);
-	}
-
-	public static <A> Sum<A, Unit> filterLeft(Sum<A, Unit> sum, Predicate<A> p) {
-		return sum.flatMapLeft(left -> p.test(left) ? ofSumLeft(left) : ofSumRight(Unit.UNIT));
-	}
-
-	public static <B> Sum<Unit, B> filterRight(Sum<Unit, B> sum, Predicate<B> p) {
-		return sum.flatMapRight(right -> p.test(right) ? ofSumRight(right) : ofSumLeft(Unit.UNIT));
-	}
-
-	public static <A> Sum<A, Unit> mappendLeft(BiFunction<A, A, A> f, Sum<A, Unit> sum1, Sum<A, Unit> sum2) {
-		return sum1.match(left1 -> sum2.match(left2 -> ofSumLeft(f.apply(left1, left2)), unit -> sum1), unit -> sum2);
-	}
-
-	public static <B> Sum<Unit, B> mappendRight(BiFunction<B, B, B> f, Sum<Unit, B> sum1, Sum<Unit, B> sum2) {
-		return sum1.match(unit -> sum2, right1 -> sum2.match(unit -> sum1, right2 -> ofSumRight(f.apply(right1, right2))));
-	}
-
-	public static <A, B, C> Sum<C, Unit> combineLeft(Function<A, Sum<C, Unit>> f, Function<B, Sum<C, Unit>> g, BiFunction<A, B, Sum<C, Unit>> h,
-		Sum<A, Unit> sum1, Sum<B, Unit> sum2) {
-		return sum1.match(a -> sum2.match(b -> h.apply(a, b), unit2 -> f.apply(a)), unit1 -> sum2.match(b -> g.apply(b), unit2 -> ofSumRight(Unit.UNIT)));
-	}
-
-	public static <A, B, C> Sum<Unit, C> combineRight(Function<A, Sum<Unit, C>> f, Function<B, Sum<Unit, C>> g, BiFunction<A, B, Sum<Unit, C>> h,
-		Sum<Unit, A> sum1, Sum<Unit, B> sum2) {
-		return sum1.match(unit1 -> sum2.match(unit2 -> ofSumLeft(Unit.UNIT), b -> g.apply(b)), a -> sum2.match(unit2 -> f.apply(a), b -> h.apply(a, b)));
 	}
 
 	public static <A, B, C> Function<Sum<A, B>, C> unboxSum(Function<A, C> f, Function<B, C> g) {

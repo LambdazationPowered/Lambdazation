@@ -14,12 +14,10 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.lambdazation.common.util.data.Maybe;
 import org.lambdazation.common.util.data.Product;
-import org.lambdazation.common.util.data.Sum;
 import org.lambdazation.common.util.data.Unit;
 import org.lambdazation.common.util.eval.Thunk;
-import org.lambdazation.common.util.reactive.Behavior.FlowStore;
-import org.lambdazation.common.util.reactive.Event.FlowInput;
 
 public final class Reactive {
 	private boolean responsive;
@@ -55,15 +53,15 @@ public final class Reactive {
 		List<Event<Runnable>> outputEvents = flowEvaluator.eval();
 
 		Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries = new HashMap<>();
-		Map<Behavior.FlowStore<?>, ?> storeBehaviorValues = new HashMap<>();
 
 		outputEvents.forEach(outputEvent -> {
-			NodeAnalyzer nodeAnalyzer = new NodeAnalyzer(outputEvent, inputEventRelationEntries, storeBehaviorValues);
+			NodeAnalyzer nodeAnalyzer = new NodeAnalyzer(outputEvent, inputEventRelationEntries);
 			nodeAnalyzer.analyze();
 		});
 
 		Lock reactiveLock = new ReentrantLock();
 		AtomicInteger activePort = new AtomicInteger(0);
+		Map<Behavior.FlowStore<?>, ?> storeBehaviorValues = new HashMap<>();
 
 		boolean responsive = false;
 		BooleanSupplier processing = () -> activePort.get() > 0;
@@ -183,13 +181,11 @@ public final class Reactive {
 	static final class NodeAnalyzer implements Event.TraverseVistor<TraverseLog>, Behavior.TraverseVistor<TraverseLog> {
 		final Event<Runnable> outputEvent;
 		final Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries;
-		final Map<Behavior.FlowStore<?>, ?> storeBehaviorValues;
 		final Set<Event.FlowInput<?>> inputEvents;
 
-		NodeAnalyzer(Event<Runnable> outputEvent, Map<FlowInput<?>, RelationEntry> inputEventRelationEntries, Map<FlowStore<?>, ?> storeBehaviorValues) {
+		NodeAnalyzer(Event<Runnable> outputEvent, Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries) {
 			this.outputEvent = outputEvent;
 			this.inputEventRelationEntries = inputEventRelationEntries;
-			this.storeBehaviorValues = storeBehaviorValues;
 			this.inputEvents = new HashSet<>();
 		}
 
@@ -274,9 +270,6 @@ public final class Reactive {
 
 		@Override
 		public <A> void visit(Behavior.FlowStore<A> behavior, TraverseLog t) {
-			@SuppressWarnings("unchecked")
-			Map<Behavior.FlowStore<A>, A> values = (Map<Behavior.FlowStore<A>, A>) (Map<?, ?>) storeBehaviorValues;
-			values.put(behavior, behavior.a);
 			if (t.traverse(behavior, behavior.event.get()))
 				accept(behavior.event, t.move());
 		}
@@ -292,7 +285,7 @@ public final class Reactive {
 		final Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries;
 		final Map<Behavior.FlowStore<?>, ?> storeBehaviorValues;
 		final Map<Event.FlowInput<?>, ?> firedInputEventValues;
-		final Map<Event<?>, Sum<Unit, ?>> eventValues;
+		final Map<Event<?>, Maybe<?>> eventValues;
 		final Map<Behavior<?>, ?> behaviorValues;
 
 		NodeEvaluator(Lock reactiveLock, Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries,
@@ -316,8 +309,8 @@ public final class Reactive {
 		}
 
 		@SuppressWarnings("unchecked")
-		<A> Map<Event<A>, Sum<Unit, A>> eventValues() {
-			return (Map<Event<A>, Sum<Unit, A>>) (Map<?, ?>) eventValues;
+		<A> Map<Event<A>, Maybe<A>> eventValues() {
+			return (Map<Event<A>, Maybe<A>>) (Map<?, ?>) eventValues;
 		}
 
 		@SuppressWarnings("unchecked")
@@ -326,70 +319,70 @@ public final class Reactive {
 		}
 
 		@Override
-		public <A, B> Sum<Unit, B> visit(Event.Fmap<A, B> event) {
-			Sum<Unit, A> eventParentValue = eval(event.parent);
+		public <A, B> Maybe<B> visit(Event.Fmap<A, B> event) {
+			Maybe<A> eventParentValue = eval(event.parent);
 
-			Sum<Unit, B> value = eventParentValue.mapRight(event.f);
+			Maybe<B> value = eventParentValue.map(event.f);
 			this.<B> eventValues().put(event, value);
 			return value;
 		}
 
 		@Override
-		public <A> Sum<Unit, A> visit(Event.Filter<A> event) {
-			Sum<Unit, A> eventParentValue = eval(event.parent);
+		public <A> Maybe<A> visit(Event.Filter<A> event) {
+			Maybe<A> eventParentValue = eval(event.parent);
 
-			Sum<Unit, A> value = Sum.filterRight(eventParentValue, event.p);
+			Maybe<A> value = eventParentValue.filter(event.p);
 			this.<A> eventValues().put(event, value);
 			return value;
 		}
 
 		@Override
-		public <A, B, C> Sum<Unit, C> visit(Event.Combine<A, B, C> event) {
-			Sum<Unit, A> eventEvent1Value = eval(event.event1);
-			Sum<Unit, B> eventEvent2Value = eval(event.event2);
+		public <A, B, C> Maybe<C> visit(Event.Combine<A, B, C> event) {
+			Maybe<A> eventEvent1Value = eval(event.event1);
+			Maybe<B> eventEvent2Value = eval(event.event2);
 
-			Sum<Unit, C> value = Sum.combineRight(event.f, event.g, event.h, eventEvent1Value, eventEvent2Value);
+			Maybe<C> value = Maybe.combine(event.f, event.g, event.h, eventEvent1Value, eventEvent2Value);
 			this.<C> eventValues().put(event, value);
 			return value;
 		}
 
 		@Override
-		public <A> Sum<Unit, A> visit(Event.Mempty<A> event) {
-			Sum<Unit, A> value = Sum.ofSumLeft(Unit.UNIT);
+		public <A> Maybe<A> visit(Event.Mempty<A> event) {
+			Maybe<A> value = Maybe.ofNothing();
 			this.<A> eventValues().put(event, value);
 			return value;
 		}
 
 		@Override
-		public <A> Sum<Unit, A> visit(Event.Mappend<A> event) {
-			Sum<Unit, A> eventEvent1Value = eval(event.event1);
-			Sum<Unit, A> eventEvent2Value = eval(event.event2);
+		public <A> Maybe<A> visit(Event.Mappend<A> event) {
+			Maybe<A> eventEvent1Value = eval(event.event1);
+			Maybe<A> eventEvent2Value = eval(event.event2);
 
-			Sum<Unit, A> value = Sum.mappendRight(event.f, eventEvent1Value, eventEvent2Value);
+			Maybe<A> value = Maybe.mappend(event.f, eventEvent1Value, eventEvent2Value);
 			this.<A> eventValues().put(event, value);
 			return value;
 		}
 
 		@Override
-		public <A> Sum<Unit, A> visit(Event.FlowEfix<A> event) {
+		public <A> Maybe<A> visit(Event.FlowEfix<A> event) {
 			return eval(event.get());
 		}
 
 		@Override
-		public <A, B> Sum<Unit, B> visit(Event.FlowRetrieve<A, B> event) {
+		public <A, B> Maybe<B> visit(Event.FlowRetrieve<A, B> event) {
 			Function<A, B> eventBehaviorValue = eval(event.behavior);
-			Sum<Unit, A> eventEventValue = eval(event.event);
+			Maybe<A> eventEventValue = eval(event.event);
 
-			Sum<Unit, B> value = eventEventValue.mapRight(eventBehaviorValue);
+			Maybe<B> value = eventEventValue.map(eventBehaviorValue);
 			this.<B> eventValues().put(event, value);
 			return value;
 		}
 
 		@Override
-		public <A> Sum<Unit, A> visit(Event.FlowInput<A> event) {
-			Sum<Unit, A> value = this.<A> firedInputEventValues().containsKey(event)
-				? Sum.ofSumRight(this.<A> firedInputEventValues().get(event))
-				: Sum.ofSumLeft(Unit.UNIT);
+		public <A> Maybe<A> visit(Event.FlowInput<A> event) {
+			Maybe<A> value = this.<A> firedInputEventValues().containsKey(event)
+				? Maybe.ofJust(this.<A> firedInputEventValues().get(event))
+				: Maybe.ofNothing();
 			this.<A> eventValues().put(event, value);
 			return value;
 		}
@@ -427,7 +420,9 @@ public final class Reactive {
 
 		@Override
 		public <A> A visit(Behavior.FlowStore<A> behavior) {
-			A value = this.<A> storeBehaviorValues().get(behavior);
+			A value = this.<A> storeBehaviorValues().containsKey(behavior)
+				? this.<A> storeBehaviorValues().get(behavior)
+				: behavior.a;
 			this.<A> behaviorValues().put(behavior, value);
 			return value;
 		}
@@ -439,13 +434,13 @@ public final class Reactive {
 				for (Event.FlowInput<?> inputEvent : firedInputEventValues.keySet()) {
 					RelationEntry relationEntry = inputEventRelationEntries.get(inputEvent);
 					for (Event<Runnable> outputEvent : relationEntry.targetOutputEvents) {
-						Sum<Unit, Runnable> eventValue = eval(outputEvent);
-						eventValue.ifRight(value -> actions.add(value));
+						Maybe<Runnable> eventValue = eval(outputEvent);
+						eventValue.ifJust(value -> actions.add(value));
 					}
 					for (Behavior.FlowStore<?> storeBehavior : relationEntry.targetStoreBehaviors) {
 						eval(storeBehavior);
-						Sum<Unit, ?> eventValue = eval(storeBehavior.event);
-						eventValue.ifRight(value -> storeBehaviorValues().put(storeBehavior, value));
+						Maybe<?> eventValue = eval(storeBehavior.event);
+						eventValue.ifJust(value -> storeBehaviorValues().put(storeBehavior, value));
 					}
 				}
 			} finally {
@@ -455,10 +450,10 @@ public final class Reactive {
 				action.run();
 		}
 
-		<A> Sum<Unit, A> eval(Event<A> event) {
+		<A> Maybe<A> eval(Event<A> event) {
 			if (eventValues.containsKey(event))
 				return this.<A> eventValues().get(event);
-			Sum<Unit, A> value = accept(event);
+			Maybe<A> value = accept(event);
 			return value;
 		}
 
