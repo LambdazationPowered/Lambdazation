@@ -453,21 +453,23 @@ public final class Reactive {
 		}
 
 		<A> Maybe<A> eval(Event<A> event) {
-			if (eventValues.containsKey(event))
-				return this.<A> eventValues().get(event);
-			if (!relatedEvents.contains(event)) {
+			Event<A> actualEvent = event.get();
+			if (eventValues.containsKey(actualEvent))
+				return this.<A> eventValues().get(actualEvent);
+			if (!relatedEvents.contains(actualEvent)) {
 				Maybe<A> value = Maybe.ofNothing();
-				eventValues.put(event, value);
+				eventValues.put(actualEvent, value);
 				return value;
 			}
-			Maybe<A> value = accept(event);
+			Maybe<A> value = accept(actualEvent);
 			return value;
 		}
 
 		<A> A eval(Behavior<A> behavior) {
-			if (behaviorValues.containsKey(behavior))
-				return this.<A> behaviorValues().get(behavior);
-			A value = accept(behavior);
+			Behavior<A> actualBehavior = behavior.get();
+			if (behaviorValues.containsKey(actualBehavior))
+				return this.<A> behaviorValues().get(actualBehavior);
+			A value = accept(actualBehavior);
 			return value;
 		}
 	}
