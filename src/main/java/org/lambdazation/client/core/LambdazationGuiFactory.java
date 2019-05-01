@@ -1,12 +1,12 @@
 package org.lambdazation.client.core;
 
 import org.lambdazation.Lambdazation;
-import org.lambdazation.client.gui.GuiCalibrator;
-import org.lambdazation.client.gui.GuiCharger;
-import org.lambdazation.client.gui.GuiCrystallizer;
-import org.lambdazation.client.gui.GuiLens;
-import org.lambdazation.client.gui.GuiReducer;
-import org.lambdazation.client.gui.GuiTransformer;
+import org.lambdazation.client.gui.inventory.GuiCalibrator;
+import org.lambdazation.client.gui.inventory.GuiCharger;
+import org.lambdazation.client.gui.inventory.GuiCrystallizer;
+import org.lambdazation.client.gui.inventory.GuiLens;
+import org.lambdazation.client.gui.inventory.GuiReducer;
+import org.lambdazation.client.gui.inventory.GuiTransformer;
 import org.lambdazation.common.inventory.ContainerCalibrator;
 import org.lambdazation.common.inventory.ContainerCharger;
 import org.lambdazation.common.inventory.ContainerCrystallizer;

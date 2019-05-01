@@ -48,6 +48,11 @@ public final class Reactive {
 		return processing.getAsBoolean() ? State.PROCESSING : responsive ? State.RESUMED : State.SUSPENDED;
 	}
 
+	public static void react(Flow<Unit> flow) {
+		Reactive reactive = build(flow);
+		reactive.resume();
+	}
+
 	public static Reactive build(Flow<Unit> flow) {
 		FlowEvaluator flowEvaluator = new FlowEvaluator(flow);
 		List<Event<Runnable>> outputEvents = flowEvaluator.eval();

@@ -1,4 +1,4 @@
-package org.lambdazation.client.gui;
+package org.lambdazation.client.gui.inventory;
 
 import org.lambdazation.Lambdazation;
 import org.lambdazation.common.inventory.ContainerTransformer;

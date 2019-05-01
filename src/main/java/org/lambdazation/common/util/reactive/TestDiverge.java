@@ -23,8 +23,7 @@ public final class TestDiverge {
 			Flow.output(eventA.replace(() -> System.out.println("123")))));
 		// @formatter:on
 
-		Reactive reactive = Reactive.build(flow);
-		reactive.resume();
+		Reactive.react(flow);
 		
 		fire.accept(Unit.UNIT);
 	}

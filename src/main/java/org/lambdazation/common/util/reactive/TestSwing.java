@@ -50,8 +50,7 @@ public final class TestSwing {
 				.replace(() -> output.setText("Button2 clicked")))))));
 		// @formatter:on
 
-		Reactive reactive = Reactive.build(flow);
-		reactive.resume();
+		Reactive.react(flow);
 
 		frame.setVisible(true);
 	}

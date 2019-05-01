@@ -19,8 +19,8 @@ public class TestPerf {
 			Flow.output(countedEvent.fmap(count -> () -> {}))));
 		// @formatter:on
 
-		Reactive reactive = Reactive.build(flow);
-		reactive.resume();
+		Reactive.react(flow);
+
 		for (int i = 0; i < 10000; i++)
 			test(product.left);
 	}
