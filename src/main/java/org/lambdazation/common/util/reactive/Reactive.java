@@ -164,6 +164,12 @@ public final class Reactive {
 		}
 
 		@Override
+		public <A> Behavior<A> visit(Flow.Pull<A> flow) {
+			Behavior<A> behavior = new Behavior.FlowPull<>(flow.f);
+			return behavior;
+		}
+
+		@Override
 		public Unit visit(Flow.Output flow) {
 			outputEvents.add(flow.event.get());
 
@@ -277,6 +283,11 @@ public final class Reactive {
 		public <A> void visit(Behavior.FlowStore<A> behavior, TraverseLog t) {
 			if (t.traverse(behavior, behavior.event.get()))
 				accept(behavior.event, t.move());
+		}
+
+		@Override
+		public <A> void visit(Behavior.FlowPull<A> behavior, TraverseLog t) {
+
 		}
 
 		void analyze() {
@@ -430,6 +441,13 @@ public final class Reactive {
 			A value = this.<A> storeBehaviorValues().containsKey(behavior)
 				? this.<A> storeBehaviorValues().get(behavior)
 				: behavior.a;
+			this.<A> behaviorValues().put(behavior, value);
+			return value;
+		}
+
+		@Override
+		public <A> A visit(Behavior.FlowPull<A> behavior) {
+			A value = behavior.f.get();
 			this.<A> behaviorValues().put(behavior, value);
 			return value;
 		}

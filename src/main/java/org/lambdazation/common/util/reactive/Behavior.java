@@ -1,6 +1,7 @@
 package org.lambdazation.common.util.reactive;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.lambdazation.common.util.Functional;
 import org.lambdazation.common.util.eval.Lazy;
@@ -123,6 +124,24 @@ public abstract class Behavior<A> {
 		}
 	}
 
+	static class FlowPull<A> extends Behavior<A> {
+		final Supplier<A> f;
+
+		FlowPull(Supplier<A> f) {
+			this.f = f;
+		}
+
+		@Override
+		A accept(EvalVistor v) {
+			return v.visit(this);
+		}
+
+		@Override
+		<T> void accept(TraverseVistor<T> v, T t) {
+			v.visit(this, t);
+		}
+	}
+
 	interface EvalVistor {
 		<A, B> B visit(Fmap<A, B> behavior);
 
@@ -133,6 +152,8 @@ public abstract class Behavior<A> {
 		<A> A visit(FlowBfix<A> behavior);
 
 		<A> A visit(FlowStore<A> behavior);
+
+		<A> A visit(FlowPull<A> behavior);
 
 		default <A> A accept(Behavior<A> behavior) {
 			return behavior.accept(this);
@@ -149,6 +170,8 @@ public abstract class Behavior<A> {
 		<A> void visit(FlowBfix<A> behavior, T t);
 
 		<A> void visit(FlowStore<A> behavior, T t);
+
+		<A> void visit(FlowPull<A> behavior, T t);
 
 		default <A> void accept(Behavior<A> behavior, T t) {
 			behavior.accept(this, t);

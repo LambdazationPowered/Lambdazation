@@ -1,6 +1,7 @@
 package org.lambdazation.common.util.reactive;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.lambdazation.common.util.Functional;
 import org.lambdazation.common.util.data.Product;
@@ -138,6 +139,19 @@ public abstract class Flow<A> {
 		}
 	}
 
+	static class Pull<A> extends Flow<Behavior<A>> {
+		final Supplier<A> f;
+
+		Pull(Supplier<A> f) {
+			this.f = f;
+		}
+
+		@Override
+		Behavior<A> accept(EvalVistor v) {
+			return v.visit(this);
+		}
+	}
+
 	static class Input<A> extends Flow<Event<A>> {
 		final Source<A> source;
 
@@ -180,6 +194,8 @@ public abstract class Flow<A> {
 		<A> Behavior<A> visit(Store<A> flow);
 
 		<A, B> Event<B> visit(Retrieve<A, B> flow);
+
+		<A> Behavior<A> visit(Pull<A> flow);
 
 		<A> Event<A> visit(Input<A> flow);
 
@@ -234,6 +250,10 @@ public abstract class Flow<A> {
 
 	public static <A, B> Flow<Event<B>> retrieve(Behavior<Function<A, B>> behavior, Event<A> event) {
 		return new Retrieve<>(behavior, event);
+	}
+
+	public static <A> Flow<Behavior<A>> pull(Supplier<A> f) {
+		return new Pull<>(f);
 	}
 
 	public static <A> Flow<Event<A>> input(Source<A> source) {
