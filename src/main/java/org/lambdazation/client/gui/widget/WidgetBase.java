@@ -5,6 +5,12 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class WidgetBase<M extends ModelBase> {
+	public final M model;
+
+	public WidgetBase(M model) {
+		this.model = model;
+	}
+
 	public abstract void draw();
 
 	public abstract void onKeyboardChar(int modifiers, char input);
