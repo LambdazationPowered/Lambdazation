@@ -4,22 +4,34 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class WidgetBase<M extends ModelBase> {
+public class WidgetBase<M extends ModelBase> {
 	public final M model;
 
 	public WidgetBase(M model) {
 		this.model = model;
 	}
 
-	public abstract void draw();
+	public void draw() {
 
-	public abstract void onKeyboardChar(int modifiers, char input);
+	}
 
-	public abstract void onKeyboardKey(int modifiers, int key, int scancode, boolean pressed);
+	public void onKeyboardChar(int modifiers, char input) {
 
-	public abstract void onMouseButton(double globalX, double globalY, int button, boolean pressed);
+	}
 
-	public abstract void onMouseMove(double globalX, double globalY, double deltaX, double deltaY);
+	public void onKeyboardKey(int modifiers, int key, int scancode, boolean pressed) {
 
-	public abstract void onMouseWheel(double globalX, double globalY, double delta);
+	}
+
+	public void onMouseButton(double globalX, double globalY, int button, boolean pressed) {
+
+	}
+
+	public void onMouseMove(double globalX, double globalY, double deltaX, double deltaY) {
+
+	}
+
+	public void onMouseWheel(double globalX, double globalY, double delta) {
+
+	}
 }
