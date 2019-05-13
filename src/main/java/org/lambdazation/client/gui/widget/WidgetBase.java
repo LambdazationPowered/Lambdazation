@@ -23,15 +23,15 @@ public class WidgetBase<M extends ModelBase> {
 
 	}
 
-	public void onMouseButton(double globalX, double globalY, int button, boolean pressed) {
+	public void onMouseButton(double localX, double localY, int button, boolean pressed) {
 
 	}
 
-	public void onMouseMove(double globalX, double globalY, double deltaX, double deltaY) {
+	public void onMouseMove(double localX, double localY, double deltaX, double deltaY) {
 
 	}
 
-	public void onMouseWheel(double globalX, double globalY, double delta) {
+	public void onMouseWheel(double localX, double localY, double delta) {
 
 	}
 }
