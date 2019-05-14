@@ -18,6 +18,12 @@ import org.lambdazation.common.util.data.Maybe;
 import org.lambdazation.common.util.data.Product;
 import org.lambdazation.common.util.data.Unit;
 import org.lambdazation.common.util.eval.Thunk;
+import org.lambdazation.common.util.reactive.Behavior.Apply;
+import org.lambdazation.common.util.reactive.Behavior.FlowBfix;
+import org.lambdazation.common.util.reactive.Behavior.FlowPull;
+import org.lambdazation.common.util.reactive.Behavior.FlowStore;
+import org.lambdazation.common.util.reactive.Behavior.Fmap;
+import org.lambdazation.common.util.reactive.Behavior.Pure;
 
 public final class Reactive {
 	private boolean responsive;
@@ -54,14 +60,23 @@ public final class Reactive {
 	}
 
 	public static Reactive build(Flow<Unit> flow) {
-		FlowEvaluator flowEvaluator = new FlowEvaluator(flow);
-		List<Event<Runnable>> outputEvents = flowEvaluator.eval();
+		Set<Behavior.FlowPull<?>> pullBehaviors = new HashSet<>();
+		Set<PushBehavior<?>> pushBehaviors = new HashSet<>();
+		Set<OutputEvent> outputEvents = new HashSet<>();
 
-		Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries = new HashMap<>();
+		FlowEvaluator flowEvaluator = new FlowEvaluator(flow, pullBehaviors, pushBehaviors, outputEvents);
+		flowEvaluator.eval();
 
+		Map<Behavior<?>, PushRelationEntry> behaviorPushRelationEntries = new HashMap<>();
+		Map<Event.FlowInput<?>, TargetRelationEntry> inputEventTargetRelationEntries = new HashMap<>();
+
+		pushBehaviors.forEach(pushBehavior -> {
+			PushBehaviorAnalyzer pushBehaviorAnalyzer = new PushBehaviorAnalyzer(pushBehavior, behaviorPushRelationEntries);
+			pushBehaviorAnalyzer.analyze();
+		});
 		outputEvents.forEach(outputEvent -> {
-			NodeAnalyzer nodeAnalyzer = new NodeAnalyzer(outputEvent, inputEventRelationEntries);
-			nodeAnalyzer.analyze();
+			OutputEventAnalyzer outputEventAnalyzer = new OutputEventAnalyzer(outputEvent, inputEventTargetRelationEntries);
+			outputEventAnalyzer.analyze();
 		});
 
 		Lock reactiveLock = new ReentrantLock();
@@ -72,15 +87,15 @@ public final class Reactive {
 		BooleanSupplier processing = () -> activePort.get() > 0;
 		List<Port<?>> ports = new ArrayList<>();
 
-		inputEventRelationEntries.forEach((inputEvent, relationEntry) -> {
+		inputEventTargetRelationEntries.forEach((inputEvent, targetRelationEntry) -> {
 			Port<?> port = new Port<>(inputEvent.source, currentPort -> value -> {
 				if (!currentPort.responsive)
 					return;
 				activePort.incrementAndGet();
 				try {
-					NodeEvaluator nodeEvaluator = new NodeEvaluator(reactiveLock, inputEventRelationEntries, storeBehaviorValues,
-						Collections.singletonMap(inputEvent, value), relationEntry.targetEvents);
-					nodeEvaluator.eval();
+					ReactiveEvaluator reactiveEvaluator = new ReactiveEvaluator(reactiveLock, behaviorPushRelationEntries, inputEventTargetRelationEntries,
+						storeBehaviorValues, Collections.singletonMap(inputEvent, value), targetRelationEntry.targetEvents, pullBehaviors);
+					reactiveEvaluator.eval();
 				} finally {
 					activePort.decrementAndGet();
 				}
@@ -93,11 +108,16 @@ public final class Reactive {
 
 	static final class FlowEvaluator implements Flow.EvalVistor {
 		final Flow<Unit> flow;
-		final List<Event<Runnable>> outputEvents;
+		final Set<Behavior.FlowPull<?>> pullBehaviors;
+		final Set<PushBehavior<?>> pushBehaviors;
+		final Set<OutputEvent> outputEvents;
 
-		FlowEvaluator(Flow<Unit> flow) {
+		FlowEvaluator(Flow<Unit> flow, Set<Behavior.FlowPull<?>> pullBehaviors, Set<PushBehavior<?>> pushBehaviors,
+			Set<OutputEvent> outputEvents) {
 			this.flow = flow;
-			this.outputEvents = new ArrayList<>();
+			this.pullBehaviors = pullBehaviors;
+			this.pushBehaviors = pushBehaviors;
+			this.outputEvents = outputEvents;
 		}
 
 		@Override
@@ -153,26 +173,27 @@ public final class Reactive {
 
 		@Override
 		public <A> Behavior<A> visit(Flow.Store<A> flow) {
-			Behavior<A> behavior = new Behavior.FlowStore<A>(flow.a, flow.event);
+			Behavior.FlowStore<A> behavior = new Behavior.FlowStore<A>(flow.a, flow.event);
 			return behavior;
 		}
 
 		@Override
 		public <A, B> Event<B> visit(Flow.Retrieve<A, B> flow) {
-			Event<B> event = new Event.FlowRetrieve<>(flow.behavior, flow.event);
+			Event.FlowRetrieve<A, B> event = new Event.FlowRetrieve<>(flow.behavior, flow.event);
 			return event;
 		}
 
 		@Override
 		public <A> Behavior<A> visit(Flow.Pull<A> flow) {
-			Behavior<A> behavior = new Behavior.FlowPull<>(flow.f);
+			Behavior.FlowPull<A> behavior = new Behavior.FlowPull<>(flow.f);
+			pullBehaviors.add(behavior);
 			return behavior;
 		}
 
 		@Override
-		public Unit visit(Flow.Output flow) {
-			outputEvents.add(flow.event.get());
-
+		public <A> Unit visit(Flow.Push<A> flow) {
+			PushBehavior<A> pushBehavior = new PushBehavior<>(flow.behavior.get(), flow.f);
+			pushBehaviors.add(pushBehavior);
 			Unit unit = Unit.UNIT;
 			return unit;
 		}
@@ -183,20 +204,27 @@ public final class Reactive {
 			return event;
 		}
 
-		List<Event<Runnable>> eval() {
+		@Override
+		public Unit visit(Flow.Output flow) {
+			OutputEvent outputEvent = new OutputEvent(flow.event.get());
+			outputEvents.add(outputEvent);
+			Unit unit = Unit.UNIT;
+			return unit;
+		}
+
+		void eval() {
 			accept(flow);
-			return outputEvents;
 		}
 	}
 
-	static final class NodeAnalyzer implements Event.TraverseVistor<TraverseLog>, Behavior.TraverseVistor<TraverseLog> {
-		final Event<Runnable> outputEvent;
-		final Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries;
+	static final class OutputEventAnalyzer implements Event.TraverseVistor<TraverseLog>, Behavior.TraverseVistor<TraverseLog> {
+		final OutputEvent outputEvent;
+		final Map<Event.FlowInput<?>, TargetRelationEntry> inputEventTargetRelationEntries;
 		final Set<Event.FlowInput<?>> inputEvents;
 
-		NodeAnalyzer(Event<Runnable> outputEvent, Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries) {
+		OutputEventAnalyzer(OutputEvent outputEvent, Map<Event.FlowInput<?>, TargetRelationEntry> inputEventTargetRelationEntries) {
 			this.outputEvent = outputEvent;
-			this.inputEventRelationEntries = inputEventRelationEntries;
+			this.inputEventTargetRelationEntries = inputEventTargetRelationEntries;
 			this.inputEvents = new HashSet<>();
 		}
 
@@ -249,10 +277,10 @@ public final class Reactive {
 		@Override
 		public <A> void visit(Event.FlowInput<A> event, TraverseLog t) {
 			inputEvents.add(event);
-			RelationEntry relationEntry = inputEventRelationEntries.get(event);
-			if (relationEntry == null)
-				inputEventRelationEntries.put(event, relationEntry = new RelationEntry());
-			relationEntry.merge(t.move());
+			TargetRelationEntry targetRelationEntry = inputEventTargetRelationEntries.get(event);
+			if (targetRelationEntry == null)
+				inputEventTargetRelationEntries.put(event, targetRelationEntry = new TargetRelationEntry());
+			targetRelationEntry.merge(t.move());
 		}
 
 		@Override
@@ -291,27 +319,87 @@ public final class Reactive {
 		}
 
 		void analyze() {
-			accept(outputEvent, new TraverseLog());
-			inputEvents.forEach(inputEvent -> inputEventRelationEntries.get(inputEvent).targetOutputEvents.add(outputEvent));
+			accept(outputEvent.event, new TraverseLog());
+			inputEvents.forEach(inputEvent -> inputEventTargetRelationEntries.get(inputEvent).targetOutputEvents.add(outputEvent.event));
 		}
 	}
 
-	static final class NodeEvaluator implements Event.EvalVistor, Behavior.EvalVistor {
+	static final class PushBehaviorAnalyzer implements Behavior.TraverseVistor<TraverseLog> {
+		final PushBehavior<?> pushBehavior;
+		final Map<Behavior<?>, PushRelationEntry> behaviorPushRelationEntries;
+
+		public PushBehaviorAnalyzer(PushBehavior<?> pushBehavior, Map<Behavior<?>, PushRelationEntry> behaviorPushRelationEntries) {
+			this.pushBehavior = pushBehavior;
+			this.behaviorPushRelationEntries = behaviorPushRelationEntries;
+		}
+
+		@Override
+		public <A, B> void visit(Fmap<A, B> behavior, TraverseLog t) {
+			if (t.traverse(behavior, behavior.parent.get()))
+				accept(behavior.parent, t.move());
+		}
+
+		@Override
+		public <A, B> void visit(Apply<A, B> behavior, TraverseLog t) {
+			if (t.traverse(behavior, behavior.parent.get()))
+				accept(behavior.parent, t.copy());
+			if (t.traverse(behavior, behavior.behavior.get()))
+				accept(behavior.behavior, t.move());
+		}
+
+		@Override
+		public <A> void visit(Pure<A> behavior, TraverseLog t) {
+
+		}
+
+		@Override
+		public <A> void visit(FlowBfix<A> behavior, TraverseLog t) {
+			accept(behavior.get(), t.move());
+		}
+
+		@Override
+		public <A> void visit(FlowStore<A> behavior, TraverseLog t) {
+			PushRelationEntry pushRelationEntry = behaviorPushRelationEntries.get(behavior);
+			if (pushRelationEntry == null)
+				behaviorPushRelationEntries.put(behavior, pushRelationEntry = new PushRelationEntry());
+			pushRelationEntry.pushBehaviors.add(pushBehavior);
+		}
+
+		@Override
+		public <A> void visit(FlowPull<A> behavior, TraverseLog t) {
+			PushRelationEntry pushRelationEntry = behaviorPushRelationEntries.get(behavior);
+			if (pushRelationEntry == null)
+				behaviorPushRelationEntries.put(behavior, pushRelationEntry = new PushRelationEntry());
+			pushRelationEntry.pushBehaviors.add(pushBehavior);
+		}
+
+		void analyze() {
+			accept(pushBehavior.behavior, new TraverseLog());
+		}
+	}
+
+	static final class ReactiveEvaluator implements Event.EvalVistor, Behavior.EvalVistor {
 		final Lock reactiveLock;
-		final Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries;
+		final Map<Behavior<?>, PushRelationEntry> behaviorPushRelationEntries;
+		final Map<Event.FlowInput<?>, TargetRelationEntry> inputEventTargetRelationEntries;
 		final Map<Behavior.FlowStore<?>, ?> storeBehaviorValues;
 		final Map<Event.FlowInput<?>, ?> firedInputEventValues;
 		final Set<Event<?>> relatedEvents;
+		final Set<Behavior.FlowPull<?>> pullBehaviors;
 		final Map<Event<?>, Maybe<?>> eventValues;
 		final Map<Behavior<?>, ?> behaviorValues;
 
-		NodeEvaluator(Lock reactiveLock, Map<Event.FlowInput<?>, RelationEntry> inputEventRelationEntries,
-			Map<Behavior.FlowStore<?>, ?> storeBehaviorValues, Map<Event.FlowInput<?>, ?> firedInputEventValues, Set<Event<?>> relatedEvents) {
+		ReactiveEvaluator(Lock reactiveLock, Map<Behavior<?>, PushRelationEntry> behaviorPushRelationEntries,
+			Map<Event.FlowInput<?>, TargetRelationEntry> inputEventTargetRelationEntries,
+			Map<Behavior.FlowStore<?>, ?> storeBehaviorValues, Map<Event.FlowInput<?>, ?> firedInputEventValues,
+			Set<Event<?>> relatedEvents, Set<Behavior.FlowPull<?>> pullBehaviors) {
 			this.reactiveLock = reactiveLock;
-			this.inputEventRelationEntries = inputEventRelationEntries;
+			this.behaviorPushRelationEntries = behaviorPushRelationEntries;
+			this.inputEventTargetRelationEntries = inputEventTargetRelationEntries;
 			this.storeBehaviorValues = storeBehaviorValues;
 			this.firedInputEventValues = firedInputEventValues;
 			this.relatedEvents = relatedEvents;
+			this.pullBehaviors = pullBehaviors;
 			this.eventValues = new HashMap<>();
 			this.behaviorValues = new HashMap<>();
 		}
@@ -452,27 +540,44 @@ public final class Reactive {
 			return value;
 		}
 
+		<A> void push(PushBehavior<A> pushBehavior) {
+			A behaviorValue = eval(pushBehavior.behavior);
+			pushBehavior.f.accept(behaviorValue);
+		}
+
 		void eval() {
+			List<PushBehavior<?>> pushs = new ArrayList<>();
 			List<Runnable> actions = new ArrayList<>();
 			reactiveLock.lock();
 			try {
+				for (Behavior.FlowPull<?> pullBehavior : pullBehaviors) {
+					eval(pullBehavior);
+					PushRelationEntry pushRelationEntry = behaviorPushRelationEntries.get(pullBehavior);
+					if (pushRelationEntry != null)
+						pushs.addAll(pushRelationEntry.pushBehaviors);
+				}
 				for (Event.FlowInput<?> inputEvent : firedInputEventValues.keySet()) {
-					RelationEntry relationEntry = inputEventRelationEntries.get(inputEvent);
-					for (Event<Runnable> outputEvent : relationEntry.targetOutputEvents) {
+					TargetRelationEntry targetRelationEntry = inputEventTargetRelationEntries.get(inputEvent);
+					for (Event<Runnable> outputEvent : targetRelationEntry.targetOutputEvents) {
 						Maybe<Runnable> eventValue = eval(outputEvent);
 						eventValue.ifJust(value -> actions.add(value));
 					}
-					for (Behavior.FlowStore<?> storeBehavior : relationEntry.targetStoreBehaviors) {
+					for (Behavior.FlowStore<?> storeBehavior : targetRelationEntry.targetStoreBehaviors) {
 						eval(storeBehavior);
 						Maybe<?> eventValue = eval(storeBehavior.event);
-						eventValue.ifJust(value -> storeBehaviorValues().put(storeBehavior, value));
+						eventValue.ifJust(value -> {
+							storeBehaviorValues().put(storeBehavior, value);
+							PushRelationEntry pushRelationEntry = behaviorPushRelationEntries.get(storeBehavior);
+							if (pushRelationEntry != null)
+								pushs.addAll(pushRelationEntry.pushBehaviors);
+						});
 					}
 				}
+				pushs.forEach(this::push);
 			} finally {
 				reactiveLock.unlock();
 			}
-			for (Runnable action : actions)
-				action.run();
+			actions.forEach(Runnable::run);
 		}
 
 		<A> Maybe<A> eval(Event<A> event) {
@@ -581,12 +686,38 @@ public final class Reactive {
 		}
 	}
 
-	static final class RelationEntry {
+	static final class PushBehavior<A> {
+		final Behavior<A> behavior;
+		final Consumer<A> f;
+
+		public PushBehavior(Behavior<A> behavior, Consumer<A> f) {
+			this.behavior = behavior;
+			this.f = f;
+		}
+	}
+
+	static final class OutputEvent {
+		final Event<Runnable> event;
+
+		public OutputEvent(Event<Runnable> event) {
+			this.event = event;
+		}
+	}
+
+	static final class PushRelationEntry {
+		final List<PushBehavior<?>> pushBehaviors;
+
+		public PushRelationEntry() {
+			this.pushBehaviors = new ArrayList<>();
+		}
+	}
+
+	static final class TargetRelationEntry {
 		final List<Event<Runnable>> targetOutputEvents;
 		final Set<Event<?>> targetEvents;
 		final Set<Behavior.FlowStore<?>> targetStoreBehaviors;
 
-		RelationEntry() {
+		TargetRelationEntry() {
 			this.targetOutputEvents = new ArrayList<>();
 			this.targetEvents = new HashSet<>();
 			this.targetStoreBehaviors = new HashSet<>();

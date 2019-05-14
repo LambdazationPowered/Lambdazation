@@ -31,4 +31,8 @@ public interface Combinator {
 	static <A, B> Flow<Event<A>> replace(Behavior<A> behavior, Event<B> event) {
 		return Flow.retrieve(behavior.fmap(Functional.constant()), event);
 	}
+
+	static <A> Flow<Behavior<A>> depose(A a, Source<A> source) {
+		return Flow.input(source).compose(e -> Flow.store(a, e));
+	}
 }
