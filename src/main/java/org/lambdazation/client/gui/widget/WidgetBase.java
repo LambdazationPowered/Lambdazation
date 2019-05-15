@@ -1,5 +1,7 @@
 package org.lambdazation.client.gui.widget;
 
+import org.lambdazation.client.gui.widget.model.ModelBase;
+
 import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -16,24 +18,24 @@ public class WidgetBase<M extends ModelBase> {
 
 	}
 
-	public void onKeyboardKey(KeyboardContext ctx, int key, boolean pressed) {
-
+	public Action onKeyboardKey(KeyboardContext ctx, int key, boolean pressed) {
+		return Action.NONE;
 	}
 
-	public void onKeyboardChar(KeyboardContext ctx, char input) {
-
+	public Action onKeyboardChar(KeyboardContext ctx, char input) {
+		return Action.NONE;
 	}
 
-	public void onMouseButton(MouseContext ctx, int button, boolean pressed) {
-
+	public Action onMouseButton(MouseContext ctx, int button, boolean pressed) {
+		return Action.NONE;
 	}
 
-	public void onMouseMove(MouseContext ctx, double deltaX, double deltaY) {
-
+	public Action onMouseMove(MouseContext ctx, double deltaX, double deltaY) {
+		return Action.NONE;
 	}
 
-	public void onMouseWheel(MouseContext ctx, double delta) {
-
+	public Action onMouseWheel(MouseContext ctx, double delta) {
+		return Action.NONE;
 	}
 
 	public static final class DrawContext {
@@ -68,5 +70,9 @@ public class WidgetBase<M extends ModelBase> {
 			this.localY = localY;
 			this.buttonPressed = buttonPressed;
 		}
+	}
+
+	public static enum Action {
+		NONE, FOCUS, UNFOCUS
 	}
 }
