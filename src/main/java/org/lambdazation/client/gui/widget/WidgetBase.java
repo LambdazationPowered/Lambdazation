@@ -1,40 +1,34 @@
 package org.lambdazation.client.gui.widget;
 
+import org.lambdazation.client.gui.widget.context.KeyboardContext;
+import org.lambdazation.client.gui.widget.context.MouseContext;
 import org.lambdazation.client.gui.widget.model.ModelBase;
 
-import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.lambdazation.client.gui.widget.view.ViewBase;
 
 @OnlyIn(Dist.CLIENT)
-public class WidgetBase<M extends ModelBase> {
+public class WidgetBase<M extends ModelBase, V extends ViewBase<M>> {
 	private final M model;
-	private boolean isFocused;
+    private final V view;
 
-	public WidgetBase(M model) {
+	public WidgetBase(M model, V view) {
 		this.model = model;
-		this.isFocused = false;
+		this.view = view;
 	}
 
-	protected M getModelInternal() {
-		return model;
-	}
+    public M getModel() {
+        return model;
+    }
 
-	protected boolean isFocusedInternal() {
-		return isFocused;
-	}
+    public V getView() {
+        return view;
+    }
 
-	protected void onFoucsedInternal() {
-		isFocused = true;
-	}
-
-	protected void onUnfocusedInternal() {
-		isFocused = false;
-	}
-
-	public void draw(DrawContext ctx) {
-
-	}
+	public void draw(ViewBase.DrawContext ctx) {
+	    view.draw(ctx, model);
+    }
 
 	public Action onKeyboardKey(InputContext ctx, int key, boolean pressed) {
 		return Action.CONTINUE;
@@ -56,23 +50,7 @@ public class WidgetBase<M extends ModelBase> {
 		return Action.CONTINUE;
 	}
 
-	public static final class DrawContext {
-		public final double partialTicks;
-		public final KeyboardContext keyboardContext;
-		public final MouseContext mouseContext;
-
-		public DrawContext(double partialTicks, KeyboardContext keyboardContext, MouseContext mouseContext) {
-			this.partialTicks = partialTicks;
-			this.keyboardContext = keyboardContext;
-			this.mouseContext = mouseContext;
-		}
-
-		public DrawContext translate(double x, double y) {
-			return new DrawContext(partialTicks, keyboardContext.translate(x, y), mouseContext.translate(x, y));
-		}
-	}
-
-	public static final class InputContext {
+    public static final class InputContext {
 		public final KeyboardContext keyboardContext;
 		public final MouseContext mouseContext;
 
@@ -86,37 +64,7 @@ public class WidgetBase<M extends ModelBase> {
 		}
 	}
 
-	public static final class KeyboardContext {
-		public final int modifiers;
-		public final IntSet keyPressed;
-
-		public KeyboardContext(int modifiers, IntSet keyPressed) {
-			this.modifiers = modifiers;
-			this.keyPressed = keyPressed;
-		}
-
-		public KeyboardContext translate(double x, double y) {
-			return new KeyboardContext(modifiers, keyPressed);
-		}
-	}
-
-	public static final class MouseContext {
-		public final double localX;
-		public final double localY;
-		public final IntSet buttonPressed;
-
-		public MouseContext(double localX, double localY, IntSet buttonPressed) {
-			this.localX = localX;
-			this.localY = localY;
-			this.buttonPressed = buttonPressed;
-		}
-
-		public MouseContext translate(double x, double y) {
-			return new MouseContext(localX - x, localY - y, buttonPressed);
-		}
-	}
-
-	public static enum Action {
+    public enum Action {
 		CONTINUE(false, false), HANDLE(true, false), FOCUS(true, true), UNFOCUS(true, true);
 
 		public final boolean handleInput;

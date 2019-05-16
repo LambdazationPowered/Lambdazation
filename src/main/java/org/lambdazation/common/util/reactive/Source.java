@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.lambdazation.common.util.Uninitialized;
 import org.lambdazation.common.util.data.Product;
 
 @FunctionalInterface
@@ -26,6 +27,18 @@ public interface Source<A> {
 		};
 		return Product.ofProduct(proxy, source);
 	}
+
+	static <A> Consumer<A> newSource(Uninitialized<Source<A>> uninitializedSource) {
+        Map<Object, Consumer<A>> callbacks = new LinkedHashMap<>();
+        Consumer<A> proxy = value -> callbacks.values().forEach(callback -> callback.accept(value));
+        Source<A> source = callback -> {
+            Object key = new Object();
+            callbacks.put(key, callback);
+            return () -> callbacks.remove(key);
+        };
+        uninitializedSource.init(source);
+        return proxy;
+    }
 
 	static <A> Source<A> newSource(Function<Consumer<A>, Runnable> register) {
 		Source<A> source = callback -> {
