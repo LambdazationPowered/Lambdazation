@@ -1,44 +1,79 @@
 package org.lambdazation.client.gui.widget;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
+
 import org.lambdazation.client.gui.widget.model.ModelBase;
 import org.lambdazation.common.util.data.Maybe;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectSortedMap;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class WidgetContainer<M extends ModelBase> extends WidgetBase<M> {
-	private final Object2ObjectSortedMap<WidgetBase<?>, Component> components;
+	private final List<Component> components;
 	private Maybe<Component> focus;
 
 	public WidgetContainer(M model) {
 		super(model);
 
-		this.components = new Object2ObjectLinkedOpenHashMap<>();
+		this.components = new ArrayList<>();
 		this.focus = Maybe.ofNothing();
 	}
 
-	@Override
-	protected void onFoucs() {
-		super.onFoucs();
+	protected Component addComponentInternal(WidgetBase<?> widget, double x, double y) {
+		Component component = new Component(widget, x, y);
+		components.add(component);
+		return component;
+	}
+
+	protected void removeComponentInternal(Component component) {
+		if (component.widget.isFocusedInternal())
+			setFocusInternal(Maybe.ofNothing());
+		components.remove(component);
+	}
+
+	protected Maybe<Component> getFocusInternal() {
+		return focus;
+	}
+
+	protected void setFocusInternal(Maybe<Component> focus) {
+		if (this.focus.isJust()) {
+			Component component = this.focus.asJust().value();
+			this.focus = null;
+			component.widget.onUnfocusedInternal();
+		}
+		if (focus.isJust()) {
+			this.focus = focus;
+			Component component = focus.asJust().value();
+			component.widget.onFoucsedInternal();
+		}
 	}
 
 	@Override
-	protected void onUnfocus() {
-		super.onUnfocus();
-		if (focus.isJust()) {
-			Component component = focus.asJust().value();
-			focus = null;
-			component.widget.onUnfocus();
-		}
+	protected void onFoucsedInternal() {
+		super.onFoucsedInternal();
+	}
+
+	@Override
+	protected void onUnfocusedInternal() {
+		super.onUnfocusedInternal();
+		setFocusInternal(Maybe.ofNothing());
 	}
 
 	@Override
 	public void draw(DrawContext ctx) {
 		super.draw(ctx);
-		// TODO NYI
+		ListIterator<Component> iterator = components.listIterator(components.size());
+		while (iterator.hasPrevious()) {
+			Component component = iterator.previous();
+			GlStateManager.pushMatrix();
+			GlStateManager.translated(component.x, component.y, 0.0D);
+			component.widget.draw(ctx.translate(component.x, component.y));
+			GlStateManager.popMatrix();
+		}
 	}
 
 	@Override
@@ -76,12 +111,12 @@ public class WidgetContainer<M extends ModelBase> extends WidgetBase<M> {
 		return Action.CONTINUE.override(action);
 	}
 
-	private static final class Component {
-		final WidgetBase<?> widget;
-		double x;
-		double y;
+	protected static final class Component {
+		protected final WidgetBase<?> widget;
+		protected double x;
+		protected double y;
 
-		private Component(final WidgetBase<?> widget, double x, double y) {
+		protected Component(final WidgetBase<?> widget, double x, double y) {
 			this.widget = widget;
 			this.x = x;
 			this.y = y;

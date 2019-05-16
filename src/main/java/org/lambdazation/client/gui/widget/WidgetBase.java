@@ -16,19 +16,19 @@ public class WidgetBase<M extends ModelBase> {
 		this.isFocused = false;
 	}
 
-	protected M getModel() {
+	protected M getModelInternal() {
 		return model;
 	}
 
-	protected boolean isFocused() {
+	protected boolean isFocusedInternal() {
 		return isFocused;
 	}
 
-	protected void onFoucs() {
+	protected void onFoucsedInternal() {
 		isFocused = true;
 	}
 
-	protected void onUnfocus() {
+	protected void onUnfocusedInternal() {
 		isFocused = false;
 	}
 
@@ -66,6 +66,10 @@ public class WidgetBase<M extends ModelBase> {
 			this.keyboardContext = keyboardContext;
 			this.mouseContext = mouseContext;
 		}
+
+		public DrawContext translate(double x, double y) {
+			return new DrawContext(partialTicks, keyboardContext.translate(x, y), mouseContext.translate(x, y));
+		}
 	}
 
 	public static final class InputContext {
@@ -76,6 +80,10 @@ public class WidgetBase<M extends ModelBase> {
 			this.keyboardContext = keyboardContext;
 			this.mouseContext = mouseContext;
 		}
+
+		public InputContext translate(double x, double y) {
+			return new InputContext(keyboardContext.translate(x, y), mouseContext.translate(x, y));
+		}
 	}
 
 	public static final class KeyboardContext {
@@ -85,6 +93,10 @@ public class WidgetBase<M extends ModelBase> {
 		public KeyboardContext(int modifiers, IntSet keyPressed) {
 			this.modifiers = modifiers;
 			this.keyPressed = keyPressed;
+		}
+
+		public KeyboardContext translate(double x, double y) {
+			return new KeyboardContext(modifiers, keyPressed);
 		}
 	}
 
@@ -97,6 +109,10 @@ public class WidgetBase<M extends ModelBase> {
 			this.localX = localX;
 			this.localY = localY;
 			this.buttonPressed = buttonPressed;
+		}
+
+		public MouseContext translate(double x, double y) {
+			return new MouseContext(localX - x, localY - y, buttonPressed);
 		}
 	}
 
