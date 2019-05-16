@@ -126,9 +126,5 @@ public class WidgetBase<M extends ModelBase> {
 			this.handleInput = handleInput;
 			this.changeFocus = changeFocus;
 		}
-
-		public Action override(Action action) {
-			return !changeFocus && action.handleInput ? action : this;
-		}
 	}
 }

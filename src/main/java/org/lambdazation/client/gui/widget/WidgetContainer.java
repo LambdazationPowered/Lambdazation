@@ -66,9 +66,9 @@ public class WidgetContainer<M extends ModelBase> extends WidgetBase<M> {
 	@Override
 	public void draw(DrawContext ctx) {
 		super.draw(ctx);
-		ListIterator<Component> iterator = components.listIterator(components.size());
-		while (iterator.hasPrevious()) {
-			Component component = iterator.previous();
+		ListIterator<Component> iterator = components.listIterator();
+		while (iterator.hasNext()) {
+			Component component = iterator.next();
 			GlStateManager.pushMatrix();
 			GlStateManager.translated(component.x, component.y, 0.0D);
 			component.widget.draw(ctx.translate(component.x, component.y));
@@ -78,37 +78,47 @@ public class WidgetContainer<M extends ModelBase> extends WidgetBase<M> {
 
 	@Override
 	public Action onKeyboardKey(InputContext ctx, int key, boolean pressed) {
-		Action action = super.onKeyboardKey(ctx, key, pressed);
+		Action action = Action.CONTINUE;
 		// TODO NYI
-		return Action.CONTINUE.override(action);
+		if (!action.handleInput)
+			action = super.onKeyboardKey(ctx, key, pressed);
+		return action;
 	}
 
 	@Override
 	public Action onKeyboardChar(InputContext ctx, char input) {
-		Action action = super.onKeyboardChar(ctx, input);
+		Action action = Action.CONTINUE;
 		// TODO NYI
-		return Action.CONTINUE.override(action);
+		if (!action.handleInput)
+			action = super.onKeyboardChar(ctx, input);
+		return action;
 	}
 
 	@Override
 	public Action onMouseButton(InputContext ctx, int button, boolean pressed) {
-		Action action = super.onMouseButton(ctx, button, pressed);
+		Action action = Action.CONTINUE;
 		// TODO NYI
-		return Action.CONTINUE.override(action);
+		if (!action.handleInput)
+			action = super.onMouseButton(ctx, button, pressed);
+		return action;
 	}
 
 	@Override
 	public Action onMouseMove(InputContext ctx, double deltaX, double deltaY) {
-		Action action = super.onMouseMove(ctx, deltaX, deltaY);
+		Action action = Action.CONTINUE;
 		// TODO NYI
-		return Action.CONTINUE.override(action);
+		if (!action.handleInput)
+			action = super.onMouseMove(ctx, deltaX, deltaY);
+		return action;
 	}
 
 	@Override
 	public Action onMouseWheel(InputContext ctx, double delta) {
-		Action action = super.onMouseWheel(ctx, delta);
+		Action action = Action.CONTINUE;
 		// TODO NYI
-		return Action.CONTINUE.override(action);
+		if (!action.handleInput)
+			action = super.onMouseWheel(ctx, delta);
+		return action;
 	}
 
 	protected static final class Component {
