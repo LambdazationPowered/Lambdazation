@@ -8,34 +8,52 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class WidgetBase<M extends ModelBase> {
-	public final M model;
+	private final M model;
+	private boolean isFocused;
 
 	public WidgetBase(M model) {
 		this.model = model;
+		this.isFocused = false;
+	}
+
+	protected M getModel() {
+		return model;
+	}
+
+	protected boolean isFocused() {
+		return isFocused;
+	}
+
+	protected void onFoucs() {
+		isFocused = true;
+	}
+
+	protected void onUnfocus() {
+		isFocused = false;
 	}
 
 	public void draw(DrawContext ctx) {
 
 	}
 
-	public Action onKeyboardKey(KeyboardContext ctx, int key, boolean pressed) {
-		return Action.NONE;
+	public Action onKeyboardKey(InputContext ctx, int key, boolean pressed) {
+		return Action.CONTINUE;
 	}
 
-	public Action onKeyboardChar(KeyboardContext ctx, char input) {
-		return Action.NONE;
+	public Action onKeyboardChar(InputContext ctx, char input) {
+		return Action.CONTINUE;
 	}
 
-	public Action onMouseButton(MouseContext ctx, int button, boolean pressed) {
-		return Action.NONE;
+	public Action onMouseButton(InputContext ctx, int button, boolean pressed) {
+		return Action.CONTINUE;
 	}
 
-	public Action onMouseMove(MouseContext ctx, double deltaX, double deltaY) {
-		return Action.NONE;
+	public Action onMouseMove(InputContext ctx, double deltaX, double deltaY) {
+		return Action.CONTINUE;
 	}
 
-	public Action onMouseWheel(MouseContext ctx, double delta) {
-		return Action.NONE;
+	public Action onMouseWheel(InputContext ctx, double delta) {
+		return Action.CONTINUE;
 	}
 
 	public static final class DrawContext {
@@ -45,6 +63,16 @@ public class WidgetBase<M extends ModelBase> {
 
 		public DrawContext(double partialTicks, KeyboardContext keyboardContext, MouseContext mouseContext) {
 			this.partialTicks = partialTicks;
+			this.keyboardContext = keyboardContext;
+			this.mouseContext = mouseContext;
+		}
+	}
+
+	public static final class InputContext {
+		public final KeyboardContext keyboardContext;
+		public final MouseContext mouseContext;
+
+		public InputContext(KeyboardContext keyboardContext, MouseContext mouseContext) {
 			this.keyboardContext = keyboardContext;
 			this.mouseContext = mouseContext;
 		}
@@ -73,6 +101,18 @@ public class WidgetBase<M extends ModelBase> {
 	}
 
 	public static enum Action {
-		NONE, FOCUS, UNFOCUS
+		CONTINUE(false, false), HANDLE(true, false), FOCUS(true, true), UNFOCUS(true, true);
+
+		public final boolean handleInput;
+		public final boolean changeFocus;
+
+		Action(boolean handleInput, boolean changeFocus) {
+			this.handleInput = handleInput;
+			this.changeFocus = changeFocus;
+		}
+
+		public Action override(Action action) {
+			return !changeFocus && action.handleInput ? action : this;
+		}
 	}
 }

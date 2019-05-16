@@ -21,6 +21,14 @@ public abstract class Maybe<A> {
 
 	public abstract void ifJust(Consumer<A> f);
 
+	public abstract boolean isNothing();
+
+	public abstract boolean isJust();
+
+	public abstract Nothing<A> asNothing() throws ClassCastException;
+
+	public abstract Just<A> asJust() throws ClassCastException;
+
 	public static final class Nothing<A> extends Maybe<A> {
 		@Override
 		public <B> B match(Supplier<B> f, Function<A, B> g) {
@@ -50,6 +58,26 @@ public abstract class Maybe<A> {
 		@Override
 		public void ifJust(Consumer<A> f) {
 
+		}
+
+		@Override
+		public boolean isNothing() {
+			return true;
+		}
+
+		@Override
+		public boolean isJust() {
+			return false;
+		}
+
+		@Override
+		public Nothing<A> asNothing() throws ClassCastException {
+			return this;
+		}
+
+		@Override
+		public Just<A> asJust() throws ClassCastException {
+			throw new ClassCastException();
 		}
 	}
 
@@ -92,6 +120,26 @@ public abstract class Maybe<A> {
 		@Override
 		public void ifJust(Consumer<A> f) {
 			f.accept(value);
+		}
+
+		@Override
+		public boolean isNothing() {
+			return false;
+		}
+
+		@Override
+		public boolean isJust() {
+			return true;
+		}
+
+		@Override
+		public Nothing<A> asNothing() throws ClassCastException {
+			throw new ClassCastException();
+		}
+
+		@Override
+		public Just<A> asJust() throws ClassCastException {
+			return this;
 		}
 	}
 

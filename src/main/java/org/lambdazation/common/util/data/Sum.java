@@ -26,6 +26,14 @@ public abstract class Sum<A, B> {
 
 	public abstract void ifRight(Consumer<B> f);
 
+	public abstract boolean isLeft();
+
+	public abstract boolean isRight();
+
+	public abstract Left<A, B> asLeft() throws ClassCastException;
+
+	public abstract Right<A, B> Right() throws ClassCastException;
+
 	public static final class Left<A, B> extends Sum<A, B> {
 		public final A left;
 
@@ -85,6 +93,26 @@ public abstract class Sum<A, B> {
 		@Override
 		public void ifRight(Consumer<B> f) {
 
+		}
+
+		@Override
+		public boolean isLeft() {
+			return true;
+		}
+
+		@Override
+		public boolean isRight() {
+			return false;
+		}
+
+		@Override
+		public Left<A, B> asLeft() throws ClassCastException {
+			return this;
+		}
+
+		@Override
+		public org.lambdazation.common.util.data.Sum.Right<A, B> Right() throws ClassCastException {
+			throw new ClassCastException();
 		}
 	}
 
@@ -147,6 +175,26 @@ public abstract class Sum<A, B> {
 		@Override
 		public void ifRight(Consumer<B> f) {
 			f.accept(right);
+		}
+
+		@Override
+		public boolean isLeft() {
+			return false;
+		}
+
+		@Override
+		public boolean isRight() {
+			return true;
+		}
+
+		@Override
+		public Left<A, B> asLeft() throws ClassCastException {
+			throw new ClassCastException();
+		}
+
+		@Override
+		public Right<A, B> Right() throws ClassCastException {
+			return this;
 		}
 	}
 
