@@ -11,24 +11,24 @@ import org.lambdazation.client.gui.widget.view.ViewBase;
 @OnlyIn(Dist.CLIENT)
 public class WidgetBase<M extends ModelBase, V extends ViewBase<M>> {
 	private final M model;
-    private final V view;
+	private final V view;
 
 	public WidgetBase(M model, V view) {
 		this.model = model;
 		this.view = view;
 	}
 
-    public M getModel() {
-        return model;
-    }
+	public M getModel() {
+		return model;
+	}
 
-    public V getView() {
-        return view;
-    }
+	public V getView() {
+		return view;
+	}
 
 	public void draw(ViewBase.DrawContext ctx) {
-	    view.draw(ctx, model);
-    }
+		view.draw(ctx, model);
+	}
 
 	public Action onKeyboardKey(InputContext ctx, int key, boolean pressed) {
 		return Action.CONTINUE;
@@ -50,7 +50,7 @@ public class WidgetBase<M extends ModelBase, V extends ViewBase<M>> {
 		return Action.CONTINUE;
 	}
 
-    public static final class InputContext {
+	public static final class InputContext {
 		public final KeyboardContext keyboardContext;
 		public final MouseContext mouseContext;
 
@@ -64,7 +64,7 @@ public class WidgetBase<M extends ModelBase, V extends ViewBase<M>> {
 		}
 	}
 
-    public enum Action {
+	public enum Action {
 		CONTINUE(false, false), HANDLE(true, false), FOCUS(true, true), UNFOCUS(true, true);
 
 		public final boolean handleInput;

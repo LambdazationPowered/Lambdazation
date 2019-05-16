@@ -7,15 +7,15 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public final class KeyboardContext {
-    public final int modifiers;
-    public final IntSet keyPressed;
+	public final int modifiers;
+	public final IntSet keyPressed;
 
-    public KeyboardContext(int modifiers, IntSet keyPressed) {
-        this.modifiers = modifiers;
-        this.keyPressed = keyPressed;
-    }
+	public KeyboardContext(int modifiers, IntSet keyPressed) {
+		this.modifiers = modifiers;
+		this.keyPressed = keyPressed;
+	}
 
-    public KeyboardContext translate(double x, double y) {
-        return new KeyboardContext(modifiers, keyPressed);
-    }
+	public KeyboardContext translate(double x, double y) {
+		return new KeyboardContext(modifiers, keyPressed);
+	}
 }

@@ -29,16 +29,16 @@ public interface Source<A> {
 	}
 
 	static <A> Consumer<A> newSource(Uninitialized<Source<A>> uninitializedSource) {
-        Map<Object, Consumer<A>> callbacks = new LinkedHashMap<>();
-        Consumer<A> proxy = value -> callbacks.values().forEach(callback -> callback.accept(value));
-        Source<A> source = callback -> {
-            Object key = new Object();
-            callbacks.put(key, callback);
-            return () -> callbacks.remove(key);
-        };
-        uninitializedSource.init(source);
-        return proxy;
-    }
+		Map<Object, Consumer<A>> callbacks = new LinkedHashMap<>();
+		Consumer<A> proxy = value -> callbacks.values().forEach(callback -> callback.accept(value));
+		Source<A> source = callback -> {
+			Object key = new Object();
+			callbacks.put(key, callback);
+			return () -> callbacks.remove(key);
+		};
+		uninitializedSource.init(source);
+		return proxy;
+	}
 
 	static <A> Source<A> newSource(Function<Consumer<A>, Runnable> register) {
 		Source<A> source = callback -> {
