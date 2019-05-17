@@ -16,20 +16,20 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 		super(model, view);
 	}
 
-	protected void handleFocusActionInternal(ViewContainer.Component component, Action action) {
+	public void handleFocusAction(ViewContainer.Component component, Action action) {
 		if (!component.isValid())
 			return;
 		switch (action) {
-			case FOCUS:
-				if (!component.getWidget().getView().isFocused())
-					getView().setFocus(Maybe.ofJust(component));
-				break;
-			case UNFOCUS:
-				if (component.getWidget().getView().isFocused())
-					getView().setFocus(Maybe.ofNothing());
-				break;
-			default:
-				break;
+		case FOCUS:
+			if (!component.getWidget().getView().isFocused())
+				getView().setFocus(Maybe.ofJust(component));
+			break;
+		case UNFOCUS:
+			if (component.getWidget().getView().isFocused())
+				getView().setFocus(Maybe.ofNothing());
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -40,7 +40,7 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 			ViewContainer.Component component = getView().getFocus().asJust().value();
 			if (component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onKeyboardKey(ctx.translate(component.getX(), component.getY()), key, pressed);
-				handleFocusActionInternal(component, action);
+				handleFocusAction(component, action);
 			}
 		}
 		List<ViewContainer.Component> components = getView().getComponents();
@@ -49,7 +49,7 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 			ViewContainer.Component component = iterator.previous();
 			if (!component.getWidget().getView().isFocused() && component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onKeyboardKey(ctx.translate(component.getX(), component.getY()), key, pressed);
-				handleFocusActionInternal(component, action);
+				handleFocusAction(component, action);
 			}
 		}
 		if (!action.handleInput)
@@ -64,7 +64,7 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 			ViewContainer.Component component = getView().getFocus().asJust().value();
 			if (component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onKeyboardChar(ctx.translate(component.getX(), component.getY()), input);
-				handleFocusActionInternal(component, action);
+				handleFocusAction(component, action);
 			}
 		}
 		List<ViewContainer.Component> components = getView().getComponents();
@@ -73,7 +73,7 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 			ViewContainer.Component component = iterator.previous();
 			if (!component.getWidget().getView().isFocused() && component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onKeyboardChar(ctx.translate(component.getX(), component.getY()), input);
-				handleFocusActionInternal(component, action);
+				handleFocusAction(component, action);
 			}
 		}
 		if (!action.handleInput)
@@ -88,7 +88,7 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 			ViewContainer.Component component = getView().getFocus().asJust().value();
 			if (component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onMouseButton(ctx.translate(component.getX(), component.getY()), button, pressed);
-				handleFocusActionInternal(component, action);
+				handleFocusAction(component, action);
 			}
 		}
 		List<ViewContainer.Component> components = getView().getComponents();
@@ -97,7 +97,7 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 			ViewContainer.Component component = iterator.previous();
 			if (!component.getWidget().getView().isFocused() && component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onMouseButton(ctx.translate(component.getX(), component.getY()), button, pressed);
-				handleFocusActionInternal(component, action);
+				handleFocusAction(component, action);
 			}
 		}
 		if (!action.handleInput)
@@ -112,7 +112,7 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 			ViewContainer.Component component = getView().getFocus().asJust().value();
 			if (component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onMouseMove(ctx.translate(component.getX(), component.getY()), deltaX, deltaY);
-				handleFocusActionInternal(component, action);
+				handleFocusAction(component, action);
 			}
 		}
 		List<ViewContainer.Component> components = getView().getComponents();
@@ -121,7 +121,7 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 			ViewContainer.Component component = iterator.previous();
 			if (!component.getWidget().getView().isFocused() && component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onMouseMove(ctx.translate(component.getX(), component.getY()), deltaX, deltaY);
-				handleFocusActionInternal(component, action);
+				handleFocusAction(component, action);
 			}
 		}
 		if (!action.handleInput)
@@ -136,7 +136,7 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 			ViewContainer.Component component = getView().getFocus().asJust().value();
 			if (component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onMouseWheel(ctx.translate(component.getX(), component.getY()), delta);
-				handleFocusActionInternal(component, action);
+				handleFocusAction(component, action);
 			}
 		}
 		List<ViewContainer.Component> components = getView().getComponents();
@@ -145,7 +145,7 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 			ViewContainer.Component component = iterator.previous();
 			if (!component.getWidget().getView().isFocused() && component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onMouseWheel(ctx.translate(component.getX(), component.getY()), delta);
-				handleFocusActionInternal(component, action);
+				handleFocusAction(component, action);
 			}
 		}
 		if (!action.handleInput)

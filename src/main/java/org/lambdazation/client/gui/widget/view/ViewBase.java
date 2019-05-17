@@ -1,5 +1,6 @@
 package org.lambdazation.client.gui.widget.view;
 
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -52,18 +53,20 @@ public class ViewBase<M extends ModelBase> {
 	}
 
 	public static final class DrawContext {
+		public final Minecraft minecraft;
 		public final double partialTicks;
 		public final KeyboardContext keyboardContext;
 		public final MouseContext mouseContext;
 
-		public DrawContext(double partialTicks, KeyboardContext keyboardContext, MouseContext mouseContext) {
+		public DrawContext(Minecraft minecraft, double partialTicks, KeyboardContext keyboardContext, MouseContext mouseContext) {
+			this.minecraft = minecraft;
 			this.partialTicks = partialTicks;
 			this.keyboardContext = keyboardContext;
 			this.mouseContext = mouseContext;
 		}
 
 		public DrawContext translate(double x, double y) {
-			return new DrawContext(partialTicks, keyboardContext.translate(x, y), mouseContext.translate(x, y));
+			return new DrawContext(minecraft, partialTicks, keyboardContext.translate(x, y), mouseContext.translate(x, y));
 		}
 	}
 }
