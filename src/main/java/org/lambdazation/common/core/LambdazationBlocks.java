@@ -1,12 +1,7 @@
 package org.lambdazation.common.core;
 
 import org.lambdazation.Lambdazation;
-import org.lambdazation.common.block.BlockCharger;
-import org.lambdazation.common.block.BlockCrystallizer;
-import org.lambdazation.common.block.BlockLambdaBlock;
-import org.lambdazation.common.block.BlockLambdaOre;
-import org.lambdazation.common.block.BlockReducer;
-import org.lambdazation.common.block.BlockTransformer;
+import org.lambdazation.common.block.*;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -22,6 +17,7 @@ public final class LambdazationBlocks {
 	public final BlockTransformer blockTransformer;
 	public final BlockCharger blockCharger;
 	public final BlockReducer blockReducer;
+	public final BlockLambdaGrass blockLambdaGrass;
 
 	public LambdazationBlocks(Lambdazation lambdazation) {
 		this.lambdazation = lambdazation;
@@ -50,6 +46,10 @@ public final class LambdazationBlocks {
 			.create(Material.ROCK)
 			.hardnessAndResistance(3.5F, 3.5F));
 		blockReducer.setRegistryName(new ResourceLocation("lambdazation:reducer"));
+		blockLambdaGrass=new BlockLambdaGrass(lambdazation, Block.Properties
+			.create(Material.GRASS)
+			.hardnessAndResistance(0.5F, 0.5F));
+		blockLambdaGrass.setRegistryName(new ResourceLocation("lambdazation:lambda_grass"));
 	}
 
 	public void registerBlocks(RegistryEvent.Register<Block> e) {

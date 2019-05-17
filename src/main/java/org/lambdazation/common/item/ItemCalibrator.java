@@ -34,7 +34,7 @@ public final class ItemCalibrator extends Item implements IInteractionObject {
 			return new ActionResult<>(EnumActionResult.SUCCESS, playerIn.getHeldItem(handIn));
 
 		if (!(playerIn instanceof EntityPlayerMP))
-			return new ActionResult<ItemStack>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
+			return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
 		EntityPlayerMP entityPlayerMP = (EntityPlayerMP) playerIn;
 
 		NetworkHooks.openGui(entityPlayerMP, this);

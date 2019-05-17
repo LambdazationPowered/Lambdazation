@@ -1,30 +1,27 @@
 package org.lambdazation.common.item;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockGrass;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Optional;
-
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUseContext;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.World;
 import org.lambdazation.Lambdazation;
-import org.lambdazation.common.core.LambdazationTermFactory.TermMetadata;
-import org.lambdazation.common.core.LambdazationTermFactory.TermNamer;
-import org.lambdazation.common.core.LambdazationTermFactory.TermNaming;
-import org.lambdazation.common.core.LambdazationTermFactory.TermRef;
-import org.lambdazation.common.core.LambdazationTermFactory.TermState;
-import org.lambdazation.common.core.LambdazationTermFactory.TermStatistics;
+import org.lambdazation.common.core.LambdazationTermFactory.*;
 import org.lambdazation.common.util.GeneralizedBuilder;
 import org.lambdazation.common.util.IO;
 import org.lamcalcj.ast.Lambda.Term;
+
+import java.io.*;
+import java.util.Arrays;
+import java.util.Optional;
 
 public final class ItemLambdaCrystal extends Item {
 	public final Lambdazation lambdazation;
@@ -276,6 +273,25 @@ public final class ItemLambdaCrystal extends Item {
 
 	public Builder builder() {
 		return new Builder();
+	}
+
+	@Override
+	public EnumActionResult onItemUse(ItemUseContext context) {
+		World world = context.getWorld();
+		BlockPos pos = context.getPos();
+		Block block = world.getBlockState(pos).getBlock();
+		EntityPlayer player = context.getPlayer();
+		ItemStack itemStackRight = player.getHeldItemMainhand();
+		ItemStack itemStackLeft = player.getHeldItemOffhand();
+		if (block instanceof BlockGrass) {
+			world.setBlockState(pos, lambdazation.lambdazationBlocks.blockLambdaGrass.getDefaultState());
+			if (itemStackLeft != null)
+				itemStackLeft.shrink(1);
+			if (itemStackRight != null)
+				itemStackRight.shrink(1);
+			return EnumActionResult.SUCCESS;
+		}
+		return EnumActionResult.FAIL;
 	}
 
 	public final class Builder implements GeneralizedBuilder<Builder, ItemStack> {

@@ -1,0 +1,26 @@
+{
+  "itemGroup.lambdazation": "函数之域",
+  "item.lambdazation.lambda_crystal": "函数水晶",
+  "item.lambdazation.lens": "透镜",
+  "item.lambdazation.calibrator": "Calibrator",
+
+  "block.lambdazation.lambda_ore": "函数水晶矿",
+  "block.lambdazation.lambda_block": "函数晶块",
+  "block.lambdazation.crystallizer": "晶化器",
+  "block.lambdazation.transformer": "变换器",
+  "block.lambdazation.charger": "充能器",
+  "block.lambdazation.reducer": "分裂器",
+
+  "entity.lambdazation.java": "Java",
+  "entity.lambdazation.csharp": "CSharp",
+  "biome.lambdazation.music_valley": "音乐山谷",
+
+  "entity.java.laugh_word": "蠢货，你的指令就是个渣渣。",
+  "entity.java.laugh_word2": "图样图森破，把你的怪物磨床拿走！",
+  "entity.java.death_word": "你以为你杀了我，不，这只是我的一个投影，想找我就去GitHub吧——不止这里，我无处不在。",
+
+
+  "entity.csharp.laugh_word": "想试试？我看你找错人了。",
+  "entity.csharp.laugh_word2": "躲在机器后面，一看就没有那话儿。",
+  "entity.csharp.death_word": "好吧，我今天的状态可能不太好……但这不是我的本体，只是我的一道化身，你要到世界之外找我。"
+}

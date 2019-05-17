@@ -1,5 +1,6 @@
 package org.lambdazation.common.core;
 
+import net.minecraft.world.gen.surfacebuilders.SurfaceBuilderConfig;
 import org.lambdazation.Lambdazation;
 
 import net.minecraft.util.ResourceLocation;
@@ -16,12 +17,17 @@ public final class LambdazationBiomes {
 	public final Lambdazation lambdazation;
 
 	public final BiomeMusicValley biomeMusicValley;
+	public final SurfaceBuilderConfig lambda_grass;
 
 	public LambdazationBiomes(Lambdazation lambdazation) {
 		this.lambdazation = lambdazation;
 
 		biomeMusicValley = new BiomeMusicValley(lambdazation);
 		biomeMusicValley.setRegistryName(new ResourceLocation("lambdazation:music_valley"));
+		lambda_grass=new SurfaceBuilderConfig(
+			lambdazation.lambdazationBlocks.blockLambdaGrass.getDefaultState(),
+			lambdazation.lambdazationBlocks.blockLambdaGrass.getDefaultState(),
+			lambdazation.lambdazationBlocks.blockLambdaGrass.getDefaultState());
 	}
 
 	public void registerBiomes(RegistryEvent.Register<Biome> e) {

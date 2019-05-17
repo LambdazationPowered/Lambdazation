@@ -1,15 +1,12 @@
 package org.lambdazation.common.core;
 
-import org.lambdazation.Lambdazation;
-import org.lambdazation.common.item.ItemCalibrator;
-import org.lambdazation.common.item.ItemLambdaCrystal;
-import org.lambdazation.common.item.ItemLens;
-
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
+import org.lambdazation.Lambdazation;
+import org.lambdazation.common.item.*;
 
 public final class LambdazationItems {
 	public final Lambdazation lambdazation;
@@ -17,6 +14,8 @@ public final class LambdazationItems {
 	public final ItemLambdaCrystal itemLambdaCrystal;
 	public final ItemLens itemLens;
 	public final ItemCalibrator itemCalibrator;
+	public final ItemJavaEye itemJavaEye;
+	public final ItemOOPSoul itemOOPSoul;
 
 	public final ItemBlock itemBlockLambdaOre;
 	public final ItemBlock itemBlockLambdaBlock;
@@ -24,6 +23,7 @@ public final class LambdazationItems {
 	public final ItemBlock itemBlockTransformer;
 	public final ItemBlock itemBlockCharger;
 	public final ItemBlock itemBlockReducer;
+	public final ItemBlock itemBlockLambdaGrass;
 
 	public LambdazationItems(Lambdazation lambdazation) {
 		this.lambdazation = lambdazation;
@@ -41,6 +41,10 @@ public final class LambdazationItems {
 		itemCalibrator = new ItemCalibrator(lambdazation, new Item.Properties()
 			.group(lambdazation.lambdazationItemGroup));
 		itemCalibrator.setRegistryName(new ResourceLocation("lambdazation:calibrator"));
+		itemJavaEye = new ItemJavaEye(lambdazation, new Item.Properties().group(lambdazation.lambdazationItemGroup));
+		itemJavaEye.setRegistryName(new ResourceLocation("lambdazation:java_eye"));
+		itemOOPSoul = new ItemOOPSoul(lambdazation, new Item.Properties().group(lambdazation.lambdazationItemGroup));
+		itemOOPSoul.setRegistryName(new ResourceLocation("lambdazation:oop_soul"));
 
 		itemBlockLambdaOre = new ItemBlock(lambdazation.lambdazationBlocks.blockLambdaOre, new Item.Properties()
 			.group(lambdazation.lambdazationItemGroup)
@@ -65,6 +69,9 @@ public final class LambdazationItems {
 		itemBlockReducer = new ItemBlock(lambdazation.lambdazationBlocks.blockReducer, new Item.Properties()
 			.group(lambdazation.lambdazationItemGroup)
 			.rarity(EnumRarity.COMMON));
+		itemBlockLambdaGrass = new ItemBlock(lambdazation.lambdazationBlocks.blockLambdaGrass, new Item.Properties()
+			.group(lambdazation.lambdazationItemGroup)
+			.rarity(EnumRarity.COMMON));
 		itemBlockReducer.setRegistryName(new ResourceLocation("lambdazation:reducer"));
 	}
 
@@ -78,6 +85,7 @@ public final class LambdazationItems {
 		e.getRegistry().register(itemBlockTransformer);
 		e.getRegistry().register(itemBlockCharger);
 		e.getRegistry().register(itemBlockReducer);
+		e.getRegistry().register(itemOOPSoul);
 	}
 
 	public void finalizeItems(RegistryEvent.Register<Item> e) {
