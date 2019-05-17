@@ -24,7 +24,7 @@ public final class TestDiverge {
 		// @formatter:on
 
 		Reactive.react(flow);
-		
+
 		fire.accept(Unit.UNIT);
 	}
 }

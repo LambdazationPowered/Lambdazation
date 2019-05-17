@@ -11,9 +11,15 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
+@OnlyIn(Dist.CLIENT)
 public final class ExternalInterface<M extends ModelBase, V extends ViewBase<M>, W extends WidgetBase<M, V>> {
 	private final W widget;
+	private double x;
+	private double y;
 
 	private int keyboardModifiers;
 	private IntSet keyboardKeyPressed;
@@ -21,8 +27,10 @@ public final class ExternalInterface<M extends ModelBase, V extends ViewBase<M>,
 	private double mouseLocalY;
 	private IntSet mouseButtonPressed;
 
-	public ExternalInterface(W widget) {
+	public ExternalInterface(W widget, double x, double y) {
 		this.widget = widget;
+		this.x = x;
+		this.y = y;
 
 		this.keyboardModifiers = 0;
 		this.keyboardKeyPressed = new IntOpenHashSet();
@@ -43,6 +51,27 @@ public final class ExternalInterface<M extends ModelBase, V extends ViewBase<M>,
 		return widget.getView();
 	}
 
+	public double getX() {
+		return x;
+	}
+
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	public double getY() {
+		return y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
+	}
+
+	public void setPosition(double x, double y) {
+		this.x = x;
+		this.y = y;
+	}
+
 	public KeyboardContext getKeyboardContext() {
 		return new KeyboardContext(keyboardModifiers, IntSets.unmodifiable(keyboardKeyPressed));
 	}
@@ -53,8 +82,11 @@ public final class ExternalInterface<M extends ModelBase, V extends ViewBase<M>,
 
 	public void externalDraw(Minecraft minecraft, double partialTicks) {
 		if (getView().isVisible()) {
+			GlStateManager.pushMatrix();
+			GlStateManager.translated(x, y, 0.0D);
 			DrawContext drawContext = new DrawContext(minecraft, partialTicks, getKeyboardContext(), getMouseContext());
 			widget.draw(drawContext);
+			GlStateManager.popMatrix();
 		}
 	}
 
@@ -90,7 +122,9 @@ public final class ExternalInterface<M extends ModelBase, V extends ViewBase<M>,
 		}
 	}
 
-	public void externalMousePosition(double localX, double localY) {
+	public void externalMousePosition(double globalX, double globalY) {
+		double localX = globalX - x;
+		double localY = globalY - y;
 		double deltaX = localX - mouseLocalX;
 		double deltaY = localY - mouseLocalY;
 		mouseLocalX = localX;
