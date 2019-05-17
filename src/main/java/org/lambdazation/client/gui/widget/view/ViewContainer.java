@@ -72,10 +72,12 @@ public class ViewContainer<M extends ModelBase> extends ViewBase<M> {
 	}
 
 	public void drawComponent(DrawContext ctx, Component component) {
-		GlStateManager.pushMatrix();
-		GlStateManager.translated(component.getX(), component.getY(), 0.0D);
-		component.getWidget().draw(ctx.translate(component.getX(), component.getY()));
-		GlStateManager.popMatrix();
+		if (component.getWidget().getView().isVisible()) {
+			GlStateManager.pushMatrix();
+			GlStateManager.translated(component.getX(), component.getY(), 0.0D);
+			component.getWidget().draw(ctx.translate(component.getX(), component.getY()));
+			GlStateManager.popMatrix();
+		}
 	}
 
 	@Override

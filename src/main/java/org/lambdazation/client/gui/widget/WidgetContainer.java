@@ -38,14 +38,16 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 		Action action = Action.CONTINUE;
 		if (!action.handleInput && getView().hasFocus()) {
 			ViewContainer.Component component = getView().getFocus().asJust().value();
-			action = component.getWidget().onKeyboardKey(ctx.translate(component.getX(), component.getY()), key, pressed);
-			handleFocusActionInternal(component, action);
+			if (component.getWidget().getView().isEnable()) {
+				action = component.getWidget().onKeyboardKey(ctx.translate(component.getX(), component.getY()), key, pressed);
+				handleFocusActionInternal(component, action);
+			}
 		}
 		List<ViewContainer.Component> components = getView().getComponents();
 		ListIterator<ViewContainer.Component> iterator = components.listIterator(components.size());
 		while (!action.handleInput && iterator.hasPrevious()) {
 			ViewContainer.Component component = iterator.previous();
-			if (!component.getWidget().getView().isFocused()) {
+			if (!component.getWidget().getView().isFocused() && component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onKeyboardKey(ctx.translate(component.getX(), component.getY()), key, pressed);
 				handleFocusActionInternal(component, action);
 			}
@@ -60,14 +62,16 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 		Action action = Action.CONTINUE;
 		if (!action.handleInput && getView().hasFocus()) {
 			ViewContainer.Component component = getView().getFocus().asJust().value();
-			action = component.getWidget().onKeyboardChar(ctx.translate(component.getX(), component.getY()), input);
-			handleFocusActionInternal(component, action);
+			if (component.getWidget().getView().isEnable()) {
+				action = component.getWidget().onKeyboardChar(ctx.translate(component.getX(), component.getY()), input);
+				handleFocusActionInternal(component, action);
+			}
 		}
 		List<ViewContainer.Component> components = getView().getComponents();
 		ListIterator<ViewContainer.Component> iterator = components.listIterator(components.size());
 		while (!action.handleInput && iterator.hasPrevious()) {
 			ViewContainer.Component component = iterator.previous();
-			if (!component.getWidget().getView().isFocused()) {
+			if (!component.getWidget().getView().isFocused() && component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onKeyboardChar(ctx.translate(component.getX(), component.getY()), input);
 				handleFocusActionInternal(component, action);
 			}
@@ -82,14 +86,16 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 		Action action = Action.CONTINUE;
 		if (!action.handleInput && getView().hasFocus()) {
 			ViewContainer.Component component = getView().getFocus().asJust().value();
-			action = component.getWidget().onMouseButton(ctx.translate(component.getX(), component.getY()), button, pressed);
-			handleFocusActionInternal(component, action);
+			if (component.getWidget().getView().isEnable()) {
+				action = component.getWidget().onMouseButton(ctx.translate(component.getX(), component.getY()), button, pressed);
+				handleFocusActionInternal(component, action);
+			}
 		}
 		List<ViewContainer.Component> components = getView().getComponents();
 		ListIterator<ViewContainer.Component> iterator = components.listIterator(components.size());
 		while (!action.handleInput && iterator.hasPrevious()) {
 			ViewContainer.Component component = iterator.previous();
-			if (!component.getWidget().getView().isFocused()) {
+			if (!component.getWidget().getView().isFocused() && component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onMouseButton(ctx.translate(component.getX(), component.getY()), button, pressed);
 				handleFocusActionInternal(component, action);
 			}
@@ -104,14 +110,16 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 		Action action = Action.CONTINUE;
 		if (!action.handleInput && getView().hasFocus()) {
 			ViewContainer.Component component = getView().getFocus().asJust().value();
-			action = component.getWidget().onMouseMove(ctx.translate(component.getX(), component.getY()), deltaX, deltaY);
-			handleFocusActionInternal(component, action);
+			if (component.getWidget().getView().isEnable()) {
+				action = component.getWidget().onMouseMove(ctx.translate(component.getX(), component.getY()), deltaX, deltaY);
+				handleFocusActionInternal(component, action);
+			}
 		}
 		List<ViewContainer.Component> components = getView().getComponents();
 		ListIterator<ViewContainer.Component> iterator = components.listIterator(components.size());
 		while (!action.handleInput && iterator.hasPrevious()) {
 			ViewContainer.Component component = iterator.previous();
-			if (!component.getWidget().getView().isFocused()) {
+			if (!component.getWidget().getView().isFocused() && component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onMouseMove(ctx.translate(component.getX(), component.getY()), deltaX, deltaY);
 				handleFocusActionInternal(component, action);
 			}
@@ -126,14 +134,16 @@ public class WidgetContainer<M extends ModelBase, V extends ViewContainer<M>> ex
 		Action action = Action.CONTINUE;
 		if (!action.handleInput && getView().hasFocus()) {
 			ViewContainer.Component component = getView().getFocus().asJust().value();
-			action = component.getWidget().onMouseWheel(ctx.translate(component.getX(), component.getY()), delta);
-			handleFocusActionInternal(component, action);
+			if (component.getWidget().getView().isEnable()) {
+				action = component.getWidget().onMouseWheel(ctx.translate(component.getX(), component.getY()), delta);
+				handleFocusActionInternal(component, action);
+			}
 		}
 		List<ViewContainer.Component> components = getView().getComponents();
 		ListIterator<ViewContainer.Component> iterator = components.listIterator(components.size());
 		while (!action.handleInput && iterator.hasPrevious()) {
 			ViewContainer.Component component = iterator.previous();
-			if (!component.getWidget().getView().isFocused()) {
+			if (!component.getWidget().getView().isFocused() && component.getWidget().getView().isEnable()) {
 				action = component.getWidget().onMouseWheel(ctx.translate(component.getX(), component.getY()), delta);
 				handleFocusActionInternal(component, action);
 			}
