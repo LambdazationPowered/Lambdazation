@@ -50,10 +50,10 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 		Tessellator tessellator = Tessellator.getInstance();
 		BufferBuilder bufferBuilder = tessellator.getBuffer();
 		bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-		bufferBuilder.pos(0.0D, 20.0D, 0.0D).tex(0.0D, 20.0D / 256.0D * (textureOffset + 1.0D)).endVertex();
-		bufferBuilder.pos(200.0D, 20.0D, 0.0D).tex(200.0D / 256.0D, 20.0D / 256.0D * (textureOffset + 1.0D)).endVertex();
-		bufferBuilder.pos(200.0D, 0.0D, 0.0D).tex(200.0D / 256.0D, 20.0D / 256.0D * textureOffset).endVertex();
-		bufferBuilder.pos(0.0D, 0.0D, 0.0D).tex(0.0D, 20.0D / 256.0D * textureOffset).endVertex();
+		bufferBuilder.pos(0.0D, 16.0D, 0.0D).tex(0.0D, 16.0D / 256.0D * (textureOffset + 1.0D)).endVertex();
+		bufferBuilder.pos(16.0D, 16.0D, 0.0D).tex(16.0D / 256.0D, 16.0D / 256.0D * (textureOffset + 1.0D)).endVertex();
+		bufferBuilder.pos(16.0D, 0.0D, 0.0D).tex(16.0D / 256.0D, 16.0D / 256.0D * textureOffset).endVertex();
+		bufferBuilder.pos(0.0D, 0.0D, 0.0D).tex(0.0D, 16.0D / 256.0D * textureOffset).endVertex();
 		tessellator.draw();
 	}
 }

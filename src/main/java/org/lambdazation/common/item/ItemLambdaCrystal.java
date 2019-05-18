@@ -43,6 +43,7 @@ public final class ItemLambdaCrystal extends Item {
 
 	@Override
 	public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
+		// FIXME Testcode
 		if (worldIn.isRemote)
 			Minecraft.getInstance().displayGuiScreen(new GuiTest(lambdazation));
 		return super.onItemRightClick(worldIn, playerIn, handIn);
