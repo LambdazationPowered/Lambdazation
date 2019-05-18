@@ -22,6 +22,8 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 	private double x;
 	private double y;
 
+	private boolean isFocused;
+
 	private int keyboardModifiers;
 	private IntSet keyboardKeyPressed;
 	private double mouseLocalX;
@@ -32,6 +34,8 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 		this.widget = widget;
 		this.x = x;
 		this.y = y;
+
+		this.isFocused = false;
 
 		this.keyboardModifiers = 0;
 		this.keyboardKeyPressed = new IntOpenHashSet();
@@ -73,6 +77,22 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 		this.y = y;
 	}
 
+	public boolean isFocused() {
+		return isFocused;
+	}
+
+	public void setFocused(boolean isFocused) {
+		if (this.isFocused == isFocused)
+			return;
+
+		this.isFocused = isFocused;
+
+		if (isFocused)
+			widget.getView().onFocused();
+		else
+			widget.getView().onUnfocused();
+	}
+
 	public KeyboardContext getKeyboardContext() {
 		return new KeyboardContext(keyboardModifiers, IntSets.unmodifiable(keyboardKeyPressed));
 	}
@@ -104,6 +124,7 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 
 		InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
 		Action action = widget.onKeyboardKey(inputContext, key, pressed);
+		handleFocusAction(action);
 
 		return action.handleInput;
 	}
@@ -114,6 +135,7 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 
 		InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
 		Action action = widget.onKeyboardChar(inputContext, input);
+		handleFocusAction(action);
 
 		return action.handleInput;
 	}
@@ -129,6 +151,7 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 
 		InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
 		Action action = widget.onMouseButton(inputContext, button, pressed);
+		handleFocusAction(action);
 
 		return action.handleInput;
 	}
@@ -148,6 +171,7 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 
 		InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
 		Action action = widget.onMouseMove(inputContext, deltaX, deltaY);
+		handleFocusAction(action);
 
 		return action.handleInput;
 	}
@@ -161,7 +185,27 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 
 		InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
 		Action action = widget.onMouseWheel(inputContext, delta);
+		handleFocusAction(action);
 
 		return action.handleInput;
+	}
+
+	public void externalResetControllerState() {
+		keyboardModifiers = 0;
+		keyboardKeyPressed.clear();
+		mouseButtonPressed.clear();
+	}
+
+	private void handleFocusAction(Action action) {
+		switch (action) {
+		case FOCUS:
+			setFocused(true);
+			break;
+		case UNFOCUS:
+			setFocused(false);
+			break;
+		default:
+			break;
+		}
 	}
 }

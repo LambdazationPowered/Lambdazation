@@ -57,11 +57,16 @@ public class WidgetButton<M extends ModelBase, V extends ViewButton<M>> extends 
 	public Action onMouseButton(InputContext ctx, int button, boolean pressed) {
 		Action action = Action.CONTINUE;
 
-		if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && !pressed) {
+		if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && pressed) {
+			if (ctx.mouseContext.localX >= 0.0D && ctx.mouseContext.localX < getView().getWidth() &&
+				ctx.mouseContext.localY >= 0.0D && ctx.mouseContext.localY < getView().getHeight()) {
+				action = Action.FOCUS;
+			}
+		} else if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && !pressed) {
 			if (ctx.mouseContext.localX >= 0.0D && ctx.mouseContext.localX < getView().getWidth() &&
 				ctx.mouseContext.localY >= 0.0D && ctx.mouseContext.localY < getView().getHeight()) {
 				activeButtonProxy.accept(Unit.UNIT);
-				action = Action.FOCUS;
+				action = Action.HANDLE;
 			}
 		}
 
