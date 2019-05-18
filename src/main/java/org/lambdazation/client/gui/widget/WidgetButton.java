@@ -58,7 +58,8 @@ public class WidgetButton<M extends ModelBase, V extends ViewButton<M>> extends 
 		Action action = Action.CONTINUE;
 
 		if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && !pressed) {
-			if (ctx.mouseContext.localX <= getView().getWidth() && ctx.mouseContext.localY <= getView().getHeight()) {
+			if (ctx.mouseContext.localX >= 0.0D && ctx.mouseContext.localX < getView().getWidth() &&
+				ctx.mouseContext.localY >= 0.0D && ctx.mouseContext.localY < getView().getHeight()) {
 				activeButtonProxy.accept(Unit.UNIT);
 				action = Action.FOCUS;
 			}

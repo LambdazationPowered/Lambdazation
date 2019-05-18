@@ -16,7 +16,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public final class ExternalInterface<M extends ModelBase, V extends ViewBase<M>, W extends WidgetBase<M, V>> {
+public final class ExternalInterface<W extends WidgetBase<M, V>, M extends ModelBase, V extends ViewBase<M>> {
 	private final W widget;
 	private double x;
 	private double y;
@@ -129,6 +129,8 @@ public final class ExternalInterface<M extends ModelBase, V extends ViewBase<M>,
 		double deltaY = localY - mouseLocalY;
 		mouseLocalX = localX;
 		mouseLocalY = localY;
+		if (deltaX == 0.0D && deltaY == 0.0D)
+			return;
 
 		if (getView().isEnable()) {
 			InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
@@ -137,6 +139,9 @@ public final class ExternalInterface<M extends ModelBase, V extends ViewBase<M>,
 	}
 
 	public void externalMouseWheel(double delta) {
+		if (delta == 0.0D)
+			return;
+
 		if (getView().isEnable()) {
 			InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
 			widget.onMouseWheel(inputContext, delta);

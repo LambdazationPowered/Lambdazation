@@ -41,15 +41,19 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 	@Override
 	public void draw(DrawContext ctx, M model) {
 		super.draw(ctx, model);
+
+		boolean isHover = ctx.mouseContext.localX >= 0.0D && ctx.mouseContext.localX < width &&
+			ctx.mouseContext.localY >= 0.0D && ctx.mouseContext.localY < height;
+		double textureOffset = isEnable() ? isHover ? 2.0D : 1.0D : 0.0D;
+
 		ctx.minecraft.getTextureManager().bindTexture(resource);
 		Tessellator tessellator = Tessellator.getInstance();
 		BufferBuilder bufferBuilder = tessellator.getBuffer();
 		bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-		// TODO NYI
-		bufferBuilder.pos(0.0D, 0.0D, 0.0D).tex(0.0D, 0.0D).endVertex();
-		bufferBuilder.pos(0.0D, 0.0D, 0.0D).tex(0.0D, 0.0D).endVertex();
-		bufferBuilder.pos(0.0D, 0.0D, 0.0D).tex(0.0D, 0.0D).endVertex();
-		bufferBuilder.pos(0.0D, 0.0D, 0.0D).tex(0.0D, 0.0D).endVertex();
+		bufferBuilder.pos(0.0D, 20.0D, 0.0D).tex(0.0D, 20.0D / 256.0D * (textureOffset + 1.0D)).endVertex();
+		bufferBuilder.pos(200.0D, 20.0D, 0.0D).tex(200.0D / 256.0D, 20.0D / 256.0D * (textureOffset + 1.0D)).endVertex();
+		bufferBuilder.pos(200.0D, 0.0D, 0.0D).tex(200.0D / 256.0D, 20.0D / 256.0D * textureOffset).endVertex();
+		bufferBuilder.pos(0.0D, 0.0D, 0.0D).tex(0.0D, 20.0D / 256.0D * textureOffset).endVertex();
 		tessellator.draw();
 	}
 }

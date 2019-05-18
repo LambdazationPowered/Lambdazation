@@ -2,8 +2,13 @@ package org.lambdazation.common.item;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 
@@ -16,6 +21,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
+import org.lambdazation.client.gui.inventory.GuiTest;
 import org.lambdazation.common.core.LambdazationTermFactory.TermMetadata;
 import org.lambdazation.common.core.LambdazationTermFactory.TermNamer;
 import org.lambdazation.common.core.LambdazationTermFactory.TermNaming;
@@ -33,6 +39,13 @@ public final class ItemLambdaCrystal extends Item {
 		super(properties);
 
 		this.lambdazation = lambdazation;
+	}
+
+	@Override
+	public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
+		if (worldIn.isRemote)
+			Minecraft.getInstance().displayGuiScreen(new GuiTest(lambdazation));
+		return super.onItemRightClick(worldIn, playerIn, handIn);
 	}
 
 	@Override
