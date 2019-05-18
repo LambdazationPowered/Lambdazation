@@ -8,6 +8,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import org.lambdazation.client.gui.widget.model.ModelBase;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 @OnlyIn(Dist.CLIENT)
@@ -44,16 +45,34 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 
 		boolean isHover = ctx.mouseContext.localX >= 0.0D && ctx.mouseContext.localX < width &&
 			ctx.mouseContext.localY >= 0.0D && ctx.mouseContext.localY < height;
-		double textureOffset = isEnable() ? isHover ? 2.0D : 1.0D : 0.0D;
+		double xOffset;
+		double yOffset;
+		if (isEnable()) {
+			if (isHover) {
+				if (ctx.mouseContext.buttonPressed.contains(GLFW.GLFW_MOUSE_BUTTON_LEFT)) {
+					xOffset = 1.0D;
+					yOffset = 1.0D;
+				} else {
+					xOffset = 1.0D;
+					yOffset = 0.0D;
+				}
+			} else {
+				xOffset = 0.0D;
+				yOffset = 1.0D;
+			}
+		} else {
+			xOffset = 0.0D;
+			yOffset = 0.0D;
+		}
 
 		ctx.minecraft.getTextureManager().bindTexture(resource);
 		Tessellator tessellator = Tessellator.getInstance();
 		BufferBuilder bufferBuilder = tessellator.getBuffer();
 		bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-		bufferBuilder.pos(0.0D, 16.0D, 0.0D).tex(0.0D, 16.0D / 256.0D * (textureOffset + 1.0D)).endVertex();
-		bufferBuilder.pos(16.0D, 16.0D, 0.0D).tex(16.0D / 256.0D, 16.0D / 256.0D * (textureOffset + 1.0D)).endVertex();
-		bufferBuilder.pos(16.0D, 0.0D, 0.0D).tex(16.0D / 256.0D, 16.0D / 256.0D * textureOffset).endVertex();
-		bufferBuilder.pos(0.0D, 0.0D, 0.0D).tex(0.0D, 16.0D / 256.0D * textureOffset).endVertex();
+		bufferBuilder.pos(0.0D, 6.0D, 0.0D).tex(6.0D / 16.0D * (xOffset + 0.0D), 6.0D / 16.0D * (yOffset + 1.0D)).endVertex();
+		bufferBuilder.pos(6.0D, 6.0D, 0.0D).tex(6.0D / 16.0D * (xOffset + 1.0D), 6.0D / 16.0D * (yOffset + 1.0D)).endVertex();
+		bufferBuilder.pos(6.0D, 0.0D, 0.0D).tex(6.0D / 16.0D * (xOffset + 1.0D), 6.0D / 16.0D * (yOffset + 0.0D)).endVertex();
+		bufferBuilder.pos(0.0D, 0.0D, 0.0D).tex(6.0D / 16.0D * (xOffset + 0.0D), 6.0D / 16.0D * (yOffset + 0.0D)).endVertex();
 		tessellator.draw();
 	}
 }

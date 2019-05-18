@@ -23,7 +23,7 @@ public final class GuiTest extends GuiScreen {
 		this.button = new ExternalInterface<>(
 			new WidgetButton<>(
 				new ModelBase(),
-				new ViewButton<>(BUTTON_RESOURCE, 16.0D, 16.0D),
+				new ViewButton<>(BUTTON_RESOURCE, 6.0D, 6.0D),
 				() -> System.out.println("Clicked")),
 			10.0D, 10.0D);
 	}
