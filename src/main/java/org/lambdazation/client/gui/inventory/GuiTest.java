@@ -42,39 +42,67 @@ public final class GuiTest extends GuiScreen {
 
 	@Override
 	public boolean mouseClicked(double p_mouseClicked_1_, double p_mouseClicked_3_, int p_mouseClicked_5_) {
-		button.externalMousePosition(p_mouseClicked_1_, p_mouseClicked_3_);
-		button.externalMouseButton(p_mouseClicked_5_, true);
-		return super.mouseClicked(p_mouseClicked_1_, p_mouseClicked_3_, p_mouseClicked_5_);
+		boolean handled = false;
+
+		handled |= button.externalMousePosition(p_mouseClicked_1_, p_mouseClicked_3_);
+		handled |= button.externalMouseButton(p_mouseClicked_5_, true);
+		handled |= super.mouseClicked(p_mouseClicked_1_, p_mouseClicked_3_, p_mouseClicked_5_);
+
+		return handled;
 	}
 
 	@Override
 	public boolean mouseReleased(double p_mouseReleased_1_, double p_mouseReleased_3_, int p_mouseReleased_5_) {
-		button.externalMousePosition(p_mouseReleased_1_, p_mouseReleased_3_);
-		button.externalMouseButton(p_mouseReleased_5_, false);
-		return super.mouseReleased(p_mouseReleased_1_, p_mouseReleased_3_, p_mouseReleased_5_);
+		boolean handled = false;
+
+		handled |= button.externalMousePosition(p_mouseReleased_1_, p_mouseReleased_3_);
+		handled |= button.externalMouseButton(p_mouseReleased_5_, false);
+		handled |= super.mouseReleased(p_mouseReleased_1_, p_mouseReleased_3_, p_mouseReleased_5_);
+
+		return handled;
 	}
 
 	@Override
 	public boolean mouseScrolled(double p_mouseScrolled_1_) {
-		button.externalMouseWheel(p_mouseScrolled_1_);
-		return super.mouseScrolled(p_mouseScrolled_1_);
+		boolean handled = false;
+
+		handled |= button.externalMouseWheel(p_mouseScrolled_1_);
+		handled |= super.mouseScrolled(p_mouseScrolled_1_);
+
+		return handled;
+
 	}
 
 	@Override
 	public boolean keyPressed(int p_keyPressed_1_, int p_keyPressed_2_, int p_keyPressed_3_) {
-		button.externalKeyboardKey(p_keyPressed_1_, true, p_keyPressed_3_);
-		return super.keyPressed(p_keyPressed_1_, p_keyPressed_2_, p_keyPressed_3_);
+		boolean handled = false;
+
+		handled |= button.externalKeyboardKey(p_keyPressed_1_, true, p_keyPressed_3_);
+		handled |= super.keyPressed(p_keyPressed_1_, p_keyPressed_2_, p_keyPressed_3_);
+
+		return handled;
+
 	}
 
 	@Override
 	public boolean keyReleased(int p_keyReleased_1_, int p_keyReleased_2_, int p_keyReleased_3_) {
-		button.externalKeyboardKey(p_keyReleased_1_, false, p_keyReleased_3_);
-		return super.keyReleased(p_keyReleased_1_, p_keyReleased_2_, p_keyReleased_3_);
+		boolean handled = false;
+
+		handled |= button.externalKeyboardKey(p_keyReleased_1_, false, p_keyReleased_3_);
+		handled |= super.keyReleased(p_keyReleased_1_, p_keyReleased_2_, p_keyReleased_3_);
+
+		return handled;
+
 	}
 
 	@Override
 	public boolean charTyped(char p_charTyped_1_, int p_charTyped_2_) {
-		button.externalKeyboardChar(p_charTyped_1_);
-		return super.charTyped(p_charTyped_1_, p_charTyped_2_);
+		boolean handled = false;
+
+		handled |= button.externalKeyboardChar(p_charTyped_1_);
+		handled |= super.charTyped(p_charTyped_1_, p_charTyped_2_);
+
+		return handled;
+
 	}
 }

@@ -1,5 +1,6 @@
 package org.lambdazation.client.gui.widget;
 
+import org.lambdazation.client.gui.widget.WidgetBase.Action;
 import org.lambdazation.client.gui.widget.WidgetBase.InputContext;
 import org.lambdazation.client.gui.widget.context.KeyboardContext;
 import org.lambdazation.client.gui.widget.context.MouseContext;
@@ -81,48 +82,58 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 	}
 
 	public void externalDraw(Minecraft minecraft, double partialTicks) {
-		if (getView().isVisible()) {
-			GlStateManager.pushMatrix();
-			GlStateManager.translated(x, y, 0.0D);
-			DrawContext drawContext = new DrawContext(minecraft, partialTicks, getKeyboardContext(), getMouseContext());
-			widget.draw(drawContext);
-			GlStateManager.popMatrix();
-		}
+		if (!getView().isVisible())
+			return;
+
+		GlStateManager.pushMatrix();
+		GlStateManager.translated(x, y, 0.0D);
+		DrawContext drawContext = new DrawContext(minecraft, partialTicks, getKeyboardContext(), getMouseContext());
+		widget.draw(drawContext);
+		GlStateManager.popMatrix();
 	}
 
-	public void externalKeyboardKey(int key, boolean pressed, int modifiers) {
+	public boolean externalKeyboardKey(int key, boolean pressed, int modifiers) {
 		keyboardModifiers = modifiers;
 		if (pressed)
 			keyboardKeyPressed.add(key);
 		else
 			keyboardKeyPressed.remove(key);
 
-		if (getView().isEnable()) {
-			InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
-			widget.onKeyboardKey(inputContext, key, pressed);
-		}
+		if (!getView().isEnable())
+			return false;
+
+		InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
+		Action action = widget.onKeyboardKey(inputContext, key, pressed);
+
+		return action.handleInput;
 	}
 
-	public void externalKeyboardChar(char input) {
-		if (getView().isEnable()) {
-			InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
-			widget.onKeyboardChar(inputContext, input);
-		}
+	public boolean externalKeyboardChar(char input) {
+		if (!getView().isEnable())
+			return false;
+
+		InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
+		Action action = widget.onKeyboardChar(inputContext, input);
+
+		return action.handleInput;
 	}
 
-	public void externalMouseButton(int button, boolean pressed) {
+	public boolean externalMouseButton(int button, boolean pressed) {
 		if (pressed)
 			mouseButtonPressed.add(button);
 		else
 			mouseButtonPressed.remove(button);
 
-		if (getView().isEnable()) {
-			InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
-			widget.onMouseButton(inputContext, button, pressed);
-		}
+		if (!getView().isEnable())
+			return false;
+
+		InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
+		Action action = widget.onMouseButton(inputContext, button, pressed);
+
+		return action.handleInput;
 	}
 
-	public void externalMousePosition(double globalX, double globalY) {
+	public boolean externalMousePosition(double globalX, double globalY) {
 		double localX = globalX - x;
 		double localY = globalY - y;
 		double deltaX = localX - mouseLocalX;
@@ -130,21 +141,27 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 		mouseLocalX = localX;
 		mouseLocalY = localY;
 		if (deltaX == 0.0D && deltaY == 0.0D)
-			return;
+			return false;
 
-		if (getView().isEnable()) {
-			InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
-			widget.onMouseMove(inputContext, deltaX, deltaY);
-		}
+		if (!getView().isEnable())
+			return false;
+
+		InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
+		Action action = widget.onMouseMove(inputContext, deltaX, deltaY);
+
+		return action.handleInput;
 	}
 
-	public void externalMouseWheel(double delta) {
+	public boolean externalMouseWheel(double delta) {
 		if (delta == 0.0D)
-			return;
+			return false;
 
-		if (getView().isEnable()) {
-			InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
-			widget.onMouseWheel(inputContext, delta);
-		}
+		if (!getView().isEnable())
+			return false;
+
+		InputContext inputContext = new InputContext(getKeyboardContext(), getMouseContext());
+		Action action = widget.onMouseWheel(inputContext, delta);
+
+		return action.handleInput;
 	}
 }
