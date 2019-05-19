@@ -5,10 +5,12 @@ import org.lambdazation.client.gui.GuiWidget;
 import org.lambdazation.client.gui.widget.WidgetButton;
 import org.lambdazation.client.gui.widget.WidgetContainer;
 import org.lambdazation.client.gui.widget.WidgetLabel;
+import org.lambdazation.client.gui.widget.WidgetWrapper;
 import org.lambdazation.client.gui.widget.model.ModelBase;
 import org.lambdazation.client.gui.widget.view.ViewButton;
 import org.lambdazation.client.gui.widget.view.ViewContainer;
 import org.lambdazation.client.gui.widget.view.ViewLabel;
+import org.lambdazation.client.gui.widget.view.ViewWrapper;
 import org.lambdazation.common.util.ValueBuilder;
 
 import net.minecraft.client.gui.GuiScreen;
@@ -33,6 +35,10 @@ public final class GuiTest extends GuiScreen {
 			new ViewButton<>(200.0D, 20.0D, "Test2"),
 			() -> System.out.println("Test2"));
 
+		WidgetWrapper<ModelBase, ViewWrapper<ModelBase>> widgetWrapper = new WidgetWrapper<>(
+			new ModelBase(),
+			new ViewWrapper<>(widgetButton2));
+
 		WidgetLabel<ModelBase, ViewLabel<ModelBase>> widgetLabel = new WidgetLabel<>(
 			new ModelBase(),
 			new ViewLabel<>("Test3"));
@@ -41,7 +47,7 @@ public final class GuiTest extends GuiScreen {
 			new ModelBase(),
 			ValueBuilder.build(new ViewContainer<>(), viewContainer -> {
 				viewContainer.addComponent(widgetButton1, 10.0D, 10.0D);
-				viewContainer.addComponent(widgetButton2, 10.0D, 40.0D);
+				viewContainer.addComponent(widgetWrapper, 10.0D, 40.0D);
 				viewContainer.addComponent(widgetLabel, 10.0D, 70.0D);
 			}));
 

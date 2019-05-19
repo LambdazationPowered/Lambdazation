@@ -68,10 +68,11 @@ public class ViewContainer<M extends ModelBase> extends ViewBase<M> {
 	@Override
 	public void onUnfocused() {
 		super.onUnfocused();
+
 		setFocus(Maybe.ofNothing());
 	}
 
-	public void drawComponent(DrawContext ctx, Component component) {
+	public void drawComponent(DrawContext ctx, M model, Component component) {
 		if (component.getWidget().getView().isVisible()) {
 			GlStateManager.pushMatrix();
 			GlStateManager.translated(component.getX(), component.getY(), 0.0D);
@@ -83,15 +84,16 @@ public class ViewContainer<M extends ModelBase> extends ViewBase<M> {
 	@Override
 	public void draw(DrawContext ctx, M model) {
 		super.draw(ctx, model);
+
 		ListIterator<Component> iterator = components.listIterator();
 		while (iterator.hasNext()) {
 			Component component = iterator.next();
 			if (!component.getWidget().getView().isFocused())
-				drawComponent(ctx, component);
+				drawComponent(ctx, model, component);
 		}
 		if (hasFocus()) {
 			Component component = focus.asJust().value();
-			drawComponent(ctx, component);
+			drawComponent(ctx, model, component);
 		}
 	}
 

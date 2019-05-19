@@ -287,7 +287,7 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 			textColor = this.textColor;
 
 		double textWidth = ctx.minecraft.fontRenderer.getStringWidth(text);
-		double textHeight = 8.0D;
+		double textHeight = ctx.minecraft.fontRenderer.FONT_HEIGHT;
 		double textX = (width - textWidth) / 2.0D;
 		double textY = (height - textHeight) / 2.0D;
 
