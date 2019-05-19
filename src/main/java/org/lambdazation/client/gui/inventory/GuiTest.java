@@ -10,14 +10,11 @@ import org.lambdazation.client.gui.widget.view.ViewContainer;
 import org.lambdazation.common.util.ValueBuilder;
 
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public final class GuiTest extends GuiScreen {
-	public static final ResourceLocation BUTTON_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/widget/button.png");
-
 	public final Lambdazation lambdazation;
 	public final GuiWidget<WidgetContainer<ModelBase, ViewContainer<ModelBase>>> container;
 
@@ -26,12 +23,12 @@ public final class GuiTest extends GuiScreen {
 
 		WidgetButton<ModelBase, ViewButton<ModelBase>> widgetButton1 = new WidgetButton<>(
 			new ModelBase(),
-			new ViewButton<>(BUTTON_RESOURCE, 200.0D, 20.0D, "Test1"),
+			new ViewButton<>(200.0D, 20.0D, "Test1"),
 			() -> System.out.println("Test1"));
 
 		WidgetButton<ModelBase, ViewButton<ModelBase>> widgetButton2 = new WidgetButton<>(
 			new ModelBase(),
-			new ViewButton<>(BUTTON_RESOURCE, 200.0D, 20.0D, "Test2"),
+			new ViewButton<>(200.0D, 20.0D, "Test2"),
 			() -> System.out.println("Test2"));
 
 		WidgetContainer<ModelBase, ViewContainer<ModelBase>> widgetContainer = new WidgetContainer<>(
