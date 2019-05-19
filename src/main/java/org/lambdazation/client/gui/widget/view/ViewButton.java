@@ -74,7 +74,7 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 		boolean isHovered = ctx.mouseContext.localX >= 0.0D && ctx.mouseContext.localX < width &&
 			ctx.mouseContext.localY >= 0.0D && ctx.mouseContext.localY < height;
 		boolean isPressed = (isHovered && ctx.mouseContext.buttonPressed.contains(GLFW.GLFW_MOUSE_BUTTON_LEFT)) ||
-			ctx.keyboardContext.keyPressed.contains(GLFW.GLFW_KEY_ENTER);
+			(isFocused() && ctx.keyboardContext.keyPressed.contains(GLFW.GLFW_KEY_ENTER));
 
 		double xOffset;
 		double yOffset;
