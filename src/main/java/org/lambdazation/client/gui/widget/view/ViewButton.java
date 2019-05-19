@@ -17,18 +17,29 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 	private ResourceLocation resource;
 	private double width;
 	private double height;
-	private boolean selectionVisible;
+	private String text;
+	private int textColor;
+	private int textColorPressed;
+	private int textColorHovered;
+	private int textColorDisabled;
+	private int selectionColor;
 	private double selectionEdge;
 
-	public ViewButton(ResourceLocation resource, double width, double height) {
-		this(resource, width, height, true, 3.0D);
+	public ViewButton(ResourceLocation resource, double width, double height, String text) {
+		this(resource, width, height, text, 0xFFE0E0E0, 0xFFFFFFA0, 0xFFFFFFA0, 0xFFA0A0A0, 0xFFFFFFFF, 3.0D);
 	}
 
-	public ViewButton(ResourceLocation resource, double width, double height, boolean selectionVisible, double selectionEdge) {
+	public ViewButton(ResourceLocation resource, double width, double height, String text,
+		int textColor, int textColorPressed, int textColorHovered, int textColorDisabled, int selectionColor, double selectionEdge) {
 		this.resource = resource;
 		this.width = width;
 		this.height = height;
-		this.selectionVisible = selectionVisible;
+		this.text = text;
+		this.textColor = textColor;
+		this.textColorPressed = textColorPressed;
+		this.textColorHovered = textColorHovered;
+		this.textColorDisabled = textColorDisabled;
+		this.selectionColor = selectionColor;
 		this.selectionEdge = selectionEdge;
 	}
 
@@ -48,30 +59,23 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 		this.height = height;
 	}
 
-	public boolean isSelectionVisible() {
-		return selectionVisible;
+	public String getText() {
+		return text;
 	}
 
-	public void setSelectionVisible(boolean selectionVisible) {
-		this.selectionVisible = selectionVisible;
-	}
-
-	public double getSelectionEdge() {
-		return selectionEdge;
-	}
-
-	public void setSelectionEdge(double selectionEdge) {
-		this.selectionEdge = selectionEdge;
+	public void setText(String text) {
+		this.text = text;
 	}
 
 	@Override
 	public void draw(DrawContext ctx, M model) {
 		super.draw(ctx, model);
 
-		boolean isHover = ctx.mouseContext.localX >= 0.0D && ctx.mouseContext.localX < width &&
+		boolean isHovered = ctx.mouseContext.localX >= 0.0D && ctx.mouseContext.localX < width &&
 			ctx.mouseContext.localY >= 0.0D && ctx.mouseContext.localY < height;
-		boolean isPressed = (isHover && ctx.mouseContext.buttonPressed.contains(GLFW.GLFW_MOUSE_BUTTON_LEFT)) ||
+		boolean isPressed = (isHovered && ctx.mouseContext.buttonPressed.contains(GLFW.GLFW_MOUSE_BUTTON_LEFT)) ||
 			ctx.keyboardContext.keyPressed.contains(GLFW.GLFW_KEY_ENTER);
+
 		double xOffset;
 		double yOffset;
 
@@ -81,7 +85,7 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 		} else if (isPressed) {
 			xOffset = 1.0D;
 			yOffset = 1.0D;
-		} else if (isHover) {
+		} else if (isHovered) {
 			xOffset = 1.0D;
 			yOffset = 0.0D;
 		} else {
@@ -149,13 +153,20 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 
 		tessellator.draw();
 
-		if (selectionVisible && isEnable() && isFocused()) {
+		if (isEnable() && isFocused()) {
+			double selectionColorAlpha = (selectionColor >>> 24 & 0xFF) / 255.0D;
+			double selectionColorRed = (selectionColor >>> 16 & 0xFF) / 255.0D;
+			double selectionColorGreen = (selectionColor >>> 8 & 0xFF) / 255.0D;
+			double selectionColorBlue = (selectionColor >>> 0 & 0xFF) / 255.0D;
+
 			double selectionWidth = width - selectionEdge * 2.0D;
 			double selectionHeight = height - selectionEdge * 2.0D;
 
 			if (selectionWidth > 0.0D && selectionHeight >= 0.0D) {
+				GlStateManager.enableBlend();
 				GlStateManager.disableTexture2D();
-				GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+				GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+				GlStateManager.color4f((float) selectionColorRed, (float) selectionColorGreen, (float) selectionColorBlue, (float) selectionColorAlpha);
 				GlStateManager.lineWidth(1.0F);
 				GL11.glEnable(GL11.GL_LINE_STIPPLE);
 				GL11.glLineStipple(1, (short) 0x5555);
@@ -170,8 +181,27 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 				tessellator.draw();
 
 				GL11.glDisable(GL11.GL_LINE_STIPPLE);
+				GlStateManager.disableBlend();
 				GlStateManager.enableTexture2D();
 			}
 		}
+
+		int textColor;
+
+		if (!isEnable())
+			textColor = this.textColorDisabled;
+		else if (isPressed)
+			textColor = this.textColorPressed;
+		else if (isHovered)
+			textColor = this.textColorHovered;
+		else
+			textColor = this.textColor;
+
+		double textWidth = ctx.minecraft.fontRenderer.getStringWidth(text);
+		double textHeight = 8.0D;
+		double textX = (width - textWidth) / 2.0D;
+		double textY = (height - textHeight) / 2.0D;
+
+		ctx.minecraft.fontRenderer.drawStringWithShadow(text, (float) textX, (float) textY, textColor);
 	}
 }

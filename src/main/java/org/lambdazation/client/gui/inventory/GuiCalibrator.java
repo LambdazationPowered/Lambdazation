@@ -63,11 +63,11 @@ public final class GuiCalibrator extends GuiContainer implements IContainerListe
 
 	@Override
 	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-		cachedCapacity.ifPresent(capacity -> drawString(fontRenderer, "Capacity: " + capacity, 4 + 0, 4 + 0, 0xFFFFFF));
-		cachedEnergy.ifPresent(energy -> drawString(fontRenderer, "Energy: " + energy, 4 + 0, 4 + 8, 0xFFFFFF));
-		cachedTermState.ifPresent(termState -> drawString(fontRenderer, "TermState: " + termState, 4 + 0, 4 + 16, 0xFFFFFF));
-		cachedTermSize.ifPresent(termSize -> drawString(fontRenderer, "TermSize: " + termSize, 4 + 0, 4 + 24, 0xFFFFFF));
-		cachedTermDepth.ifPresent(termDepth -> drawString(fontRenderer, "TermDepth: " + termDepth, 4 + 0, 4 + 32, 0xFFFFFF));
+		cachedCapacity.ifPresent(capacity -> drawString(fontRenderer, "Capacity: " + capacity, 4 + 0, 4 + 0, 0xFFFFFFFF));
+		cachedEnergy.ifPresent(energy -> drawString(fontRenderer, "Energy: " + energy, 4 + 0, 4 + 8, 0xFFFFFFFF));
+		cachedTermState.ifPresent(termState -> drawString(fontRenderer, "TermState: " + termState, 4 + 0, 4 + 16, 0xFFFFFFFF));
+		cachedTermSize.ifPresent(termSize -> drawString(fontRenderer, "TermSize: " + termSize, 4 + 0, 4 + 24, 0xFFFFFFFF));
+		cachedTermDepth.ifPresent(termDepth -> drawString(fontRenderer, "TermDepth: " + termDepth, 4 + 0, 4 + 32, 0xFFFFFFFF));
 	}
 
 	@Override

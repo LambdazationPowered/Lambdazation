@@ -41,10 +41,10 @@ public final class GuiTransformer extends GuiContainer {
 	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
 		drawString(fontRenderer, "Total time: " + containerTransformer
 			.lookupInventoryField(InventoryRefTransformer.TRANSFORMER, InventoryFieldTransformer.TOTAL_TIME),
-			4 + 0, 4 + 0, 0xFFFFFF);
+			4 + 0, 4 + 0, 0xFFFFFFFF);
 		drawString(fontRenderer, "Transforme time: " + containerTransformer
 			.lookupInventoryField(InventoryRefTransformer.TRANSFORMER, InventoryFieldTransformer.TRANSFORM_TIME),
-			4 + 0, 4 + 8, 0xFFFFFF);
+			4 + 0, 4 + 8, 0xFFFFFFFF);
 	}
 
 	@Override

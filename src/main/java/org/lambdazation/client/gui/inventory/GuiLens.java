@@ -55,7 +55,7 @@ public final class GuiLens extends GuiContainer implements IContainerListener {
 
 	@Override
 	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-		cachedTermSource.ifPresent(termSource -> drawString(fontRenderer, "TermSource: " + termSource, 4 + 0, 4 + 0, 0xFFFFFF));
+		cachedTermSource.ifPresent(termSource -> drawString(fontRenderer, "TermSource: " + termSource, 4 + 0, 4 + 0, 0xFFFFFFFF));
 	}
 
 	@Override

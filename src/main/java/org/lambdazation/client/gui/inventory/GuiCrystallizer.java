@@ -41,10 +41,10 @@ public final class GuiCrystallizer extends GuiContainer {
 	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
 		drawString(fontRenderer, "Total time: " + containerCrystallizer
 			.lookupInventoryField(InventoryRefCrystallizer.CRYSTALLIZER, InventoryFieldCrystallizer.TOTAL_TIME),
-			4 + 0, 4 + 0, 0xFFFFFF);
+			4 + 0, 4 + 0, 0xFFFFFFFF);
 		drawString(fontRenderer, "Crystallize time: " + containerCrystallizer
 			.lookupInventoryField(InventoryRefCrystallizer.CRYSTALLIZER, InventoryFieldCrystallizer.CRYSTALLIZE_TIME),
-			4 + 0, 4 + 8, 0xFFFFFF);
+			4 + 0, 4 + 8, 0xFFFFFFFF);
 	}
 
 	@Override
