@@ -23,14 +23,18 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 	private int textColorHovered;
 	private int textColorDisabled;
 	private int selectionColor;
-	private double selectionEdge;
+	private double selectionTopMargin;
+	private double selectionLeftMargin;
+	private double selectionBottomMargin;
+	private double selectionRightMargin;
 
 	public ViewButton(ResourceLocation resource, double width, double height, String text) {
-		this(resource, width, height, text, 0xFFE0E0E0, 0xFFFFFFA0, 0xFFFFFFA0, 0xFFA0A0A0, 0xFFFFFFFF, 3.0D);
+		this(resource, width, height, text, 0xFFE0E0E0, 0xFFFFFFA0, 0xFFFFFFA0, 0xFFA0A0A0, 0xFFFFFFFF, 3.0D, 3.0D, 3.0D, 3.0D);
 	}
 
 	public ViewButton(ResourceLocation resource, double width, double height, String text,
-		int textColor, int textColorPressed, int textColorHovered, int textColorDisabled, int selectionColor, double selectionEdge) {
+		int textColor, int textColorPressed, int textColorHovered, int textColorDisabled,
+		int selectionColor, double selectionTopMargin, double selectionLeftMargin, double selectionBottomMargin, double selectionRightMargin) {
 		this.resource = resource;
 		this.width = width;
 		this.height = height;
@@ -40,7 +44,10 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 		this.textColorHovered = textColorHovered;
 		this.textColorDisabled = textColorDisabled;
 		this.selectionColor = selectionColor;
-		this.selectionEdge = selectionEdge;
+		this.selectionTopMargin = selectionTopMargin;
+		this.selectionLeftMargin = selectionLeftMargin;
+		this.selectionBottomMargin = selectionBottomMargin;
+		this.selectionRightMargin = selectionRightMargin;
 	}
 
 	public double getWidth() {
@@ -159,8 +166,8 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 			double selectionColorGreen = (selectionColor >>> 8 & 0xFF) / 255.0D;
 			double selectionColorBlue = (selectionColor >>> 0 & 0xFF) / 255.0D;
 
-			double selectionWidth = width - selectionEdge * 2.0D;
-			double selectionHeight = height - selectionEdge * 2.0D;
+			double selectionWidth = width - selectionLeftMargin - selectionRightMargin;
+			double selectionHeight = height - selectionTopMargin - selectionBottomMargin;
 
 			if (selectionWidth > 0.0D && selectionHeight >= 0.0D) {
 				GlStateManager.enableBlend();
@@ -173,10 +180,10 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 
 				bufferBuilder.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION);
 
-				bufferBuilder.pos(selectionEdge, selectionEdge, 0.0D).endVertex();
-				bufferBuilder.pos(selectionEdge, selectionEdge + selectionHeight, 0.0D).endVertex();
-				bufferBuilder.pos(selectionEdge + selectionWidth, selectionEdge + selectionHeight, 0.0D).endVertex();
-				bufferBuilder.pos(selectionEdge + selectionWidth, selectionEdge, 0.0D).endVertex();
+				bufferBuilder.pos(selectionLeftMargin, selectionTopMargin, 0.0D).endVertex();
+				bufferBuilder.pos(selectionLeftMargin, selectionTopMargin + selectionHeight, 0.0D).endVertex();
+				bufferBuilder.pos(selectionLeftMargin + selectionWidth, selectionTopMargin + selectionHeight, 0.0D).endVertex();
+				bufferBuilder.pos(selectionLeftMargin + selectionWidth, selectionTopMargin, 0.0D).endVertex();
 
 				tessellator.draw();
 

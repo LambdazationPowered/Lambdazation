@@ -49,6 +49,7 @@ public final class GuiTest extends GuiScreen {
 		super.initGui();
 
 		children.add(container);
+		focusOn(container);
 	}
 
 	@Override
