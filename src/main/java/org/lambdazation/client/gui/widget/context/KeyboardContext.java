@@ -14,8 +14,4 @@ public final class KeyboardContext {
 		this.modifiers = modifiers;
 		this.keyPressed = keyPressed;
 	}
-
-	public KeyboardContext translate(double x, double y) {
-		return new KeyboardContext(modifiers, keyPressed);
-	}
 }

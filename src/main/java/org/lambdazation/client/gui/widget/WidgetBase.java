@@ -60,7 +60,7 @@ public class WidgetBase<M extends ModelBase, V extends ViewBase<M>> {
 		}
 
 		public InputContext translate(double x, double y) {
-			return new InputContext(keyboardContext.translate(x, y), mouseContext.translate(x, y));
+			return new InputContext(keyboardContext, mouseContext.translate(x, y));
 		}
 	}
 

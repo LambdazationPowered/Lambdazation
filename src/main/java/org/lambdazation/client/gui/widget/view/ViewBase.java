@@ -66,7 +66,7 @@ public class ViewBase<M extends ModelBase> {
 		}
 
 		public DrawContext translate(double x, double y) {
-			return new DrawContext(minecraft, partialTicks, keyboardContext.translate(x, y), mouseContext.translate(x, y));
+			return new DrawContext(minecraft, partialTicks, keyboardContext, mouseContext.translate(x, y));
 		}
 	}
 }
