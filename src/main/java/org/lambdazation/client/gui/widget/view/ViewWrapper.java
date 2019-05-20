@@ -22,7 +22,7 @@ public class ViewWrapper<M extends ModelBase> extends ViewBase<M> {
 		this.component = component;
 	}
 
-	public void drawComponent(DrawContext ctx, M model, WidgetBase<?, ?> component) {
+	public void drawComponent(WidgetBase<?, ?> component, DrawContext ctx, M model) {
 		if (component.getView().isVisible())
 			component.draw(ctx);
 	}
@@ -45,6 +45,6 @@ public class ViewWrapper<M extends ModelBase> extends ViewBase<M> {
 	public void draw(DrawContext ctx, M model) {
 		super.draw(ctx, model);
 
-		drawComponent(ctx, model, component);
+		drawComponent(component, ctx, model);
 	}
 }

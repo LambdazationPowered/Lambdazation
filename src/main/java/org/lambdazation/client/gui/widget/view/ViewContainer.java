@@ -72,7 +72,7 @@ public class ViewContainer<M extends ModelBase> extends ViewBase<M> {
 		setFocus(Maybe.ofNothing());
 	}
 
-	public void drawComponent(DrawContext ctx, M model, Component component) {
+	public void drawComponent(Component component, DrawContext ctx, M model) {
 		if (component.getWidget().getView().isVisible()) {
 			GlStateManager.pushMatrix();
 			GlStateManager.translated(component.getX(), component.getY(), 0.0D);
@@ -89,11 +89,11 @@ public class ViewContainer<M extends ModelBase> extends ViewBase<M> {
 		while (iterator.hasNext()) {
 			Component component = iterator.next();
 			if (!component.getWidget().getView().isFocused())
-				drawComponent(ctx, model, component);
+				drawComponent(component, ctx, model);
 		}
 		if (hasFocus()) {
 			Component component = focus.asJust().value();
-			drawComponent(ctx, model, component);
+			drawComponent(component, ctx, model);
 		}
 	}
 

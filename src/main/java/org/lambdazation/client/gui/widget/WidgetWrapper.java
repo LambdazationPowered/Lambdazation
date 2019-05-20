@@ -12,13 +12,47 @@ public class WidgetWrapper<M extends ModelBase, V extends ViewWrapper<M>> extend
 		super(model, view);
 	}
 
+	public Action onKeyboardKeyComponent(WidgetBase<?, ?> component, InputContext ctx, int key, boolean pressed) {
+		Action action = Action.CONTINUE;
+		if (component.getView().isEnable())
+			action = component.onKeyboardKey(ctx, key, pressed);
+		return action;
+	}
+
+	public Action onKeyboardCharComponent(WidgetBase<?, ?> component, InputContext ctx, char input) {
+		Action action = Action.CONTINUE;
+		if (component.getView().isEnable())
+			action = component.onKeyboardChar(ctx, input);
+		return action;
+	}
+
+	public Action onMouseButtonComponent(WidgetBase<?, ?> component, InputContext ctx, int button, boolean pressed) {
+		Action action = Action.CONTINUE;
+		if (component.getView().isEnable())
+			action = component.onMouseButton(ctx, button, pressed);
+		return action;
+	}
+
+	public Action onMouseMoveComponent(WidgetBase<?, ?> component, InputContext ctx, double deltaX, double deltaY) {
+		Action action = Action.CONTINUE;
+		if (component.getView().isEnable())
+			action = component.onMouseMove(ctx, deltaX, deltaY);
+		return action;
+	}
+
+	public Action onMouseWheelComponent(WidgetBase<?, ?> component, InputContext ctx, double delta) {
+		Action action = Action.CONTINUE;
+		if (component.getView().isEnable())
+			action = component.onMouseWheel(ctx, delta);
+		return action;
+	}
+
 	@Override
 	public Action onKeyboardKey(InputContext ctx, int key, boolean pressed) {
 		Action action = Action.CONTINUE;
 		if (!action.handleInput) {
 			WidgetBase<?, ?> component = getView().getComponent();
-			if (component.getView().isEnable())
-				action = component.onKeyboardKey(ctx, key, pressed);
+			action = onKeyboardKeyComponent(component, ctx, key, pressed);
 		}
 		if (!action.handleInput)
 			action = super.onKeyboardKey(ctx, key, pressed);
@@ -30,8 +64,7 @@ public class WidgetWrapper<M extends ModelBase, V extends ViewWrapper<M>> extend
 		Action action = Action.CONTINUE;
 		if (!action.handleInput) {
 			WidgetBase<?, ?> component = getView().getComponent();
-			if (component.getView().isEnable())
-				action = component.onKeyboardChar(ctx, input);
+			action = onKeyboardCharComponent(component, ctx, input);
 		}
 		if (!action.handleInput)
 			action = super.onKeyboardChar(ctx, input);
@@ -43,8 +76,7 @@ public class WidgetWrapper<M extends ModelBase, V extends ViewWrapper<M>> extend
 		Action action = Action.CONTINUE;
 		if (!action.handleInput) {
 			WidgetBase<?, ?> component = getView().getComponent();
-			if (component.getView().isEnable())
-				action = component.onMouseButton(ctx, button, pressed);
+			action = onMouseButtonComponent(component, ctx, button, pressed);
 		}
 		if (!action.handleInput)
 			action = super.onMouseButton(ctx, button, pressed);
@@ -56,8 +88,7 @@ public class WidgetWrapper<M extends ModelBase, V extends ViewWrapper<M>> extend
 		Action action = Action.CONTINUE;
 		if (!action.handleInput) {
 			WidgetBase<?, ?> component = getView().getComponent();
-			if (component.getView().isEnable())
-				action = component.onMouseMove(ctx, deltaX, deltaY);
+			action = onMouseMoveComponent(component, ctx, deltaX, deltaY);
 		}
 		if (!action.handleInput)
 			action = super.onMouseMove(ctx, deltaX, deltaY);
@@ -69,8 +100,7 @@ public class WidgetWrapper<M extends ModelBase, V extends ViewWrapper<M>> extend
 		Action action = Action.CONTINUE;
 		if (!action.handleInput) {
 			WidgetBase<?, ?> component = getView().getComponent();
-			if (component.getView().isEnable())
-				action = component.onMouseWheel(ctx, delta);
+			action = onMouseWheelComponent(component, ctx, delta);
 		}
 		if (!action.handleInput)
 			action = super.onMouseWheel(ctx, delta);
