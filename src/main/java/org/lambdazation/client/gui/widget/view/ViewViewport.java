@@ -63,15 +63,17 @@ public class ViewViewport<M extends ModelBase> extends ViewWrapper<M> {
 		GL11.glPushAttrib(GL11.GL_STENCIL_BUFFER_BIT);
 		if (!GL11.glIsEnabled(GL11.GL_STENCIL_TEST)) {
 			GL11.glEnable(GL11.GL_STENCIL_TEST);
-			GL11.glClearStencil(0);
+			GL11.glClearStencil(1);
 			GlStateManager.clear(GL11.GL_STENCIL_BUFFER_BIT);
 		}
 
-		GL11.glStencilFunc(GL11.GL_NEVER, 1, 1);
-		GL11.glStencilOp(GL11.GL_REPLACE, GL11.GL_KEEP, GL11.GL_KEEP);
-		GL11.glStencilMask(1);
+		GL11.glStencilFunc(GL11.GL_NEVER, 0, 0xFF);
+		GL11.glStencilOp(GL11.GL_INCR, GL11.GL_KEEP, GL11.GL_KEEP);
+		GL11.glStencilMask(0xFF);
 
 		GlStateManager.disableTexture2D();
+		GlStateManager.disableDepthTest();
+		GlStateManager.disableAlphaTest();
 		GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
 
 		Tessellator tessellator = Tessellator.getInstance();
@@ -86,9 +88,33 @@ public class ViewViewport<M extends ModelBase> extends ViewWrapper<M> {
 
 		tessellator.draw();
 
-		GlStateManager.enableTexture2D();
+		GL11.glStencilFunc(GL11.GL_NEVER, 0, 0xFF);
+		GL11.glStencilOp(GL11.GL_DECR, GL11.GL_KEEP, GL11.GL_KEEP);
+		GL11.glStencilMask(0xFF);
 
-		GL11.glStencilFunc(GL11.GL_EQUAL, 1, 1);
+		GlStateManager.pushMatrix();
+		GlStateManager.loadIdentity();
+		GlStateManager.translatef(0.0F, 0.0F, -2000.0F);
+
+		double scaledWidth = ctx.minecraft.mainWindow.getScaledWidth();
+		double scaledHeight = ctx.minecraft.mainWindow.getScaledHeight();
+
+		bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
+
+		bufferBuilder.pos(0.0D, 0.0D, 0.0D).endVertex();
+		bufferBuilder.pos(0.0D, scaledHeight, 0.0D).endVertex();
+		bufferBuilder.pos(scaledWidth, scaledHeight, 0.0D).endVertex();
+		bufferBuilder.pos(scaledWidth, 0.0D, 0.0D).endVertex();
+
+		tessellator.draw();
+
+		GlStateManager.popMatrix();
+
+		GlStateManager.enableTexture2D();
+		GlStateManager.enableDepthTest();
+		GlStateManager.enableAlphaTest();
+
+		GL11.glStencilFunc(GL11.GL_EQUAL, 1, 0xFF);
 		GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
 		GL11.glStencilMask(0);
 
