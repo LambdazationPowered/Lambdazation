@@ -5,15 +5,18 @@ import org.lambdazation.client.gui.GuiWidget;
 import org.lambdazation.client.gui.widget.WidgetButton;
 import org.lambdazation.client.gui.widget.WidgetContainer;
 import org.lambdazation.client.gui.widget.WidgetLabel;
+import org.lambdazation.client.gui.widget.WidgetSprite;
 import org.lambdazation.client.gui.widget.WidgetViewport;
 import org.lambdazation.client.gui.widget.model.ModelBase;
 import org.lambdazation.client.gui.widget.view.ViewButton;
 import org.lambdazation.client.gui.widget.view.ViewContainer;
 import org.lambdazation.client.gui.widget.view.ViewLabel;
+import org.lambdazation.client.gui.widget.view.ViewSprite;
 import org.lambdazation.client.gui.widget.view.ViewViewport;
 import org.lambdazation.common.util.ValueBuilder;
 
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -43,12 +46,17 @@ public final class GuiTest extends GuiScreen {
 			new ModelBase(),
 			new ViewLabel<>("Test3"));
 
+		WidgetSprite<ModelBase, ViewSprite<ModelBase>> widgetSprite = new WidgetSprite<>(
+			new ModelBase(),
+			new ViewSprite<>(new ResourceLocation("minecraft", "textures/block/oak_planks.png")));
+
 		WidgetContainer<ModelBase, ViewContainer<ModelBase>> widgetContainer = new WidgetContainer<>(
 			new ModelBase(),
 			ValueBuilder.build(new ViewContainer<>(), viewContainer -> {
 				viewContainer.addComponent(widgetButton1, 10.0D, 10.0D);
 				viewContainer.addComponent(widgetViewPort, 10.0D, 40.0D);
 				viewContainer.addComponent(widgetLabel, 10.0D, 70.0D);
+				viewContainer.addComponent(widgetSprite, 10.0D, 100.0D);
 			}));
 
 		this.container = new GuiWidget<>(this, widgetContainer, 0.0D, 0.0D);
