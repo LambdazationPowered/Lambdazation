@@ -1,14 +1,14 @@
 package org.lambdazation.client.gui.widget;
 
-import org.lambdazation.client.gui.widget.model.ModelTextField;
-import org.lambdazation.client.gui.widget.view.ViewTextField;
+import org.lambdazation.client.gui.widget.model.ModelText;
+import org.lambdazation.client.gui.widget.view.ViewText;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public class WidgetTextField<M extends ModelTextField, V extends ViewTextField<M>> extends WidgetBase<M, V> {
-	public WidgetTextField(M model, V view) {
+public class WidgetText<M extends ModelText, V extends ViewText<M>> extends WidgetBase<M, V> {
+	public WidgetText(M model, V view) {
 		super(model, view);
 	}
 

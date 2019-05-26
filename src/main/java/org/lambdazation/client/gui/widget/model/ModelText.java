@@ -4,12 +4,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public class ModelTextField extends ModelBase {
-	public static final Attribute<ModelTextField, String> ATTRIBUTE_TEXT = attribute(ModelTextField::getText, ModelTextField::setText);
+public class ModelText extends ModelBase {
+	public static final Attribute<ModelText, String> ATTRIBUTE_TEXT = attribute(ModelText::getText, ModelText::setText);
 
 	private String text;
 
-	public ModelTextField(String text) {
+	public ModelText(String text) {
 		this.text = text;
 	}
 

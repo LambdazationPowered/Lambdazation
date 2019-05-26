@@ -1,12 +1,12 @@
 package org.lambdazation.client.gui.widget.view;
 
-import org.lambdazation.client.gui.widget.model.ModelTextField;
+import org.lambdazation.client.gui.widget.model.ModelText;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public class ViewTextField<M extends ModelTextField> extends ViewBase<M> {
+public class ViewText<M extends ModelText> extends ViewBase<M> {
 	private int textColor = 0xFFFFFFFF;
 	private int backgroundColor = 0xFF000000;
 	private int cursorColor = 0xFFFFFFFF;
