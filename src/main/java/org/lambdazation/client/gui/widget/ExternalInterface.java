@@ -24,6 +24,7 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 
 	private boolean isFocused;
 
+	private int ticks;
 	private int keyboardModifiers;
 	private IntSet keyboardKeyPressed;
 	private double mouseLocalX;
@@ -37,6 +38,7 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 
 		this.isFocused = false;
 
+		this.ticks = 0;
 		this.keyboardModifiers = 0;
 		this.keyboardKeyPressed = new IntOpenHashSet();
 		this.mouseLocalX = 0;
@@ -107,9 +109,13 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 
 		GlStateManager.pushMatrix();
 		GlStateManager.translated(x, y, 0.0D);
-		DrawContext drawContext = new DrawContext(minecraft, partialTicks, getKeyboardContext(), getMouseContext());
+		DrawContext drawContext = new DrawContext(minecraft, ticks, partialTicks, getKeyboardContext(), getMouseContext());
 		widget.draw(drawContext);
 		GlStateManager.popMatrix();
+	}
+
+	public void externalTick() {
+		ticks++;
 	}
 
 	public boolean externalKeyboardKey(int key, boolean pressed, int modifiers) {

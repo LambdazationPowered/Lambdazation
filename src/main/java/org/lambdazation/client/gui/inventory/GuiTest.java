@@ -77,4 +77,11 @@ public final class GuiTest extends GuiScreen {
 
 		container.render(mc, partialTicks);
 	}
+
+	@Override
+	public void tick() {
+		super.tick();
+
+		container.tick();
+	}
 }

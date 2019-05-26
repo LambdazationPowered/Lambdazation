@@ -73,6 +73,10 @@ public class GuiWidget<W extends WidgetBase<?, ?>> extends Gui implements IGuiEv
 		updateFocus();
 	}
 
+	public void tick() {
+		externalInterface.externalTick();
+	}
+
 	@Override
 	public boolean mouseClicked(double p_mouseClicked_1_, double p_mouseClicked_3_, int p_mouseClicked_5_) {
 		boolean handled = false;

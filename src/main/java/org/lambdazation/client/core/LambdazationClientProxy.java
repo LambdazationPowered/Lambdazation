@@ -5,6 +5,8 @@ import org.lambdazation.common.core.LambdazationCommonProxy;
 
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.ExtensionPoint;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
 import net.minecraftforge.fml.ModLoadingContext;
 
 public class LambdazationClientProxy extends LambdazationCommonProxy {
@@ -19,6 +21,6 @@ public class LambdazationClientProxy extends LambdazationCommonProxy {
 	@Override
 	public void init() {
 		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.GUIFACTORY, () -> lambdazationGuiFactory::openGui);
-		Minecraft.getInstance().addScheduledTask(() -> Minecraft.getInstance().getFramebuffer().enableStencil());
+		Minecraft.getInstance().addScheduledTask(() -> LogicalSidedProvider.INSTANCE.<Minecraft> get(LogicalSide.CLIENT).getFramebuffer().enableStencil());
 	}
 }
