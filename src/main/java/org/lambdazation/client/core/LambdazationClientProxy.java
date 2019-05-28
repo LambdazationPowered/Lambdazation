@@ -23,7 +23,7 @@ public class LambdazationClientProxy extends LambdazationCommonProxy {
 	@Override
 	public void init() {
 		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.GUIFACTORY, () -> lambdazationGuiFactory::openGui);
-		Minecraft.getInstance().addScheduledTask(() -> lambdazationFonts.registerFonts(LogicalSidedProvider.INSTANCE.<Minecraft> get(LogicalSide.CLIENT).textureManager));
+		Minecraft.getInstance().addScheduledTask(() -> lambdazationFonts.registerFonts(LogicalSidedProvider.INSTANCE.<Minecraft> get(LogicalSide.CLIENT)));
 		Minecraft.getInstance().addScheduledTask(() -> LogicalSidedProvider.INSTANCE.<Minecraft> get(LogicalSide.CLIENT).getFramebuffer().enableStencil());
 	}
 }

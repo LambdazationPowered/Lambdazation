@@ -15,7 +15,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class ViewText<M extends ModelText> extends ViewBase<M> {
-	private Maybe<Font> font;
+	private Maybe<Font> preferredFont;
 	private int textColor;
 	private int backgroundColor;
 	private int selectionTextColor;
@@ -29,9 +29,9 @@ public class ViewText<M extends ModelText> extends ViewBase<M> {
 		this(Maybe.ofNothing(), 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFF0000FF, 0xFFFFFFFF, 0, 0, 0);
 	}
 
-	public ViewText(Maybe<Font> font, int textColor, int backgroundColor, int selectionTextColor, int selectionBackgroundColor, int cursorColor,
-		int selectedFromIndex, int selectedToIndex, int cursorIndex) {
-		this.font = font;
+	public ViewText(Maybe<Font> preferredFont, int textColor, int backgroundColor, int selectionTextColor, int selectionBackgroundColor, int cursorColor,
+					int selectedFromIndex, int selectedToIndex, int cursorIndex) {
+		this.preferredFont = preferredFont;
 		this.textColor = textColor;
 		this.backgroundColor = backgroundColor;
 		this.selectionTextColor = selectionTextColor;
@@ -46,9 +46,11 @@ public class ViewText<M extends ModelText> extends ViewBase<M> {
 	public void draw(DrawContext ctx, M model) {
 		super.draw(ctx, model);
 
+		Font font = preferredFont.orElse(() -> ctx.proxy.lambdazationFonts.defaultFont.get());
+
 		// TODO NYI
 
-		TexturedGlyph glyph = font.orElse(() -> ctx.proxy.lambdazationFonts.defaultFont.get()).getGlyph('A');
+		TexturedGlyph glyph = font.getGlyph('i');
 		ResourceLocation resource = glyph.getTextureLocation();
 
 		if (resource != null) {
