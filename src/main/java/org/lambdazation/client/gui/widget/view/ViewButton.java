@@ -14,7 +14,7 @@ import org.lwjgl.opengl.GL11;
 
 @OnlyIn(Dist.CLIENT)
 public class ViewButton<M extends ModelBase> extends ViewBase<M> {
-	public static final ResourceLocation RESOURCE = new ResourceLocation("lambdazation", "textures/gui/widget/button.png");
+	public static final ResourceLocation BUTTON_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/widget/button.png");
 
 	private double width;
 	private double height;
@@ -31,7 +31,7 @@ public class ViewButton<M extends ModelBase> extends ViewBase<M> {
 	private double selectionRightMargin;
 
 	public ViewButton(double width, double height, String text) {
-		this(width, height, text, RESOURCE, 0xFFE0E0E0, 0xFFFFFFA0, 0xFFFFFFA0, 0xFFA0A0A0, 0xFFFFFFFF, 3.0D, 3.0D, 3.0D, 3.0D);
+		this(width, height, text, BUTTON_RESOURCE, 0xFFE0E0E0, 0xFFFFFFA0, 0xFFFFFFA0, 0xFFA0A0A0, 0xFFFFFFFF, 3.0D, 3.0D, 3.0D, 3.0D);
 	}
 
 	public ViewButton(double width, double height, String text, ResourceLocation resource,

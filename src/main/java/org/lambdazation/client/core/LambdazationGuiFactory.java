@@ -1,6 +1,5 @@
 package org.lambdazation.client.core;
 
-import org.lambdazation.Lambdazation;
 import org.lambdazation.client.gui.inventory.GuiCalibrator;
 import org.lambdazation.client.gui.inventory.GuiCharger;
 import org.lambdazation.client.gui.inventory.GuiCrystallizer;
@@ -29,21 +28,21 @@ import net.minecraftforge.fml.network.FMLPlayMessages;
 
 @OnlyIn(Dist.CLIENT)
 public final class LambdazationGuiFactory {
-	public final Lambdazation lambdazation;
+	public final LambdazationClientProxy proxy;
 
-	public LambdazationGuiFactory(Lambdazation lambdazation) {
-		this.lambdazation = lambdazation;
+	public LambdazationGuiFactory(LambdazationClientProxy proxy) {
+		this.proxy = proxy;
 	}
 
 	public GuiScreen openGui(FMLPlayMessages.OpenContainer msg) {
 		if (msg.getId().equals(ContainerLens.GUI_ID)) {
 			InventoryPlayer playerInventory = Minecraft.getInstance().player.inventory;
 
-			return new GuiLens(lambdazation, playerInventory);
+			return new GuiLens(proxy, playerInventory);
 		} else if (msg.getId().equals(ContainerCalibrator.GUI_ID)) {
 			InventoryPlayer playerInventory = Minecraft.getInstance().player.inventory;
 
-			return new GuiCalibrator(lambdazation, playerInventory);
+			return new GuiCalibrator(proxy, playerInventory);
 		} else if (msg.getId().equals(ContainerCrystallizer.GUI_ID)) {
 			BlockPos blockPos = msg.getAdditionalData().readBlockPos();
 			TileEntity tileEntity = Minecraft.getInstance().world.getTileEntity(blockPos);
@@ -54,7 +53,7 @@ public final class LambdazationGuiFactory {
 				return null;
 			TileEntityCrystallizer crystallizerInventory = (TileEntityCrystallizer) tileEntity;
 
-			return new GuiCrystallizer(lambdazation, playerInventory, crystallizerInventory);
+			return new GuiCrystallizer(proxy, playerInventory, crystallizerInventory);
 		} else if (msg.getId().equals(ContainerTransformer.GUI_ID)) {
 			BlockPos blockPos = msg.getAdditionalData().readBlockPos();
 			TileEntity tileEntity = Minecraft.getInstance().world.getTileEntity(blockPos);
@@ -65,7 +64,7 @@ public final class LambdazationGuiFactory {
 				return null;
 			TileEntityTransformer transformerInventory = (TileEntityTransformer) tileEntity;
 
-			return new GuiTransformer(lambdazation, playerInventory, transformerInventory);
+			return new GuiTransformer(proxy, playerInventory, transformerInventory);
 		} else if (msg.getId().equals(ContainerCharger.GUI_ID)) {
 			BlockPos blockPos = msg.getAdditionalData().readBlockPos();
 			TileEntity tileEntity = Minecraft.getInstance().world.getTileEntity(blockPos);
@@ -76,7 +75,7 @@ public final class LambdazationGuiFactory {
 				return null;
 			TileEntityCharger chargerInventory = (TileEntityCharger) tileEntity;
 
-			return new GuiCharger(lambdazation, playerInventory, chargerInventory);
+			return new GuiCharger(proxy, playerInventory, chargerInventory);
 		} else if (msg.getId().equals(ContainerReducer.GUI_ID)) {
 			BlockPos blockPos = msg.getAdditionalData().readBlockPos();
 			TileEntity tileEntity = Minecraft.getInstance().world.getTileEntity(blockPos);
@@ -87,7 +86,7 @@ public final class LambdazationGuiFactory {
 				return null;
 			TileEntityReducer reducerInventory = (TileEntityReducer) tileEntity;
 
-			return new GuiReducer(lambdazation, playerInventory, reducerInventory);
+			return new GuiReducer(proxy, playerInventory, reducerInventory);
 		} else
 			return null;
 	}

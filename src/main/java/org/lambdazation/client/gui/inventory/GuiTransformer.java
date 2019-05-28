@@ -1,6 +1,6 @@
 package org.lambdazation.client.gui.inventory;
 
-import org.lambdazation.Lambdazation;
+import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.common.inventory.ContainerTransformer;
 import org.lambdazation.common.inventory.ContainerTransformer.InventoryRefTransformer;
 import org.lambdazation.common.tileentity.TileEntityTransformer;
@@ -17,15 +17,15 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public final class GuiTransformer extends GuiContainer {
 	public static final ResourceLocation TRANSFORMER_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/container/transformer.png");
 
-	public final Lambdazation lambdazation;
+	public final LambdazationClientProxy proxy;
 
 	public final ContainerTransformer containerTransformer;
 
-	public GuiTransformer(Lambdazation lambdazation, InventoryPlayer playerInventory,
+	public GuiTransformer(LambdazationClientProxy proxy, InventoryPlayer playerInventory,
 		TileEntityTransformer transformerInventory) {
-		super(new ContainerTransformer(lambdazation, playerInventory, transformerInventory));
+		super(new ContainerTransformer(proxy.lambdazation, playerInventory, transformerInventory));
 
-		this.lambdazation = lambdazation;
+		this.proxy = proxy;
 
 		this.containerTransformer = (ContainerTransformer) inventorySlots;
 	}

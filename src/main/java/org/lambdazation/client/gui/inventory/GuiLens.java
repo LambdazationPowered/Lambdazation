@@ -2,7 +2,7 @@ package org.lambdazation.client.gui.inventory;
 
 import java.util.Optional;
 
-import org.lambdazation.Lambdazation;
+import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.common.inventory.ContainerLens;
 import org.lambdazation.common.item.ItemLambdaCrystal;
 import org.lamcalcj.pretty.PrettyPrint;
@@ -23,16 +23,16 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public final class GuiLens extends GuiContainer implements IContainerListener {
 	public static final ResourceLocation LENS_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/container/lens.png");
 
-	public final Lambdazation lambdazation;
+	public final LambdazationClientProxy proxy;
 
 	public ContainerLens containerLens;
 	public ItemStack prevItemStack;
 	public Optional<String> cachedTermSource;
 
-	public GuiLens(Lambdazation lambdazation, InventoryPlayer playerInventory) {
-		super(new ContainerLens(lambdazation, playerInventory));
+	public GuiLens(LambdazationClientProxy proxy, InventoryPlayer playerInventory) {
+		super(new ContainerLens(proxy.lambdazation, playerInventory));
 
-		this.lambdazation = lambdazation;
+		this.proxy = proxy;
 
 		this.containerLens = (ContainerLens) inventorySlots;
 		this.prevItemStack = null;
@@ -69,7 +69,7 @@ public final class GuiLens extends GuiContainer implements IContainerListener {
 	}
 
 	public void detectChanges(ItemStack itemStack) {
-		ItemLambdaCrystal itemLambdaCrystal = lambdazation.lambdazationItems.itemLambdaCrystal;
+		ItemLambdaCrystal itemLambdaCrystal = proxy.lambdazation.lambdazationItems.itemLambdaCrystal;
 
 		if (prevItemStack == null || !ItemStack.areItemStacksEqual(itemStack, prevItemStack)) {
 			if (itemStack.getItem().equals(itemLambdaCrystal)) {

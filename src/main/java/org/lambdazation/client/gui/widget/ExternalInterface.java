@@ -1,5 +1,6 @@
 package org.lambdazation.client.gui.widget;
 
+import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.client.gui.widget.WidgetBase.Action;
 import org.lambdazation.client.gui.widget.WidgetBase.InputContext;
 import org.lambdazation.client.gui.widget.context.KeyboardContext;
@@ -103,13 +104,13 @@ public final class ExternalInterface<W extends WidgetBase<M, V>, M extends Model
 		return new MouseContext(mouseLocalX, mouseLocalY, IntSets.unmodifiable(mouseButtonPressed));
 	}
 
-	public void externalDraw(Minecraft minecraft, double partialTicks) {
+	public void externalDraw(LambdazationClientProxy proxy, Minecraft minecraft, double partialTicks) {
 		if (!getView().isVisible())
 			return;
 
 		GlStateManager.pushMatrix();
 		GlStateManager.translated(x, y, 0.0D);
-		DrawContext drawContext = new DrawContext(minecraft, ticks, partialTicks, getKeyboardContext(), getMouseContext());
+		DrawContext drawContext = new DrawContext(proxy, minecraft, ticks, partialTicks, getKeyboardContext(), getMouseContext());
 		widget.draw(drawContext);
 		GlStateManager.popMatrix();
 	}

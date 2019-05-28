@@ -1,6 +1,6 @@
 package org.lambdazation.client.gui.inventory;
 
-import org.lambdazation.Lambdazation;
+import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.common.inventory.ContainerReducer;
 import org.lambdazation.common.inventory.ContainerReducer.InventoryRefReducer;
 import org.lambdazation.common.tileentity.TileEntityReducer;
@@ -17,15 +17,15 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public final class GuiReducer extends GuiContainer {
 	public static final ResourceLocation REDUCER_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/container/reducer.png");
 
-	public final Lambdazation lambdazation;
+	public final LambdazationClientProxy proxy;
 
 	public final ContainerReducer containerReducer;
 
-	public GuiReducer(Lambdazation lambdazation, InventoryPlayer playerInventory,
+	public GuiReducer(LambdazationClientProxy proxy, InventoryPlayer playerInventory,
 		TileEntityReducer reducerInventory) {
-		super(new ContainerReducer(lambdazation, playerInventory, reducerInventory));
+		super(new ContainerReducer(proxy.lambdazation, playerInventory, reducerInventory));
 
-		this.lambdazation = lambdazation;
+		this.proxy = proxy;
 
 		this.containerReducer = (ContainerReducer) inventorySlots;
 	}

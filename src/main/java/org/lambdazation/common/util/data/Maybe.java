@@ -17,6 +17,8 @@ public abstract class Maybe<A> {
 
 	public abstract Maybe<A> filter(Predicate<A> p);
 
+	public abstract A orElse(Supplier<A> f);
+
 	public abstract void ifNothing(Runnable f);
 
 	public abstract void ifJust(Consumer<A> f);
@@ -48,6 +50,11 @@ public abstract class Maybe<A> {
 		@Override
 		public Maybe<A> filter(Predicate<A> p) {
 			return new Nothing<>();
+		}
+
+		@Override
+		public A orElse(Supplier<A> f) {
+			return f.get();
 		}
 
 		@Override
@@ -110,6 +117,11 @@ public abstract class Maybe<A> {
 		@Override
 		public Maybe<A> filter(Predicate<A> p) {
 			return p.test(value) ? this : new Nothing<>();
+		}
+
+		@Override
+		public A orElse(Supplier<A> f) {
+			return value;
 		}
 
 		@Override

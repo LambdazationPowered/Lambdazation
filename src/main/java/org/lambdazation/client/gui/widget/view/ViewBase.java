@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.client.gui.widget.context.KeyboardContext;
 import org.lambdazation.client.gui.widget.context.MouseContext;
 import org.lambdazation.client.gui.widget.model.ModelBase;
@@ -53,13 +54,15 @@ public class ViewBase<M extends ModelBase> {
 	}
 
 	public static final class DrawContext {
+		public final LambdazationClientProxy proxy;
 		public final Minecraft minecraft;
 		public final int ticks;
 		public final double partialTicks;
 		public final KeyboardContext keyboardContext;
 		public final MouseContext mouseContext;
 
-		public DrawContext(Minecraft minecraft, int ticks, double partialTicks, KeyboardContext keyboardContext, MouseContext mouseContext) {
+		public DrawContext(LambdazationClientProxy proxy, Minecraft minecraft, int ticks, double partialTicks, KeyboardContext keyboardContext, MouseContext mouseContext) {
+			this.proxy = proxy;
 			this.minecraft = minecraft;
 			this.ticks = ticks;
 			this.partialTicks = partialTicks;
@@ -68,7 +71,7 @@ public class ViewBase<M extends ModelBase> {
 		}
 
 		public DrawContext translate(double x, double y) {
-			return new DrawContext(minecraft, ticks, partialTicks, keyboardContext, mouseContext.translate(x, y));
+			return new DrawContext(proxy, minecraft, ticks, partialTicks, keyboardContext, mouseContext.translate(x, y));
 		}
 	}
 }

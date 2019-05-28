@@ -1,5 +1,6 @@
 package org.lambdazation.client.gui;
 
+import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.client.gui.widget.ExternalInterface;
 import org.lambdazation.client.gui.widget.WidgetBase;
 
@@ -12,15 +13,18 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class GuiWidget<W extends WidgetBase<?, ?>> extends Gui implements IGuiEventListener {
+	public final LambdazationClientProxy proxy;
+
 	private final GuiEventHandler parent;
 	private final ExternalInterface<W, ?, ?> externalInterface;
 
-	public GuiWidget(GuiEventHandler parent, W widget, double x, double y) {
+	public GuiWidget(LambdazationClientProxy proxy, GuiEventHandler parent, W widget, double x, double y) {
+		this.proxy = proxy;
 		this.parent = parent;
-		this.externalInterface = newExternalInterface(widget, x, y);
+		this.externalInterface = newExternalInterface(proxy, widget, x, y);
 	}
 
-	private static <W extends WidgetBase<?, ?>> ExternalInterface<W, ?, ?> newExternalInterface(W widget, double x, double y) {
+	private static <W extends WidgetBase<?, ?>> ExternalInterface<W, ?, ?> newExternalInterface(LambdazationClientProxy proxy, W widget, double x, double y) {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		ExternalInterface<W, ?, ?> externalInterface = new ExternalInterface(widget, x, y);
 		return externalInterface;
@@ -68,7 +72,7 @@ public class GuiWidget<W extends WidgetBase<?, ?>> extends Gui implements IGuiEv
 		double globalY = minecraft.mouseHelper.getMouseY() * (double) minecraft.mainWindow.getScaledHeight() / (double) minecraft.mainWindow.getHeight();
 
 		externalInterface.externalMousePosition(globalX, globalY);
-		externalInterface.externalDraw(minecraft, partialTicks);
+		externalInterface.externalDraw(proxy, minecraft, partialTicks);
 
 		updateFocus();
 	}

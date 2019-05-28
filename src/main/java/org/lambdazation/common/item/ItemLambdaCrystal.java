@@ -21,7 +21,8 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import org.lambdazation.Lambdazation;
-import org.lambdazation.client.gui.inventory.GuiTest;
+import org.lambdazation.client.core.LambdazationClientProxy;
+import org.lambdazation.client.gui.GuiTest;
 import org.lambdazation.common.core.LambdazationTermFactory.TermMetadata;
 import org.lambdazation.common.core.LambdazationTermFactory.TermNamer;
 import org.lambdazation.common.core.LambdazationTermFactory.TermNaming;
@@ -45,7 +46,7 @@ public final class ItemLambdaCrystal extends Item {
 	public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
 		// FIXME Testcode
 		if (worldIn.isRemote)
-			Minecraft.getInstance().displayGuiScreen(new GuiTest(lambdazation));
+			Minecraft.getInstance().displayGuiScreen(new GuiTest((LambdazationClientProxy) lambdazation.lambdazationCommonProxy));
 		return super.onItemRightClick(worldIn, playerIn, handIn);
 	}
 

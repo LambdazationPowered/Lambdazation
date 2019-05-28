@@ -1,6 +1,6 @@
 package org.lambdazation.client.gui.inventory;
 
-import org.lambdazation.Lambdazation;
+import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.common.inventory.ContainerCharger;
 import org.lambdazation.common.inventory.ContainerCharger.InventoryRefCharger;
 import org.lambdazation.common.tileentity.TileEntityCharger;
@@ -17,15 +17,15 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public final class GuiCharger extends GuiContainer {
 	public static final ResourceLocation CHARGER_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/container/charger.png");
 
-	public final Lambdazation lambdazation;
+	public final LambdazationClientProxy proxy;
 
 	public final ContainerCharger containerCharger;
 
-	public GuiCharger(Lambdazation lambdazation, InventoryPlayer playerInventory,
+	public GuiCharger(LambdazationClientProxy proxy, InventoryPlayer playerInventory,
 		TileEntityCharger chargerInventory) {
-		super(new ContainerCharger(lambdazation, playerInventory, chargerInventory));
+		super(new ContainerCharger(proxy.lambdazation, playerInventory, chargerInventory));
 
-		this.lambdazation = lambdazation;
+		this.proxy = proxy;
 
 		this.containerCharger = (ContainerCharger) inventorySlots;
 	}

@@ -2,7 +2,7 @@ package org.lambdazation.client.gui.inventory;
 
 import java.util.Optional;
 
-import org.lambdazation.Lambdazation;
+import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.common.core.LambdazationTermFactory.TermState;
 import org.lambdazation.common.inventory.ContainerCalibrator;
 import org.lambdazation.common.item.ItemLambdaCrystal;
@@ -23,7 +23,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public final class GuiCalibrator extends GuiContainer implements IContainerListener {
 	public static final ResourceLocation LENS_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/container/calibrator.png");
 
-	public final Lambdazation lambdazation;
+	public final LambdazationClientProxy proxy;
 
 	public ContainerCalibrator containerCalibrator;
 	public ItemStack prevItemStack;
@@ -33,10 +33,10 @@ public final class GuiCalibrator extends GuiContainer implements IContainerListe
 	public Optional<Integer> cachedTermSize;
 	public Optional<Integer> cachedTermDepth;
 
-	public GuiCalibrator(Lambdazation lambdazation, InventoryPlayer playerInventory) {
-		super(new ContainerCalibrator(lambdazation, playerInventory));
+	public GuiCalibrator(LambdazationClientProxy proxy, InventoryPlayer playerInventory) {
+		super(new ContainerCalibrator(proxy.lambdazation, playerInventory));
 
-		this.lambdazation = lambdazation;
+		this.proxy = proxy;
 
 		this.containerCalibrator = (ContainerCalibrator) inventorySlots;
 		this.prevItemStack = null;
@@ -81,7 +81,7 @@ public final class GuiCalibrator extends GuiContainer implements IContainerListe
 	}
 
 	public void detectChanges(ItemStack itemStack) {
-		ItemLambdaCrystal itemLambdaCrystal = lambdazation.lambdazationItems.itemLambdaCrystal;
+		ItemLambdaCrystal itemLambdaCrystal = proxy.lambdazation.lambdazationItems.itemLambdaCrystal;
 
 		if (prevItemStack == null || !ItemStack.areItemStacksEqual(itemStack, prevItemStack)) {
 			if (itemStack.getItem().equals(itemLambdaCrystal)) {

@@ -1,6 +1,6 @@
 package org.lambdazation.client.gui.inventory;
 
-import org.lambdazation.Lambdazation;
+import org.lambdazation.client.core.LambdazationClientProxy;
 import org.lambdazation.common.inventory.ContainerCrystallizer;
 import org.lambdazation.common.inventory.ContainerCrystallizer.InventoryRefCrystallizer;
 import org.lambdazation.common.tileentity.TileEntityCrystallizer;
@@ -17,15 +17,15 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public final class GuiCrystallizer extends GuiContainer {
 	public static final ResourceLocation CRYSTALLIZER_RESOURCE = new ResourceLocation("lambdazation", "textures/gui/container/crystallizer.png");
 
-	public final Lambdazation lambdazation;
+	public final LambdazationClientProxy proxy;
 
 	public final ContainerCrystallizer containerCrystallizer;
 
-	public GuiCrystallizer(Lambdazation lambdazation, InventoryPlayer playerInventory,
+	public GuiCrystallizer(LambdazationClientProxy proxy, InventoryPlayer playerInventory,
 		TileEntityCrystallizer crystallizerInventory) {
-		super(new ContainerCrystallizer(lambdazation, playerInventory, crystallizerInventory));
+		super(new ContainerCrystallizer(proxy.lambdazation, playerInventory, crystallizerInventory));
 
-		this.lambdazation = lambdazation;
+		this.proxy = proxy;
 
 		this.containerCrystallizer = (ContainerCrystallizer) inventorySlots;
 	}
