@@ -48,7 +48,7 @@ public class ViewText<M extends ModelText> extends ViewBase<M> {
 
 		// TODO NYI
 
-		TexturedGlyph glyph = font.orElse(() -> ctx.proxy.lambdazationFonts.getDefaultFont()).getGlyph('A');
+		TexturedGlyph glyph = font.orElse(() -> ctx.proxy.lambdazationFonts.defaultFont.get()).getGlyph('A');
 		ResourceLocation resource = glyph.getTextureLocation();
 
 		if (resource != null) {
