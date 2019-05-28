@@ -16,29 +16,38 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class ViewText<M extends ModelText> extends ViewBase<M> {
 	private Maybe<Font> preferredFont;
+	private boolean shadowEnabled;
+	private boolean formattingEnabled;
+	private boolean selectionEnabled;
+	private boolean cursorEnabled;
 	private int textColor;
 	private int backgroundColor;
 	private int selectionTextColor;
 	private int selectionBackgroundColor;
 	private int cursorColor;
-	private int selectedFromIndex;
-	private int selectedToIndex;
+	private int selectionFromIndex;
+	private int selectionToIndex;
 	private int cursorIndex;
 
 	public ViewText() {
-		this(Maybe.ofNothing(), 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFF0000FF, 0xFFFFFFFF, 0, 0, 0);
+		this(Maybe.ofNothing(), true, true, true, true, 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFF0000FF, 0xFFFFFFFF, 0, 0, 0);
 	}
 
-	public ViewText(Maybe<Font> preferredFont, int textColor, int backgroundColor, int selectionTextColor, int selectionBackgroundColor, int cursorColor,
-					int selectedFromIndex, int selectedToIndex, int cursorIndex) {
+	public ViewText(Maybe<Font> preferredFont, boolean shadowEnabled, boolean formattingEnabled, boolean selectionEnabled, boolean cursorEnabled,
+		int textColor, int backgroundColor, int selectionTextColor, int selectionBackgroundColor, int cursorColor,
+		int selectionFromIndex, int selectedToIndex, int cursorIndex) {
 		this.preferredFont = preferredFont;
+		this.shadowEnabled = shadowEnabled;
+		this.formattingEnabled = formattingEnabled;
+		this.selectionEnabled = selectionEnabled;
+		this.cursorEnabled = cursorEnabled;
 		this.textColor = textColor;
 		this.backgroundColor = backgroundColor;
 		this.selectionTextColor = selectionTextColor;
 		this.selectionBackgroundColor = selectionBackgroundColor;
 		this.cursorColor = cursorColor;
-		this.selectedFromIndex = selectedFromIndex;
-		this.selectedToIndex = selectedToIndex;
+		this.selectionFromIndex = selectionFromIndex;
+		this.selectionToIndex = selectedToIndex;
 		this.cursorIndex = cursorIndex;
 	}
 
